@@ -16,11 +16,11 @@ const mapLayers = {
   },
   satellite: {
     name: 'SATELLITE',
-    url: (lat: number, lon: number) => `https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dOWTgAzCfr0d7A&center=${lat},${lon}&zoom=15&maptype=satellite`
+    url: (lat: number, lon: number) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/${Math.floor((1 - Math.log(Math.tan(lat * Math.PI/180) + 1/Math.cos(lat * Math.PI/180))/Math.PI)/2 * Math.pow(2,15))}/${Math.floor((lon + 180)/360 * Math.pow(2,15))}`
   },
   terrain: {
     name: 'TERRAIN', 
-    url: (lat: number, lon: number) => `https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dOWTgAzCfr0d7A&center=${lat},${lon}&zoom=15&maptype=terrain`
+    url: (lat: number, lon: number) => `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01},${lat-0.01},${lon+0.01},${lat+0.01}&layer=cyclemap&marker=${lat},${lon}`
   },
   transport: {
     name: 'TRANSPORT',
