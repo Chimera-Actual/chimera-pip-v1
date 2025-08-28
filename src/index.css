@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Pip-Boy Retro CRT Design System 
+All colors MUST be HSL - Monochrome Green Theme
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=VT323:wght@400&family=Share+Tech+Mono:wght@400&display=swap');
+
+@layer base {
+  :root {
+    /* Core CRT Green Palette */
+    --background: 120 100% 3%;        /* Very dark green-black */
+    --foreground: 120 100% 75%;       /* Bright terminal green */
+    
+    --card: 120 100% 4%;              /* Slightly lighter dark green */
+    --card-foreground: 120 100% 70%;  /* Card text green */
+    
+    --popover: 120 100% 5%;
+    --popover-foreground: 120 100% 75%;
+    
+    --primary: 120 100% 50%;          /* Electric terminal green */
+    --primary-foreground: 120 100% 3%;
+    
+    --secondary: 120 50% 15%;         /* Darker green for secondary elements */
+    --secondary-foreground: 120 100% 65%;
+    
+    --muted: 120 30% 10%;             /* Muted dark green */
+    --muted-foreground: 120 50% 45%;  /* Muted text */
+    
+    --accent: 120 100% 40%;           /* Accent bright green */
+    --accent-foreground: 120 100% 5%;
+    
+    --destructive: 0 100% 45%;        /* Red for errors */
+    --destructive-foreground: 120 100% 95%;
+    
+    --border: 120 50% 20%;            /* Border green */
+    --input: 120 50% 12%;             /* Input background */
+    --ring: 120 100% 50%;             /* Focus ring */
+    
+    --radius: 0.25rem;                /* Sharp corners for retro feel */
+    
+    /* CRT Effects */
+    --scanline-opacity: 0.1;
+    --flicker-intensity: 0.98;
+    --glow-size: 2px;
+    
+    /* Custom gradients */
+    --gradient-crt: linear-gradient(180deg, 
+      hsl(120 100% 5%), 
+      hsl(120 100% 3%), 
+      hsl(120 100% 5%));
+    --gradient-screen: radial-gradient(ellipse at center,
+      hsl(120 100% 4%) 0%,
+      hsl(120 100% 2%) 100%);
+      
+    /* Sidebar specific */
+    --sidebar-background: 120 100% 4%;
+    --sidebar-foreground: 120 100% 70%;
+    --sidebar-primary: 120 100% 50%;
+    --sidebar-primary-foreground: 120 100% 3%;
+    --sidebar-accent: 120 50% 15%;
+    --sidebar-accent-foreground: 120 100% 65%;
+    --sidebar-border: 120 50% 20%;
+    --sidebar-ring: 120 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-mono;
+    overflow: hidden; /* Prevent scrollbars for immersive feel */
+    /* Mobile optimizations */
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* CRT Screen Effects */
+  .crt-screen {
+    position: relative;
+    background: var(--gradient-screen);
+    overflow: hidden;
+  }
+
+  .crt-screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(120, 255, 120, var(--scanline-opacity)) 2px,
+      rgba(120, 255, 120, var(--scanline-opacity)) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .crt-glow {
+    text-shadow: 
+      0 0 var(--glow-size) hsl(var(--primary)),
+      0 0 calc(var(--glow-size) * 2) hsl(var(--primary)),
+      0 0 calc(var(--glow-size) * 3) hsl(var(--primary));
+  }
+
+  .crt-flicker {
+    animation: flicker 0.15s infinite linear alternate;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: var(--flicker-intensity); }
+  }
+
+  /* Boot sequence animation */
+  .boot-sequence {
+    animation: bootUp 2s ease-out;
+  }
+
+  @keyframes bootUp {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Mobile touch optimizations */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .mobile-nav {
+    @apply touch-target;
+  }
+
+  /* Improve touch responsiveness */
+  button, [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Mobile-specific CRT effects (lighter for performance) */
+  @media (max-width: 768px) {
+    .crt-screen::before {
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(120, 255, 120, calc(var(--scanline-opacity) * 0.7)) 3px,
+        rgba(120, 255, 120, calc(var(--scanline-opacity) * 0.7)) 6px
+      );
+    }
+  }
+}
