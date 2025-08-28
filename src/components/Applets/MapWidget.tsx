@@ -109,23 +109,25 @@ export const MapWidget: React.FC = () => {
         
         {/* Overlay UI Elements */}
         <div className="absolute inset-0 pointer-events-none z-10">
-          {/* Top Status Bar */}
-          <div className="absolute top-3 left-3 right-3 flex justify-between">
+          {/* Bottom Status Bar */}
+          <div className="absolute bottom-3 left-3">
             <div className="bg-background/95 border border-border rounded px-3 py-2 backdrop-blur-sm">
               <div className="text-xs font-mono text-primary space-y-1">
                 <div>LAT: {location.latitude.toFixed(6)}</div>
                 <div>LON: {location.longitude.toFixed(6)}</div>
               </div>
             </div>
-            
-            {userLocation && (
+          </div>
+          
+          {userLocation && (
+            <div className="absolute bottom-3 right-3">
               <div className="bg-primary/20 border border-primary rounded px-3 py-2 backdrop-blur-sm">
                 <div className="text-xs font-mono text-primary font-bold animate-pulse">
                   USER POSITION LOCKED
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Crosshairs */}
           <div className="absolute inset-0 flex items-center justify-center">
