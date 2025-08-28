@@ -155,19 +155,6 @@ export const MapWidget: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom Status */}
-          <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
-            <div className="bg-background/95 border border-border rounded px-3 py-1 backdrop-blur-sm">
-              <div className="text-xs font-mono text-muted-foreground">
-                LAYER: {mapLayers[activeLayer].name}
-              </div>
-            </div>
-            <div className="bg-background/95 border border-border rounded px-3 py-1 backdrop-blur-sm">
-              <div className="text-xs font-mono text-primary crt-glow">
-                ◈ OPERATIONAL
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
