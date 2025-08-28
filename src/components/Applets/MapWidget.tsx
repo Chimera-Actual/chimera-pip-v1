@@ -62,7 +62,7 @@ export const MapWidget: React.FC = () => {
   const mapUrl = mapLayers[activeLayer].url(location.latitude, location.longitude);
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden p-3 md:p-4">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Header Controls */}
       <div className="flex-shrink-0 h-16 bg-card border-b border-border px-4 flex items-center justify-between">
         <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
