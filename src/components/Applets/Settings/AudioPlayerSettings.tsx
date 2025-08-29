@@ -13,6 +13,7 @@ interface AudioPlayerSettingsProps {
     playlist?: any[];
     waveformStyle?: string;
     waveformColor?: string;
+    waveformSize?: string;
     showWaveform?: boolean;
   };
   onSettingsChange: (settings: any) => void;
@@ -29,6 +30,7 @@ export const AudioPlayerSettings: React.FC<AudioPlayerSettingsProps> = ({
   const [loop, setLoop] = useState(settings.loop ?? false);
   const [waveformStyle, setWaveformStyle] = useState(settings.waveformStyle || 'bars');
   const [waveformColor, setWaveformColor] = useState(settings.waveformColor || 'primary');
+  const [waveformSize, setWaveformSize] = useState(settings.waveformSize || 'medium');
   const [showWaveform, setShowWaveform] = useState(settings.showWaveform ?? true);
 
   const handleSave = () => {
@@ -39,6 +41,7 @@ export const AudioPlayerSettings: React.FC<AudioPlayerSettingsProps> = ({
       loop,
       waveformStyle,
       waveformColor,
+      waveformSize,
       showWaveform
     });
     onClose();
@@ -136,6 +139,20 @@ export const AudioPlayerSettings: React.FC<AudioPlayerSettingsProps> = ({
                 <SelectItem value="accent" className="font-mono">Accent (Blue)</SelectItem>
                 <SelectItem value="rainbow" className="font-mono">Rainbow</SelectItem>
                 <SelectItem value="mono" className="font-mono">Monochrome</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-mono text-foreground">Waveform Size</Label>
+            <Select value={waveformSize} onValueChange={setWaveformSize}>
+              <SelectTrigger className="font-mono bg-background/50 border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background border-border">
+                <SelectItem value="small" className="font-mono">Small</SelectItem>
+                <SelectItem value="medium" className="font-mono">Medium</SelectItem>
+                <SelectItem value="large" className="font-mono">Large</SelectItem>
               </SelectContent>
             </Select>
           </div>

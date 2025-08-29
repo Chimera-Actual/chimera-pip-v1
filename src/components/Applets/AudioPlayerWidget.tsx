@@ -109,6 +109,7 @@ interface AudioPlayerWidgetProps {
     loop?: boolean;
     waveformStyle?: string;
     waveformColor?: string;
+    waveformSize?: string;
     showWaveform?: boolean;
   };
 }
@@ -206,7 +207,11 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
 
       {/* Audio Waveform Visualization - At Top */}
       {settings?.showWaveform !== false && (
-        <div className="flex-shrink-0 h-24 bg-background/20 border-b border-border p-4">
+        <div className={`flex-shrink-0 bg-background/20 border-b border-border p-4 ${
+          settings?.waveformSize === 'small' ? 'h-16' :
+          settings?.waveformSize === 'large' ? 'h-32' :
+          'h-24'
+        }`}>
           <AudioWaveform 
             audioElement={audioRef.current}
             isPlaying={isPlaying}
