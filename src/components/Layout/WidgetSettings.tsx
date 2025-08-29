@@ -7,6 +7,7 @@ import { CustomAssistantSettings } from '@/components/Applets/Settings/CustomAss
 import { TextDisplaySettings } from '@/components/Applets/Settings/TextDisplaySettings';
 import { ImageDisplaySettings } from '@/components/Applets/Settings/ImageDisplaySettings';
 import { MapWidgetSettings } from '@/components/Applets/Settings/MapWidgetSettings';
+import { AudioWidgetSettings } from '@/components/Applets/Settings/AudioWidgetSettings';
 
 interface WidgetSettingsProps {
   isOpen: boolean;
@@ -62,6 +63,14 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
       case 'MapWidget':
         return (
           <MapWidgetSettings
+            settings={currentSettings}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onClose={onClose}
+          />
+        );
+      case 'AudioWidget':
+        return (
+          <AudioWidgetSettings
             settings={currentSettings}
             onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
             onClose={onClose}
