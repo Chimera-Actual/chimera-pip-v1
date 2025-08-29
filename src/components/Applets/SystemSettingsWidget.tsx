@@ -14,11 +14,23 @@ interface UserSettings {
   location_latitude?: number;
   location_longitude?: number;
   location_name?: string;
+  theme_mode: 'auto' | 'dark' | 'light';
+  crt_effects_enabled: boolean;
+  sound_enabled: boolean;
+  notifications_enabled: boolean;
+  auto_save_enabled: boolean;
+  data_backup_enabled: boolean;
 }
 
 export const SystemSettingsWidget: React.FC = () => {
   const [settings, setSettings] = useState<UserSettings>({
     location_enabled: false,
+    theme_mode: 'auto',
+    crt_effects_enabled: true,
+    sound_enabled: true,
+    notifications_enabled: true,
+    auto_save_enabled: true,
+    data_backup_enabled: false,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -51,6 +63,12 @@ export const SystemSettingsWidget: React.FC = () => {
           location_latitude: data.location_latitude || undefined,
           location_longitude: data.location_longitude || undefined,
           location_name: data.location_name || undefined,
+          theme_mode: data.theme_mode || 'auto',
+          crt_effects_enabled: data.crt_effects_enabled ?? true,
+          sound_enabled: data.sound_enabled ?? true,
+          notifications_enabled: data.notifications_enabled ?? true,
+          auto_save_enabled: data.auto_save_enabled ?? true,
+          data_backup_enabled: data.data_backup_enabled ?? false,
         });
       }
     } catch (error) {
@@ -78,6 +96,12 @@ export const SystemSettingsWidget: React.FC = () => {
           location_latitude: settings.location_latitude,
           location_longitude: settings.location_longitude,
           location_name: settings.location_name,
+          theme_mode: settings.theme_mode,
+          crt_effects_enabled: settings.crt_effects_enabled,
+          sound_enabled: settings.sound_enabled,
+          notifications_enabled: settings.notifications_enabled,
+          auto_save_enabled: settings.auto_save_enabled,
+          data_backup_enabled: settings.data_backup_enabled,
         });
 
       if (error) throw error;
