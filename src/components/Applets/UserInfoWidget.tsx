@@ -377,7 +377,7 @@ export const UserInfoWidget: React.FC = () => {
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto crt-scrollbar">
         {/* Usage Statistics */}
       <div className="border-b border-border bg-card p-4">
         <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
