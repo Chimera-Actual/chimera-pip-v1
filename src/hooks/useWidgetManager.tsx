@@ -276,6 +276,32 @@ export const useWidgetManager = () => {
     }
   };
 
+  const moveWidgetToTab = async (instanceId: string, newTabId: string): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_widget_instances')
+        .update({ tab_id: newTabId })
+        .eq('id', instanceId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setUserWidgetInstances(prev => 
+        prev.map(instance => 
+          instance.id === instanceId 
+            ? { ...instance, tab_id: newTabId }
+            : instance
+        )
+      );
+    } catch (error) {
+      console.error('Error moving widget to tab:', error);
+      throw error;
+    }
+  };
+
   return {
     availableWidgets,
     userWidgetInstances,
@@ -289,6 +315,7 @@ export const useWidgetManager = () => {
     getAvailableWidgetsForTab,
     updateWidgetPosition,
     updateWidgetName,
+    moveWidgetToTab,
     refreshData: loadWidgetData,
   };
 };

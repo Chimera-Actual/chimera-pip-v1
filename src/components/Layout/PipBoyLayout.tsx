@@ -5,6 +5,7 @@ import { TabContent } from './TabContent';
 import { UserAvatar } from './UserAvatar';
 import { TabManager } from './TabManager';
 import { useTabManager, UserTab } from '@/hooks/useTabManager';
+import { useWidgetManager } from '@/hooks/useWidgetManager';
 import { useToast } from '@/hooks/use-toast';
 import { Settings } from 'lucide-react';
 
@@ -40,8 +41,11 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
     canDeleteTab,
   } = useTabManager();
   
+  const { moveWidgetToTab } = useWidgetManager();
+  
   const [activeTab, setActiveTab] = useState<string>('');
   const [showTabManager, setShowTabManager] = useState(false);
+  const [dragOverTab, setDragOverTab] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Set the first tab as active when tabs load
@@ -76,6 +80,48 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
       }
     } catch (error) {
       throw error;
+    }
+  };
+
+  const handleTabDragOver = (e: React.DragEvent, tabId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverTab(tabId);
+  };
+
+  const handleTabDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're leaving the tab area entirely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverTab(null);
+    }
+  };
+
+  const handleTabDrop = async (e: React.DragEvent, tabId: string) => {
+    e.preventDefault();
+    setDragOverTab(null);
+    
+    try {
+      const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+      
+      // Don't allow dropping on the same tab
+      if (dragData.sourceTabId === tabId) {
+        return;
+      }
+
+      await moveWidgetToTab(dragData.instanceId, tabId);
+      
+      const targetTab = userTabs.find(t => t.id === tabId);
+      toast({
+        title: "Widget Moved",
+        description: `"${dragData.widgetName}" moved to ${targetTab?.name}`,
+      });
+    } catch (error) {
+      console.error('Error moving widget:', error);
+      toast({
+        title: "Error",
+        description: "Failed to move widget between tabs",
+        variant: "destructive"
+      });
     }
   };
 
@@ -122,10 +168,20 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
               <TabsTrigger
                 key={tab.id}
                 value={tab.id}
-                className="flex-1 h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider text-sm hover:bg-muted/50 transition-colors"
+                onDragOver={(e) => handleTabDragOver(e, tab.id)}
+                onDragLeave={handleTabDragLeave}
+                onDrop={(e) => handleTabDrop(e, tab.id)}
+                className={`flex-1 h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider text-sm hover:bg-muted/50 transition-all duration-200 ${
+                  dragOverTab === tab.id && dragOverTab !== activeTab
+                    ? 'bg-primary/10 border-b-2 border-primary/50 shadow-inner'
+                    : ''
+                }`}
               >
                 <span className="mr-2 text-lg">{tab.icon}</span>
                 {tab.name}
+                {dragOverTab === tab.id && dragOverTab !== activeTab && (
+                  <span className="ml-2 text-xs opacity-70">DROP HERE</span>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>

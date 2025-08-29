@@ -30,6 +30,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     updateWidgetSettings,
     getWidgetSettings,
     updateWidgetName,
+    moveWidgetToTab,
     loading,
     userWidgetInstances
   } = useWidgetManager();
@@ -128,6 +129,55 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, widget: UserWidgetInstance) => {
+    // Add a semi-transparent drag image
+    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+    dragImage.style.opacity = '0.7';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    setTimeout(() => document.body.removeChild(dragImage), 0);
+    
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      instanceId: widget.id,
+      widgetId: widget.widget_id,
+      widgetName: widget.custom_name || widget.widget_definition?.name,
+      sourceTabId: tabId
+    }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    
+    try {
+      const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+      
+      // Don't allow dropping on the same tab
+      if (dragData.sourceTabId === tabId) {
+        return;
+      }
+
+      await moveWidgetToTab(dragData.instanceId, tabId);
+      
+      toast({
+        title: "Widget Moved",
+        description: `"${dragData.widgetName}" has been moved to this tab`,
+      });
+    } catch (error) {
+      console.error('Error moving widget:', error);
+      toast({
+        title: "Error",
+        description: "Failed to move widget between tabs",
+        variant: "destructive"
+      });
+    }
+  };
+
   const renderActiveWidget = () => {
     const activeWidget = widgets.find(w => w.widget_id === activeApplet);
     if (!activeWidget?.widget_definition) {
@@ -181,7 +231,11 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
 
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div 
+      className="flex h-full overflow-hidden"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       {/* Sidebar */}
       <div className="w-72 bg-card border-r border-border flex flex-col overflow-hidden">
         {/* Header */}
@@ -197,11 +251,14 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
             {widgets.map((widget) => (
               <div
                 key={widget.id}
-                className={`rounded transition-colors ${
+                draggable
+                onDragStart={(e) => handleDragStart(e, widget)}
+                className={`rounded transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md ${
                   activeApplet === widget.widget_id
                     ? 'bg-primary/20 border border-primary/50'
-                    : 'border border-transparent hover:bg-muted/50'
+                    : 'border border-transparent hover:bg-muted/50 hover:border-primary/20'
                 }`}
+                title="Drag to move to another tab"
               >
                 <div
                   className="flex items-center justify-between p-3 cursor-pointer"
