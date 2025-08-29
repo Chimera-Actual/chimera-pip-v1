@@ -11,7 +11,7 @@ import { SystemSettingsWidget } from '@/components/Applets/SystemSettingsWidget'
 import { CustomAssistantWidget } from '@/components/Applets/CustomAssistantWidget';
 import { TextDisplayWidget } from '@/components/Applets/TextDisplayWidget';
 import { ImageDisplayWidget } from '@/components/Applets/ImageDisplayWidget';
-import { SimpleAudioPlayer } from '@/components/Applets/SimpleAudioPlayer';
+import { AudioPlayer } from '@/components/Applets/AudioPlayer';
 
 
 export const WIDGET_COMPONENTS = {
@@ -27,7 +27,7 @@ export const WIDGET_COMPONENTS = {
   CustomAssistantWidget,
   TextDisplayWidget,
   ImageDisplayWidget,
-  AudioPlayerWidget: SimpleAudioPlayer,
+  AudioPlayerWidget: AudioPlayer,
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
