@@ -13,6 +13,7 @@ import { GPTAssistantWidget } from '@/components/Applets/GPTAssistantWidget';
 import { VoiceAssistantWidget } from '@/components/Applets/VoiceAssistantWidget';
 import { CustomAssistantWidget } from '@/components/Applets/CustomAssistantWidget';
 import { TextDisplayWidget } from '@/components/Applets/TextDisplayWidget';
+import { ImageDisplayWidget } from '@/components/Applets/ImageDisplayWidget';
 
 export const WIDGET_COMPONENTS = {
   MapWidget,
@@ -29,6 +30,7 @@ export const WIDGET_COMPONENTS = {
   VoiceAssistantWidget,
   CustomAssistantWidget,
   TextDisplayWidget,
+  ImageDisplayWidget,
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
