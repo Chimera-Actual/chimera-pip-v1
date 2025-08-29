@@ -149,7 +149,6 @@ export const UserInfoWidget: React.FC = () => {
       {/* Header */}
       <div className="border-b border-border bg-card p-4">
         <div className="flex items-center gap-2">
-          <User className="w-5 h-5 text-primary crt-glow" />
           <span className="text-primary font-mono text-lg uppercase tracking-wider crt-glow">
             ◉ USER PROFILE
           </span>
