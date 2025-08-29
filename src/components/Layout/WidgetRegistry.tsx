@@ -5,7 +5,7 @@ import { ClockWidget } from '@/components/Applets/ClockWidget';
 import { UserInfoWidget } from '@/components/Applets/UserInfoWidget';
 import { EmailWidget } from '@/components/Applets/EmailWidget';
 import { CalendarWidget } from '@/components/Applets/CalendarWidget';
-import { RadioWidget } from '@/components/Applets/RadioWidget';
+
 import { BrowserWidget } from '@/components/Applets/BrowserWidget';
 import { SystemSettingsWidget } from '@/components/Applets/SystemSettingsWidget';
 import { ClaudeAssistantWidget } from '@/components/Applets/ClaudeAssistantWidget';
@@ -24,7 +24,7 @@ export const WIDGET_COMPONENTS = {
   UserInfoWidget,
   EmailWidget,
   CalendarWidget,
-  RadioWidget,
+  
   BrowserWidget,
   SystemSettingsWidget,
   ClaudeAssistantWidget,
