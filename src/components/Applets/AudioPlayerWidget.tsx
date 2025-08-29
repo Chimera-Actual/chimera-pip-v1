@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Plus, Trash2, GripVertical } from 'lucide-react';
+import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Trash2, GripVertical } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { AudioWaveform } from './AudioWaveform';
@@ -32,6 +32,7 @@ interface AudioTrack {
   title: string;
   url: string;
   duration?: number;
+  storagePath?: string; // Store the Supabase storage path for uploaded files
 }
 
 interface PlayerSettings {
@@ -117,8 +118,6 @@ export const AudioPlayerWidget: React.FC = () => {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState([75]);
   const [playlist, setPlaylist] = useState<AudioTrack[]>([]);
-  const [newUrl, setNewUrl] = useState('');
-  const [newTitle, setNewTitle] = useState('');
   const [settings, setSettings] = useState<PlayerSettings>({
     volume: 75,
     autoplay: false,
@@ -199,22 +198,46 @@ export const AudioPlayerWidget: React.FC = () => {
     if (!file || !user) return;
 
     try {
-      // For now, use blob URL for immediate playback (simpler debugging)
-      const blobUrl = URL.createObjectURL(file);
-      console.log('Created blob URL:', blobUrl);
+      console.log('Uploading file:', file.name);
+      
+      // Create unique filename with user ID folder structure
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('audio')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Error uploading file:', error);
+        return;
+      }
+
+      console.log('File uploaded successfully:', data.path);
+
+      // Get signed URL for private bucket access (24 hour expiry)
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from('audio')
+        .createSignedUrl(fileName, 60 * 60 * 24);
+
+      if (urlError || !urlData) {
+        console.error('Error creating signed URL:', urlError);
+        return;
+      }
 
       const track: AudioTrack = {
         id: `file-${Date.now()}`,
         title: file.name,
-        url: blobUrl
+        url: urlData.signedUrl,
+        storagePath: fileName // Store the path for future signed URL generation
       };
       
       const newPlaylist = [...playlist, track];
       setPlaylist(newPlaylist);
       
-      // Save updated playlist to settings (without blob URLs since they're temporary)
-      const persistentPlaylist = newPlaylist.filter(t => !t.url.startsWith('blob:'));
-      await savePlaylistToSettings(persistentPlaylist);
+      // Save updated playlist to settings
+      await savePlaylistToSettings(newPlaylist);
       
       if (!currentTrack) {
         setCurrentTrack(track);
@@ -226,26 +249,6 @@ export const AudioPlayerWidget: React.FC = () => {
     }
   };
 
-  const addUrlToPlaylist = async () => {
-    if (newUrl.trim()) {
-      const track: AudioTrack = {
-        id: `url-${Date.now()}`,
-        title: newTitle.trim() || 'Streaming Audio',
-        url: newUrl.trim()
-      };
-      const newPlaylist = [...playlist, track];
-      setPlaylist(newPlaylist);
-      
-      // Save updated playlist to settings
-      await savePlaylistToSettings(newPlaylist);
-      
-      setNewUrl('');
-      setNewTitle('');
-      if (!currentTrack) {
-        setCurrentTrack(track);
-      }
-    }
-  };
 
   const removeTrack = async (trackId: string) => {
     const newPlaylist = playlist.filter(track => track.id !== trackId);
@@ -480,42 +483,17 @@ export const AudioPlayerWidget: React.FC = () => {
         </div>
       </div>
 
-      {/* Add Content */}
-      <div className="flex-shrink-0 bg-background/20 border-b border-border p-4 space-y-3">
+      {/* Upload Audio Files */}
+      <div className="flex-shrink-0 bg-background/20 border-b border-border p-4">
         <div className="space-y-2">
-          <Label className="text-xs font-mono text-primary uppercase">Add Stream URL</Label>
-          <div className="flex gap-2">
-            <Input
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              placeholder="https://stream.example.com/audio.mp3"
-              className="flex-1 text-xs font-mono bg-background/50"
-            />
-            <Input
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Title (optional)"
-              className="w-32 text-xs font-mono bg-background/50"
-            />
-            <Button
-              onClick={addUrlToPlaylist}
-              size="sm"
-              disabled={!newUrl.trim()}
-              className="px-3"
-            >
-              <Plus size={16} />
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-mono text-primary uppercase">Upload File</Label>
+          <Label className="text-xs font-mono text-primary uppercase">Upload Audio Files</Label>
           <input
             ref={fileInputRef}
             type="file"
             accept="audio/*"
             onChange={handleFileUpload}
             className="hidden"
+            multiple
           />
           <Button
             onClick={() => fileInputRef.current?.click()}
@@ -523,8 +501,11 @@ export const AudioPlayerWidget: React.FC = () => {
             size="sm"
             className="w-full text-xs font-mono"
           >
-            Choose Audio File
+            📁 Choose Audio Files
           </Button>
+          <div className="text-xs text-muted-foreground text-center">
+            Supported: MP3, WAV, OGG, M4A
+          </div>
         </div>
       </div>
 
@@ -539,9 +520,9 @@ export const AudioPlayerWidget: React.FC = () => {
         <div className="px-4 pb-4 overflow-y-auto max-h-full">
           {playlist.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm font-mono">
-              NO TRACKS IN PLAYLIST
+              NO AUDIO FILES IN PLAYLIST
               <br />
-              <span className="text-xs">Add URLs or upload files to begin</span>
+              <span className="text-xs">Upload audio files to begin listening</span>
             </div>
           ) : (
             <DndContext
