@@ -30,6 +30,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     updateWidgetSettings,
     getWidgetSettings,
     updateWidgetName,
+    updateWidgetPosition,
     moveWidgetToTab,
     loading,
     userWidgetInstances
@@ -41,6 +42,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [selectedWidgetForSettings, setSelectedWidgetForSettings] = useState<UserWidgetInstance | null>(null);
   const [selectedWidgetForRename, setSelectedWidgetForRename] = useState<UserWidgetInstance | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // Get widgets for current tab directly from the hook
   const widgets = getActiveWidgetsForTab(tabId);
@@ -137,11 +139,13 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     e.dataTransfer.setDragImage(dragImage, 0, 0);
     setTimeout(() => document.body.removeChild(dragImage), 0);
     
+    // Set data for both tab transfer and reordering
     e.dataTransfer.setData('application/json', JSON.stringify({
       instanceId: widget.id,
       widgetId: widget.widget_id,
       widgetName: widget.custom_name || widget.widget_definition?.name,
-      sourceTabId: tabId
+      sourceTabId: tabId,
+      currentPosition: widget.position
     }));
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -153,6 +157,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
+    setDragOverIndex(null);
     
     try {
       const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
@@ -173,6 +178,58 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       toast({
         title: "Error",
         description: "Failed to move widget between tabs",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleWidgetDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverIndex(index);
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleWidgetDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverIndex(null);
+    
+    try {
+      const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+      
+      // Only handle reordering within the same tab
+      if (dragData.sourceTabId === tabId) {
+        const sourceIndex = widgets.findIndex(w => w.id === dragData.instanceId);
+        if (sourceIndex !== -1 && sourceIndex !== targetIndex) {
+          // Calculate new positions
+          const targetPosition = widgets[targetIndex].position;
+          await updateWidgetPosition(dragData.instanceId, targetPosition);
+          
+          // Update all affected positions
+          if (sourceIndex < targetIndex) {
+            // Moving down - shift items up
+            for (let i = sourceIndex + 1; i <= targetIndex; i++) {
+              await updateWidgetPosition(widgets[i].id, widgets[i].position - 1);
+            }
+          } else {
+            // Moving up - shift items down
+            for (let i = targetIndex; i < sourceIndex; i++) {
+              await updateWidgetPosition(widgets[i].id, widgets[i].position + 1);
+            }
+          }
+          
+          toast({
+            title: "Widget Reordered",
+            description: "Widget position updated successfully",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error reordering widget:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reorder widget",
         variant: "destructive"
       });
     }
@@ -248,17 +305,22 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         {/* Widget List */}
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-1 p-2">
-            {widgets.map((widget) => (
+            {widgets.map((widget, index) => (
               <div
                 key={widget.id}
                 draggable
                 onDragStart={(e) => handleDragStart(e, widget)}
-                className={`rounded transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md ${
+                onDragOver={(e) => handleWidgetDragOver(e, index)}
+                onDrop={(e) => handleWidgetDrop(e, index)}
+                onDragLeave={() => setDragOverIndex(null)}
+                className={`rounded transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md relative ${
                   activeApplet === widget.widget_id
                     ? 'bg-primary/20 border border-primary/50'
                     : 'border border-transparent hover:bg-muted/50 hover:border-primary/20'
+                } ${
+                  dragOverIndex === index ? 'border-t-2 border-t-primary' : ''
                 }`}
-                title="Drag to move to another tab"
+                title="Drag to reorder or move to another tab"
               >
                 <div
                   className="flex items-center justify-between p-3 cursor-pointer"
