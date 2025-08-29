@@ -166,6 +166,115 @@ export type Database = {
         }
         Relationships: []
       }
+      user_widget_instances: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          position: number | null
+          tab_category: string
+          updated_at: string
+          user_id: string
+          widget_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          position?: number | null
+          tab_category: string
+          updated_at?: string
+          user_id: string
+          widget_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          position?: number | null
+          tab_category?: string
+          updated_at?: string
+          user_id?: string
+          widget_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_widget_instances_widget_id_fkey"
+            columns: ["widget_id"]
+            isOneToOne: false
+            referencedRelation: "widget_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_widget_settings: {
+        Row: {
+          created_at: string
+          id: string
+          settings: Json | null
+          updated_at: string
+          user_id: string
+          widget_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+          widget_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+          widget_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_widget_settings_widget_id_fkey"
+            columns: ["widget_id"]
+            isOneToOne: false
+            referencedRelation: "widget_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      widget_definitions: {
+        Row: {
+          category: string
+          component_name: string
+          created_at: string
+          default_settings: Json | null
+          description: string | null
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category: string
+          component_name: string
+          created_at?: string
+          default_settings?: Json | null
+          description?: string | null
+          icon: string
+          id: string
+          name: string
+        }
+        Update: {
+          category?: string
+          component_name?: string
+          created_at?: string
+          default_settings?: Json | null
+          description?: string | null
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
