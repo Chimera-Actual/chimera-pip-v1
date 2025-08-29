@@ -6,6 +6,7 @@ import { Slider } from '@/components/ui/slider';
 import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { AudioWaveform } from './AudioWaveform';
 
 interface AudioTrack {
   id: string;
@@ -226,6 +227,15 @@ export const AudioPlayerWidget: React.FC = () => {
             />
           )}
         </div>
+      </div>
+
+      {/* Audio Waveform Visualization */}
+      <div className="flex-shrink-0 h-24 bg-background/20 border-b border-border p-4">
+        <AudioWaveform 
+          audioElement={audioRef.current}
+          isPlaying={isPlaying}
+          className="h-full"
+        />
       </div>
 
       {/* Controls */}
