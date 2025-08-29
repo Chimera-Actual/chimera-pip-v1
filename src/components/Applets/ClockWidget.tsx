@@ -58,6 +58,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
   // Use settings from props, with defaults
   const is24Hour = settings?.displayFormat === '24h' || false;
   const clockStyle = settings?.clockStyle || 'modern';
+  const clockSize = settings?.clockSize || 'large';
   
   // Convert timezone settings to WorldClock format if needed
   const worldClocks: WorldClock[] = settings?.timeZones 
@@ -154,43 +155,68 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
     }).format(time);
   };
 
-  const getClockStyleClasses = (style: string) => {
+  const getClockStyleClasses = (style: string, size: string) => {
+    const sizeClasses = {
+      small: {
+        container: "text-2xl lg:text-4xl px-3 py-2",
+        date: "text-sm lg:text-base mt-1",
+        timezone: "text-xs mt-1"
+      },
+      medium: {
+        container: "text-4xl lg:text-6xl px-4 py-2",
+        date: "text-base lg:text-lg mt-2",
+        timezone: "text-xs mt-1"
+      },
+      large: {
+        container: "text-6xl lg:text-8xl px-6 py-3",
+        date: "text-xl lg:text-2xl mt-3",
+        timezone: "text-xs mt-1"
+      },
+      'extra-large': {
+        container: "text-8xl lg:text-9xl px-8 py-4",
+        date: "text-2xl lg:text-3xl mt-4",
+        timezone: "text-sm mt-2"
+      }
+    };
+
+    const currentSize = sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.large;
+
     switch (style) {
       case 'classic':
         return {
-          container: "font-['VT323'] text-foreground text-6xl lg:text-8xl leading-none tracking-wider bg-card border-2 border-border rounded px-6 py-3",
-          date: "font-['VT323'] text-muted-foreground text-xl lg:text-2xl mt-3 tracking-wider",
-          timezone: "font-mono text-xs text-muted-foreground mt-1 opacity-60 uppercase tracking-widest"
+          container: `font-['VT323'] text-foreground ${currentSize.container} leading-none tracking-wider bg-card border-2 border-border rounded`,
+          date: `font-['VT323'] text-muted-foreground ${currentSize.date} tracking-wider`,
+          timezone: `font-mono ${currentSize.timezone} text-muted-foreground opacity-60 uppercase tracking-widest`
         };
       case 'neon':
         return {
-          container: "font-['VT323'] text-primary text-6xl lg:text-8xl leading-none tracking-wider bg-primary/5 border-2 border-primary rounded-xl px-6 py-3 shadow-[0_0_80px_rgba(34,197,94,0.8)] animate-pulse",
-          date: "font-['VT323'] text-primary text-xl lg:text-2xl mt-3 tracking-wider drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]",
-          timezone: "font-mono text-xs text-primary mt-1 opacity-80 uppercase tracking-widest drop-shadow-[0_0_5px_rgba(34,197,94,0.6)]"
+          container: `font-['VT323'] text-primary ${currentSize.container} leading-none tracking-wider bg-primary/5 border-2 border-primary rounded-xl shadow-[0_0_80px_rgba(34,197,94,0.8)] animate-pulse`,
+          date: `font-['VT323'] text-primary ${currentSize.date} tracking-wider drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]`,
+          timezone: `font-mono ${currentSize.timezone} text-primary opacity-80 uppercase tracking-widest drop-shadow-[0_0_5px_rgba(34,197,94,0.6)]`
         };
       case 'minimal':
         return {
-          container: "font-sans text-foreground text-5xl lg:text-7xl font-light leading-none tracking-tight",
-          date: "font-sans text-muted-foreground text-lg lg:text-xl font-light mt-4 tracking-normal",
-          timezone: "font-sans text-xs text-muted-foreground mt-2 opacity-50 uppercase tracking-wider font-medium"
+          container: `font-sans text-foreground ${currentSize.container} font-light leading-none tracking-tight`,
+          date: `font-sans text-muted-foreground ${currentSize.date} font-light tracking-normal`,
+          timezone: `font-sans ${currentSize.timezone} text-muted-foreground opacity-50 uppercase tracking-wider font-medium`
         };
       case 'retro':
         return {
-          container: "font-mono text-primary text-4xl lg:text-6xl leading-none tracking-widest bg-background border border-primary/50 rounded-none px-4 py-2 shadow-none",
-          date: "font-mono text-accent text-sm lg:text-base mt-2 tracking-widest uppercase",
-          timezone: "font-mono text-xs text-muted-foreground mt-1 opacity-75 uppercase tracking-[0.3em]"
+          container: `font-mono text-primary ${currentSize.container} leading-none tracking-widest bg-background border border-primary/50 rounded-none shadow-none`,
+          date: `font-mono text-accent ${currentSize.date} tracking-widest uppercase`,
+          timezone: `font-mono ${currentSize.timezone} text-muted-foreground opacity-75 uppercase tracking-[0.3em]`
         };
       case 'digital':
         return {
-          container: "font-mono text-accent text-5xl lg:text-7xl font-bold leading-none tracking-wider bg-background/80 border border-accent/30 rounded-sm px-6 py-3 shadow-inner",
-          date: "font-mono text-muted-foreground text-base lg:text-lg font-medium mt-3 tracking-wide",
-          timezone: "font-mono text-xs text-accent/70 mt-1 opacity-80 uppercase tracking-widest font-bold"
+          container: `font-mono text-accent ${currentSize.container} font-bold leading-none tracking-wider bg-background/80 border border-accent/30 rounded-sm shadow-inner`,
+          date: `font-mono text-muted-foreground ${currentSize.date} font-medium tracking-wide`,
+          timezone: `font-mono ${currentSize.timezone} text-accent/70 opacity-80 uppercase tracking-widest font-bold`
         };
       default: // modern
         return {
-          container: "font-['VT323'] text-primary text-6xl lg:text-8xl crt-glow leading-none tracking-wider bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/50 rounded-xl px-6 py-3 backdrop-blur-sm shadow-[0_0_50px_rgba(34,197,94,0.4)] animate-pulse",
-          date: "font-['VT323'] text-accent text-xl lg:text-2xl mt-3 tracking-wider opacity-90",
-          timezone: "font-mono text-xs text-muted-foreground mt-1 opacity-60 uppercase tracking-widest"
+          container: `font-['VT323'] text-primary ${currentSize.container} crt-glow leading-none tracking-wider bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/50 rounded-xl backdrop-blur-sm shadow-[0_0_50px_rgba(34,197,94,0.4)] animate-pulse`,
+          date: `font-['VT323'] text-accent ${currentSize.date} tracking-wider opacity-90`,
+          timezone: `font-mono ${currentSize.timezone} text-muted-foreground opacity-60 uppercase tracking-widest`
         };
     }
   };
@@ -214,17 +240,17 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
           {/* Main Time Display */}
           <div className="text-center">
             <div className="relative">
-              <div className={getClockStyleClasses(clockStyle).container}>
+              <div className={getClockStyleClasses(clockStyle, clockSize).container}>
                 {formatTime(currentTime, userTimezone, is24Hour)}
               </div>
               {clockStyle === 'modern' && (
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-primary/5 to-primary/10 rounded-xl pointer-events-none"></div>
               )}
             </div>
-            <div className={getClockStyleClasses(clockStyle).date}>
+            <div className={getClockStyleClasses(clockStyle, clockSize).date}>
               {formatDate(currentTime, userTimezone)}
             </div>
-            <div className={getClockStyleClasses(clockStyle).timezone}>
+            <div className={getClockStyleClasses(clockStyle, clockSize).timezone}>
               {userTimezone.replace('_', ' ')}
             </div>
           </div>

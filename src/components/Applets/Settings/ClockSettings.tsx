@@ -31,6 +31,7 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
   const [showSeconds, setShowSeconds] = useState(settings.showSeconds ?? true);
   const [compactMode, setCompactMode] = useState(settings.compactMode ?? false);
   const [clockStyle, setClockStyle] = useState(settings.clockStyle || 'modern');
+  const [clockSize, setClockSize] = useState(settings.clockSize || 'large');
   const [newTimezoneName, setNewTimezoneName] = useState('');
   const [newTimezoneValue, setNewTimezoneValue] = useState('');
 
@@ -54,7 +55,8 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
       displayFormat,
       showSeconds,
       compactMode,
-      clockStyle
+      clockStyle,
+      clockSize
     };
     onSettingsChange(newSettings);
     onClose();
@@ -90,6 +92,22 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
             <SelectItem value="minimal" className="font-mono">Minimal (Clean)</SelectItem>
             <SelectItem value="retro" className="font-mono">Retro (Terminal)</SelectItem>
             <SelectItem value="digital" className="font-mono">Digital (LCD)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Clock Size */}
+      <div className="space-y-3">
+        <Label className="text-sm font-mono text-primary">CLOCK SIZE</Label>
+        <Select value={clockSize} onValueChange={setClockSize}>
+          <SelectTrigger className="font-mono bg-background/50 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="small" className="font-mono">Small</SelectItem>
+            <SelectItem value="medium" className="font-mono">Medium</SelectItem>
+            <SelectItem value="large" className="font-mono">Large</SelectItem>
+            <SelectItem value="extra-large" className="font-mono">Extra Large</SelectItem>
           </SelectContent>
         </Select>
       </div>

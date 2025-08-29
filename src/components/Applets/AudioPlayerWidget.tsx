@@ -103,9 +103,20 @@ const SortableTrack: React.FC<SortableTrackProps> = ({ track, isActive, onPlay, 
 
 interface AudioPlayerWidgetProps {
   widgetInstanceId?: string;
+  settings?: {
+    volume?: number;
+    autoplay?: boolean;
+    loop?: boolean;
+    waveformStyle?: string;
+    waveformColor?: string;
+    showWaveform?: boolean;
+  };
 }
 
-export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInstanceId }) => {
+export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ 
+  widgetInstanceId, 
+  settings 
+}) => {
   const {
     isPlaying,
     currentTrack,
@@ -193,7 +204,20 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInst
         </div>
       </div>
 
-      {/* Current Track Display */}
+      {/* Audio Waveform Visualization - At Top */}
+      {settings?.showWaveform !== false && (
+        <div className="flex-shrink-0 h-24 bg-background/20 border-b border-border p-4">
+          <AudioWaveform 
+            audioElement={audioRef.current}
+            isPlaying={isPlaying}
+            className="h-full"
+            style={settings?.waveformStyle || 'bars'}
+            color={settings?.waveformColor || 'primary'}
+          />
+        </div>
+      )}
+
+      {/* Current Track Display - Song Information */}
       <div className="flex-shrink-0 bg-background/30 border-b border-border p-4">
         <div className="text-center space-y-2">
           <div className="text-sm font-mono text-primary truncate">
@@ -218,16 +242,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInst
         </div>
       </div>
 
-      {/* Audio Waveform Visualization */}
-      <div className="flex-shrink-0 h-24 bg-background/20 border-b border-border p-4">
-        <AudioWaveform 
-          audioElement={audioRef.current}
-          isPlaying={isPlaying}
-          className="h-full"
-        />
-      </div>
-
-      {/* Controls */}
+      {/* Controls - Play Controls */}
       <div className="flex-shrink-0 bg-background/20 border-b border-border p-4">
         <div className="flex items-center justify-center gap-4">
           <Button
@@ -271,31 +286,6 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInst
         </div>
       </div>
 
-      {/* Upload Audio Files */}
-      <div className="flex-shrink-0 bg-background/20 border-b border-border p-4">
-        <div className="space-y-2">
-          <Label className="text-xs font-mono text-primary uppercase">Upload Audio Files</Label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="audio/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            variant="outline"
-            size="sm"
-            className="w-full text-xs font-mono"
-          >
-            📁 Choose Audio Files
-          </Button>
-          <div className="text-xs text-muted-foreground text-center">
-            Supported: MP3, WAV, OGG, M4A
-          </div>
-        </div>
-      </div>
-
       {/* Playlist */}
       <div className="flex-1 overflow-hidden">
         <div className="p-4">
@@ -335,6 +325,31 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInst
               </SortableContext>
             </DndContext>
           )}
+        </div>
+      </div>
+
+      {/* Upload Audio Files - At Bottom */}
+      <div className="flex-shrink-0 bg-background/20 border-t border-border p-4">
+        <div className="space-y-2">
+          <Label className="text-xs font-mono text-primary uppercase">Upload Audio Files</Label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="sm"
+            className="w-full text-xs font-mono"
+          >
+            📁 Choose Audio Files
+          </Button>
+          <div className="text-xs text-muted-foreground text-center">
+            Supported: MP3, WAV, OGG, M4A
+          </div>
         </div>
       </div>
     </div>
