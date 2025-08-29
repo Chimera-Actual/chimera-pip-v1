@@ -18,9 +18,6 @@ interface AudioPlayerProps {
   widgetInstanceId?: string;
   settings?: {
     volume?: number;
-    waveformStyle?: string;
-    waveformColor?: string;
-    waveformSize?: string;
     showWaveform?: boolean;
   };
   onSettingsUpdate?: (settings: any) => void;
@@ -44,7 +41,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(settings.volume || 75);
-  const [waveformSize, setWaveformSize] = useState(settings.waveformSize || 'medium');
   const [isLoading, setIsLoading] = useState(false);
 
   // Load playlist from database
@@ -176,7 +172,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isPlaying, settings.waveformStyle, settings.waveformColor]);
+  }, [isPlaying]);
 
   const loadPlaylist = async () => {
     try {
@@ -203,7 +199,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       const settingsData = {
         playlist: newPlaylist,
         volume,
-        waveformSize,
         ...settings
       };
 
@@ -279,12 +274,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     }
   };
 
-  const handleWaveformSizeChange = (size: string) => {
-    setWaveformSize(size);
-    if (onSettingsUpdate) {
-      onSettingsUpdate({ ...settings, waveformSize: size });
-    }
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -359,13 +348,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getWaveformHeight = () => {
-    switch (waveformSize) {
-      case 'small': return 'h-16';
-      case 'large': return 'h-48';
-      default: return 'h-24';
-    }
-  };
 
   return (
     <div className="w-full h-full flex flex-col bg-card border border-border rounded-lg overflow-hidden">
@@ -398,25 +380,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       {/* Waveform */}
       {settings?.showWaveform !== false && (
-        <div className={`flex-shrink-0 bg-background/20 border-b border-border relative ${getWaveformHeight()}`}>
+        <div className="flex-shrink-0 bg-background/20 border-b border-border h-24">
           <canvas
             ref={canvasRef}
             className="w-full h-full"
             style={{ display: 'block' }}
           />
-          <div className="absolute bottom-2 right-2 flex gap-1 bg-background/80 backdrop-blur-sm rounded p-1">
-            {['small', 'medium', 'large'].map((size) => (
-              <Button
-                key={size}
-                onClick={() => handleWaveformSizeChange(size)}
-                size="sm"
-                variant={waveformSize === size ? 'default' : 'ghost'}
-                className="h-6 px-2 text-xs font-mono"
-              >
-                {size[0].toUpperCase()}
-              </Button>
-            ))}
-          </div>
         </div>
       )}
 

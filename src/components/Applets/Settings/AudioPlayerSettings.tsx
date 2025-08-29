@@ -11,9 +11,6 @@ interface AudioPlayerSettingsProps {
     autoplay?: boolean;
     loop?: boolean;
     playlist?: any[];
-    waveformStyle?: string;
-    waveformColor?: string;
-    waveformSize?: string;
     showWaveform?: boolean;
   };
   onSettingsChange: (settings: any) => void;
@@ -28,9 +25,6 @@ export const AudioPlayerSettings: React.FC<AudioPlayerSettingsProps> = ({
   const [volume, setVolume] = useState([settings.volume || 75]);
   const [autoplay, setAutoplay] = useState(settings.autoplay ?? false);
   const [loop, setLoop] = useState(settings.loop ?? false);
-  const [waveformStyle, setWaveformStyle] = useState(settings.waveformStyle || 'bars');
-  const [waveformColor, setWaveformColor] = useState(settings.waveformColor || 'primary');
-  const [waveformSize, setWaveformSize] = useState(settings.waveformSize || 'medium');
   const [showWaveform, setShowWaveform] = useState(settings.showWaveform ?? true);
 
   const handleSave = () => {
@@ -39,9 +33,6 @@ export const AudioPlayerSettings: React.FC<AudioPlayerSettingsProps> = ({
       volume: volume[0],
       autoplay,
       loop,
-      waveformStyle,
-      waveformColor,
-      waveformSize,
       showWaveform
     });
     onClose();
@@ -102,60 +93,14 @@ export const AudioPlayerSettings: React.FC<AudioPlayerSettingsProps> = ({
           📊 Waveform Visualization
         </Label>
         
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-sm font-mono text-foreground">Show Waveform</Label>
-              <div className="text-xs text-muted-foreground font-mono">
-                Display audio visualization waveform
-              </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-sm font-mono text-foreground">Show Waveform</Label>
+            <div className="text-xs text-muted-foreground font-mono">
+              Display audio visualization waveform
             </div>
-            <Switch checked={showWaveform} onCheckedChange={setShowWaveform} />
           </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-mono text-foreground">Waveform Style</Label>
-            <Select value={waveformStyle} onValueChange={setWaveformStyle}>
-              <SelectTrigger className="font-mono bg-background/50 border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                <SelectItem value="bars" className="font-mono">Frequency Bars</SelectItem>
-                <SelectItem value="wave" className="font-mono">Waveform</SelectItem>
-                <SelectItem value="circle" className="font-mono">Circular</SelectItem>
-                <SelectItem value="minimal" className="font-mono">Minimal</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-mono text-foreground">Waveform Color</Label>
-            <Select value={waveformColor} onValueChange={setWaveformColor}>
-              <SelectTrigger className="font-mono bg-background/50 border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                <SelectItem value="primary" className="font-mono">Primary (Green)</SelectItem>
-                <SelectItem value="accent" className="font-mono">Accent (Blue)</SelectItem>
-                <SelectItem value="rainbow" className="font-mono">Rainbow</SelectItem>
-                <SelectItem value="mono" className="font-mono">Monochrome</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-mono text-foreground">Waveform Size</Label>
-            <Select value={waveformSize} onValueChange={setWaveformSize}>
-              <SelectTrigger className="font-mono bg-background/50 border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                <SelectItem value="small" className="font-mono">Small</SelectItem>
-                <SelectItem value="medium" className="font-mono">Medium</SelectItem>
-                <SelectItem value="large" className="font-mono">Large</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Switch checked={showWaveform} onCheckedChange={setShowWaveform} />
         </div>
       </div>
 
