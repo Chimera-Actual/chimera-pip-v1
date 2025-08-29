@@ -101,7 +101,11 @@ const SortableTrack: React.FC<SortableTrackProps> = ({ track, isActive, onPlay, 
   );
 };
 
-export const AudioPlayerWidget: React.FC = () => {
+interface AudioPlayerWidgetProps {
+  widgetInstanceId?: string;
+}
+
+export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInstanceId }) => {
   const {
     isPlaying,
     currentTrack,
@@ -119,6 +123,7 @@ export const AudioPlayerWidget: React.FC = () => {
     removeTrack,
     reorderPlaylist,
     handleFileUpload,
+    loadWidgetPlaylist,
   } = useAudio();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -131,10 +136,17 @@ export const AudioPlayerWidget: React.FC = () => {
     })
   );
 
+  // Load playlist when widget mounts
+  React.useEffect(() => {
+    if (widgetInstanceId) {
+      loadWidgetPlaylist(widgetInstanceId);
+    }
+  }, [widgetInstanceId, loadWidgetPlaylist]);
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      await handleFileUpload(file);
+    if (file && widgetInstanceId) {
+      await handleFileUpload(file, widgetInstanceId);
     }
   };
 
@@ -148,12 +160,12 @@ export const AudioPlayerWidget: React.FC = () => {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (active.id !== over?.id) {
+    if (active.id !== over?.id && widgetInstanceId) {
       const oldIndex = playlist.findIndex((track) => track.id === active.id);
       const newIndex = playlist.findIndex((track) => track.id === over?.id);
       
       const newPlaylist = arrayMove(playlist, oldIndex, newIndex);
-      await reorderPlaylist(newPlaylist);
+      await reorderPlaylist(newPlaylist, widgetInstanceId);
     }
   };
 
@@ -312,7 +324,7 @@ export const AudioPlayerWidget: React.FC = () => {
                       track={track}
                       isActive={currentTrack?.id === track.id}
                       onPlay={playTrack}
-                      onRemove={removeTrack}
+                      onRemove={(trackId) => removeTrack(trackId, widgetInstanceId)}
                     />
                   ))}
                 </div>

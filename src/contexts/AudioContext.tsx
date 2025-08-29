@@ -37,10 +37,12 @@ interface AudioContextType {
   nextTrack: () => void;
   prevTrack: () => void;
   setVolume: (volume: number[]) => void;
-  addTrack: (track: AudioTrack) => Promise<void>;
-  removeTrack: (trackId: string) => Promise<void>;
-  reorderPlaylist: (newPlaylist: AudioTrack[]) => Promise<void>;
-  handleFileUpload: (file: File) => Promise<void>;
+  addTrack: (track: AudioTrack, widgetInstanceId?: string) => Promise<void>;
+  removeTrack: (trackId: string, widgetInstanceId?: string) => Promise<void>;
+  reorderPlaylist: (newPlaylist: AudioTrack[], widgetInstanceId?: string) => Promise<void>;
+  handleFileUpload: (file: File, widgetInstanceId?: string) => Promise<void>;
+  loadWidgetPlaylist: (widgetInstanceId: string) => Promise<void>;
+  saveWidgetPlaylist: (widgetInstanceId: string, playlist: AudioTrack[]) => Promise<void>;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -74,68 +76,10 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Load user settings and refresh URLs if needed
+  // Load user settings (now handled per widget instance)
   useEffect(() => {
-    const loadSettings = async () => {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('user_widget_settings')
-          .select('settings')
-          .eq('user_id', user.id)
-          .eq('widget_id', 'audio-system')
-          .single();
-
-        if (data?.settings && typeof data.settings === 'object') {
-          const loadedSettings = data.settings as Partial<PlayerSettings>;
-          setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
-          
-          // Refresh URLs for stored tracks with better error handling
-          if (loadedSettings.playlist) {
-            const refreshedPlaylist = await Promise.all(
-              loadedSettings.playlist.map(async (track) => {
-                if (track.storagePath) {
-                  try {
-                    // Create fresh signed URL (30 days)
-                    const { data: urlData } = await supabase.storage
-                      .from('audio')
-                      .createSignedUrl(track.storagePath, 60 * 60 * 24 * 30);
-                    
-                    if (urlData?.signedUrl) {
-                      return { ...track, url: urlData.signedUrl };
-                    }
-                  } catch (e) {
-                    console.error('Failed to refresh URL for track:', track.title, e);
-                  }
-                }
-                return track;
-              })
-            );
-            
-            // Filter out tracks with invalid URLs
-            const validTracks = refreshedPlaylist.filter(track => 
-              track.url && !track.url.includes('undefined')
-            );
-            
-            setPlaylist(validTracks);
-            
-            // If current track is invalid, clear it
-            if (validTracks.length > 0 && !validTracks.some(t => t.id === currentTrack?.id)) {
-              setCurrentTrack(validTracks[0]);
-            }
-          }
-          
-          if (loadedSettings.volume !== undefined) {
-            setVolumeState([loadedSettings.volume]);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading player settings:', error);
-      }
-    };
-
-    loadSettings();
+    // Global audio settings can be loaded here if needed
+    // Individual widget playlists are loaded via loadWidgetPlaylist()
   }, [user]);
 
   // Update audio volume when slider changes
@@ -145,8 +89,69 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     }
   }, [volume]);
 
-  // Save playlist to settings
-  const savePlaylistToSettings = async (newPlaylist: AudioTrack[]) => {
+  // Load playlist for specific widget instance
+  const loadWidgetPlaylist = async (widgetInstanceId: string) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_widget_settings')
+        .select('settings')
+        .eq('user_id', user.id)
+        .eq('widget_id', widgetInstanceId)
+        .single();
+
+      if (data?.settings && typeof data.settings === 'object') {
+        const loadedSettings = data.settings as Partial<PlayerSettings>;
+        
+        // Refresh URLs for stored tracks with better error handling
+        if (loadedSettings.playlist) {
+          const refreshedPlaylist = await Promise.all(
+            loadedSettings.playlist.map(async (track) => {
+              if (track.storagePath) {
+                try {
+                  // Create fresh signed URL (30 days)
+                  const { data: urlData } = await supabase.storage
+                    .from('audio')
+                    .createSignedUrl(track.storagePath, 60 * 60 * 24 * 30);
+                  
+                  if (urlData?.signedUrl) {
+                    return { ...track, url: urlData.signedUrl };
+                  }
+                } catch (e) {
+                  console.error('Failed to refresh URL for track:', track.title, e);
+                }
+              }
+              return track;
+            })
+          );
+          
+          // Filter out tracks with invalid URLs
+          const validTracks = refreshedPlaylist.filter(track => 
+            track.url && !track.url.includes('undefined')
+          );
+          
+          setPlaylist(validTracks);
+          
+          // Set first track as current if no current track
+          if (validTracks.length > 0 && !currentTrack) {
+            setCurrentTrack(validTracks[0]);
+          }
+        }
+        
+        if (loadedSettings.volume !== undefined) {
+          setVolumeState([loadedSettings.volume]);
+        }
+        
+        setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
+      }
+    } catch (error) {
+      console.error('Error loading widget playlist:', error);
+    }
+  };
+
+  // Save playlist for specific widget instance
+  const saveWidgetPlaylist = async (widgetInstanceId: string, newPlaylist: AudioTrack[]) => {
     if (!user) return;
 
     try {
@@ -156,7 +161,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         .from('user_widget_settings')
         .upsert({
           user_id: user.id,
-          widget_id: 'audio-system',
+          widget_id: widgetInstanceId,
           settings: updatedSettings as any
         });
       
@@ -166,11 +171,11 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     }
   };
 
-  const handleFileUpload = async (file: File) => {
-    if (!user) return;
+  const handleFileUpload = async (file: File, widgetInstanceId?: string) => {
+    if (!user || !widgetInstanceId) return;
 
     try {
-      console.log('Uploading file:', file.name);
+      console.log('Uploading file:', file.name, 'for widget:', widgetInstanceId);
       
       // Create a consistent filename based on user and file content
       const fileExt = file.name.split('.').pop();
@@ -239,7 +244,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       }
       
       setPlaylist(newPlaylist);
-      await savePlaylistToSettings(newPlaylist);
+      await saveWidgetPlaylist(widgetInstanceId, newPlaylist);
       
       if (!currentTrack) {
         setCurrentTrack(track);
@@ -258,16 +263,20 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     return hashHex.substring(0, 16); // Use first 16 characters for shorter filenames
   };
 
-  const addTrack = async (track: AudioTrack) => {
+  const addTrack = async (track: AudioTrack, widgetInstanceId?: string) => {
     const newPlaylist = [...playlist, track];
     setPlaylist(newPlaylist);
-    await savePlaylistToSettings(newPlaylist);
+    if (widgetInstanceId) {
+      await saveWidgetPlaylist(widgetInstanceId, newPlaylist);
+    }
   };
 
-  const removeTrack = async (trackId: string) => {
+  const removeTrack = async (trackId: string, widgetInstanceId?: string) => {
     const newPlaylist = playlist.filter(track => track.id !== trackId);
     setPlaylist(newPlaylist);
-    await savePlaylistToSettings(newPlaylist);
+    if (widgetInstanceId) {
+      await saveWidgetPlaylist(widgetInstanceId, newPlaylist);
+    }
     
     if (currentTrack?.id === trackId) {
       setCurrentTrack(newPlaylist[0] || null);
@@ -275,9 +284,11 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     }
   };
 
-  const reorderPlaylist = async (newPlaylist: AudioTrack[]) => {
+  const reorderPlaylist = async (newPlaylist: AudioTrack[], widgetInstanceId?: string) => {
     setPlaylist(newPlaylist);
-    await savePlaylistToSettings(newPlaylist);
+    if (widgetInstanceId) {
+      await saveWidgetPlaylist(widgetInstanceId, newPlaylist);
+    }
   };
 
   const playTrack = async (track: AudioTrack) => {
@@ -368,7 +379,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
           t.id === track.id ? updatedTrack : t
         );
         setPlaylist(updatedPlaylist);
-        await savePlaylistToSettings(updatedPlaylist);
+        // Note: Would need widgetInstanceId to save, but this is just for URL refresh
         
         // Retry playing with new URL
         if (audioRef.current) {
@@ -401,6 +412,8 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     removeTrack,
     reorderPlaylist,
     handleFileUpload,
+    loadWidgetPlaylist,
+    saveWidgetPlaylist,
   };
 
   return (

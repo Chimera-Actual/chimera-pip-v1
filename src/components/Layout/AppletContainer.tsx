@@ -49,8 +49,8 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
 
   // Set first widget as active if none selected or current doesn't exist
   useEffect(() => {
-    if (!loading && widgets.length > 0 && !widgets.find(w => w.widget_id === activeApplet)) {
-      onAppletChange(widgets[0].widget_id);
+    if (!loading && widgets.length > 0 && !widgets.find(w => w.id === activeApplet)) {
+      onAppletChange(widgets[0].id);
     }
   }, [widgets, activeApplet, onAppletChange, loading]);
 
@@ -59,10 +59,10 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       await removeWidgetFromTab(instanceId);
       
       // If we removed the active widget, switch to another one
-      if (widgetId === activeApplet) {
+      if (instanceId === activeApplet) {
         const remainingWidgets = getActiveWidgetsForTab(tabId);
         if (remainingWidgets.length > 0) {
-          onAppletChange(remainingWidgets[0].widget_id);
+          onAppletChange(remainingWidgets[0].id);
         }
       }
       
@@ -236,7 +236,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   };
 
   const renderActiveWidget = () => {
-    const activeWidget = widgets.find(w => w.widget_id === activeApplet);
+    const activeWidget = widgets.find(w => w.id === activeApplet);
     if (!activeWidget?.widget_definition) {
       return (
         <div className="flex-1 flex items-center justify-center">
@@ -266,12 +266,13 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       );
     }
 
-    const widgetSettings = getWidgetSettings(activeApplet);
+    const widgetSettings = getWidgetSettings(activeWidget.id);
     const widgetName = activeWidget.custom_name || activeWidget.widget_definition.name;
     return <WidgetComponent 
       settings={widgetSettings} 
       widgetName={widgetName}
-      onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeApplet, newSettings)}
+      widgetInstanceId={activeWidget.id}
+      onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeWidget.id, newSettings)}
     />;
   };
 
@@ -314,7 +315,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
                 onDrop={(e) => handleWidgetDrop(e, index)}
                 onDragLeave={() => setDragOverIndex(null)}
                 className={`rounded transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md relative ${
-                  activeApplet === widget.widget_id
+                  activeApplet === widget.id
                     ? 'bg-primary/20 border border-primary/50'
                     : 'border border-transparent hover:bg-muted/50 hover:border-primary/20'
                 } ${
@@ -324,7 +325,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
               >
                 <div
                   className="flex items-center justify-between p-3 cursor-pointer"
-                  onClick={() => onAppletChange(widget.widget_id)}
+                  onClick={() => onAppletChange(widget.id)}
                 >
                   <div className="flex items-center space-x-3 min-w-0 flex-1">
                     <span className="text-lg">{widget.widget_definition?.icon}</span>
@@ -409,7 +410,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         onClose={handleCloseWidgetSettings}
         widget={selectedWidgetForSettings}
         onSettingsUpdate={updateWidgetSettings}
-        currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.widget_id) : {}}
+        currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.id) : {}}
       />
 
       {/* Widget Rename Dialog */}

@@ -33,7 +33,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
         return (
           <ClockSettings
             settings={currentSettings}
-            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
             onClose={onClose}
           />
         );
@@ -41,7 +41,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
         return (
           <CustomAssistantSettings
             settings={currentSettings}
-            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
             onClose={onClose}
           />
         );
@@ -49,7 +49,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
         return (
           <TextDisplaySettings
             settings={currentSettings}
-            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
             onClose={onClose}
           />
         );
@@ -57,7 +57,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
         return (
           <ImageDisplaySettings
             settings={currentSettings}
-            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
             onClose={onClose}
           />
         );
@@ -65,7 +65,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
         return (
           <MapWidgetSettings
             settings={currentSettings}
-            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
             onClose={onClose}
           />
         );
@@ -73,7 +73,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
         return (
           <AudioPlayerSettings
             settings={currentSettings}
-            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
             onClose={onClose}
           />
         );
