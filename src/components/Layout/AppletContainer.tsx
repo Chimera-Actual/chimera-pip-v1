@@ -285,12 +285,16 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
 
     const widgetSettings = getWidgetSettings(activeWidget.id);
     const widgetName = activeWidget.custom_name || activeWidget.widget_definition.name;
-    return <WidgetComponent 
-      settings={widgetSettings} 
-      widgetName={widgetName}
-      widgetInstanceId={activeWidget.id}
-      onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeWidget.id, newSettings)}
-    />;
+    return (
+      <div className="w-full h-full">
+        <WidgetComponent 
+          settings={widgetSettings} 
+          widgetName={widgetName}
+          widgetInstanceId={activeWidget.id}
+          onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeWidget.id, newSettings)}
+        />
+      </div>
+    );
   };
 
   if (loading) {
