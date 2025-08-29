@@ -30,6 +30,7 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
   const [displayFormat, setDisplayFormat] = useState(settings.displayFormat || '12h');
   const [showSeconds, setShowSeconds] = useState(settings.showSeconds ?? true);
   const [compactMode, setCompactMode] = useState(settings.compactMode ?? false);
+  const [clockStyle, setClockStyle] = useState(settings.clockStyle || 'modern');
   const [newTimezoneName, setNewTimezoneName] = useState('');
   const [newTimezoneValue, setNewTimezoneValue] = useState('');
 
@@ -52,7 +53,8 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
       timeZones,
       displayFormat,
       showSeconds,
-      compactMode
+      compactMode,
+      clockStyle
     };
     onSettingsChange(newSettings);
     onClose();
@@ -70,6 +72,24 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
           <SelectContent className="bg-background border-border">
             <SelectItem value="12h" className="font-mono">12 Hour (AM/PM)</SelectItem>
             <SelectItem value="24h" className="font-mono">24 Hour (Military)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Clock Style */}
+      <div className="space-y-3">
+        <Label className="text-sm font-mono text-primary">CLOCK STYLE</Label>
+        <Select value={clockStyle} onValueChange={setClockStyle}>
+          <SelectTrigger className="font-mono bg-background/50 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="modern" className="font-mono">Modern (Gradient)</SelectItem>
+            <SelectItem value="classic" className="font-mono">Classic (Simple)</SelectItem>
+            <SelectItem value="neon" className="font-mono">Neon (Bright Glow)</SelectItem>
+            <SelectItem value="minimal" className="font-mono">Minimal (Clean)</SelectItem>
+            <SelectItem value="retro" className="font-mono">Retro (Terminal)</SelectItem>
+            <SelectItem value="digital" className="font-mono">Digital (LCD)</SelectItem>
           </SelectContent>
         </Select>
       </div>

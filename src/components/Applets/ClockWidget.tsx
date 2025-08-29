@@ -57,6 +57,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
 
   // Use settings from props, with defaults
   const is24Hour = settings?.displayFormat === '24h' || false;
+  const clockStyle = settings?.clockStyle || 'modern';
   
   // Convert timezone settings to WorldClock format if needed
   const worldClocks: WorldClock[] = settings?.timeZones 
@@ -152,6 +153,47 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
       hour12: !format24Hour
     }).format(time);
   };
+
+  const getClockStyleClasses = (style: string) => {
+    switch (style) {
+      case 'classic':
+        return {
+          container: "font-['VT323'] text-foreground text-6xl lg:text-8xl leading-none tracking-wider bg-card border-2 border-border rounded px-6 py-3",
+          date: "font-['VT323'] text-muted-foreground text-xl lg:text-2xl mt-3 tracking-wider",
+          timezone: "font-mono text-xs text-muted-foreground mt-1 opacity-60 uppercase tracking-widest"
+        };
+      case 'neon':
+        return {
+          container: "font-['VT323'] text-primary text-6xl lg:text-8xl leading-none tracking-wider bg-primary/5 border-2 border-primary rounded-xl px-6 py-3 shadow-[0_0_80px_rgba(34,197,94,0.8)] animate-pulse",
+          date: "font-['VT323'] text-primary text-xl lg:text-2xl mt-3 tracking-wider drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]",
+          timezone: "font-mono text-xs text-primary mt-1 opacity-80 uppercase tracking-widest drop-shadow-[0_0_5px_rgba(34,197,94,0.6)]"
+        };
+      case 'minimal':
+        return {
+          container: "font-sans text-foreground text-5xl lg:text-7xl font-light leading-none tracking-tight",
+          date: "font-sans text-muted-foreground text-lg lg:text-xl font-light mt-4 tracking-normal",
+          timezone: "font-sans text-xs text-muted-foreground mt-2 opacity-50 uppercase tracking-wider font-medium"
+        };
+      case 'retro':
+        return {
+          container: "font-mono text-primary text-4xl lg:text-6xl leading-none tracking-widest bg-background border border-primary/50 rounded-none px-4 py-2 shadow-none",
+          date: "font-mono text-accent text-sm lg:text-base mt-2 tracking-widest uppercase",
+          timezone: "font-mono text-xs text-muted-foreground mt-1 opacity-75 uppercase tracking-[0.3em]"
+        };
+      case 'digital':
+        return {
+          container: "font-mono text-accent text-5xl lg:text-7xl font-bold leading-none tracking-wider bg-background/80 border border-accent/30 rounded-sm px-6 py-3 shadow-inner",
+          date: "font-mono text-muted-foreground text-base lg:text-lg font-medium mt-3 tracking-wide",
+          timezone: "font-mono text-xs text-accent/70 mt-1 opacity-80 uppercase tracking-widest font-bold"
+        };
+      default: // modern
+        return {
+          container: "font-['VT323'] text-primary text-6xl lg:text-8xl crt-glow leading-none tracking-wider bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/50 rounded-xl px-6 py-3 backdrop-blur-sm shadow-[0_0_50px_rgba(34,197,94,0.4)] animate-pulse",
+          date: "font-['VT323'] text-accent text-xl lg:text-2xl mt-3 tracking-wider opacity-90",
+          timezone: "font-mono text-xs text-muted-foreground mt-1 opacity-60 uppercase tracking-widest"
+        };
+    }
+  };
   return <div className="h-full flex flex-col bg-card border border-border overflow-hidden">
       {/* Header Controls */}
       <div className="flex-shrink-0 border-b border-border bg-card p-4">
@@ -172,15 +214,17 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
           {/* Main Time Display */}
           <div className="text-center">
             <div className="relative">
-              <div className="font-['VT323'] text-primary text-6xl lg:text-8xl crt-glow leading-none tracking-wider bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/50 rounded-xl px-6 py-3 backdrop-blur-sm shadow-[0_0_50px_rgba(34,197,94,0.4)] animate-pulse">
+              <div className={getClockStyleClasses(clockStyle).container}>
                 {formatTime(currentTime, userTimezone, is24Hour)}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-primary/5 to-primary/10 rounded-xl pointer-events-none"></div>
+              {clockStyle === 'modern' && (
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-primary/5 to-primary/10 rounded-xl pointer-events-none"></div>
+              )}
             </div>
-            <div className="font-['VT323'] text-accent text-xl lg:text-2xl mt-3 tracking-wider opacity-90">
+            <div className={getClockStyleClasses(clockStyle).date}>
               {formatDate(currentTime, userTimezone)}
             </div>
-            <div className="font-mono text-xs text-muted-foreground mt-1 opacity-60 uppercase tracking-widest">
+            <div className={getClockStyleClasses(clockStyle).timezone}>
               {userTimezone.replace('_', ' ')}
             </div>
           </div>
