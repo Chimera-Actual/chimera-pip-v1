@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { MapPin, RefreshCw, Save, AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MapPin, RefreshCw, Save, AlertCircle, Monitor, Volume2, Bell, Database, Palette, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -63,12 +64,12 @@ export const SystemSettingsWidget: React.FC = () => {
           location_latitude: data.location_latitude || undefined,
           location_longitude: data.location_longitude || undefined,
           location_name: data.location_name || undefined,
-          theme_mode: data.theme_mode || 'auto',
-          crt_effects_enabled: data.crt_effects_enabled ?? true,
-          sound_enabled: data.sound_enabled ?? true,
-          notifications_enabled: data.notifications_enabled ?? true,
-          auto_save_enabled: data.auto_save_enabled ?? true,
-          data_backup_enabled: data.data_backup_enabled ?? false,
+          theme_mode: (data as any).theme_mode || 'auto',
+          crt_effects_enabled: (data as any).crt_effects_enabled ?? true,
+          sound_enabled: (data as any).sound_enabled ?? true,
+          notifications_enabled: (data as any).notifications_enabled ?? true,
+          auto_save_enabled: (data as any).auto_save_enabled ?? true,
+          data_backup_enabled: (data as any).data_backup_enabled ?? false,
         });
       }
     } catch (error) {
@@ -317,6 +318,209 @@ export const SystemSettingsWidget: React.FC = () => {
               </div>
               <div className="text-foreground">
                 • You can disable or clear location data at any time
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Display & Interface Settings */}
+        <Card className="bg-card/50 border-border">
+          <CardHeader>
+            <CardTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
+              <Monitor className="w-5 h-5" />
+              DISPLAY & INTERFACE
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Theme Mode */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-mono text-foreground">
+                  Theme Mode
+                </Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Control the visual appearance of the interface
+                </p>
+              </div>
+              <Select
+                value={settings.theme_mode}
+                onValueChange={(value: 'auto' | 'dark' | 'light') =>
+                  setSettings(prev => ({ ...prev, theme_mode: value }))
+                }
+              >
+                <SelectTrigger className="w-32 font-mono bg-background/50 border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-border">
+                  <SelectItem value="auto" className="font-mono">AUTO</SelectItem>
+                  <SelectItem value="dark" className="font-mono">DARK</SelectItem>
+                  <SelectItem value="light" className="font-mono">LIGHT</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* CRT Effects */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-mono text-foreground">
+                  CRT Visual Effects
+                </Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Enable retro CRT scanlines and glow effects
+                </p>
+              </div>
+              <Switch
+                checked={settings.crt_effects_enabled}
+                onCheckedChange={(checked) =>
+                  setSettings(prev => ({ ...prev, crt_effects_enabled: checked }))
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Audio & Notifications */}
+        <Card className="bg-card/50 border-border">
+          <CardHeader>
+            <CardTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
+              <Volume2 className="w-5 h-5" />
+              AUDIO & NOTIFICATIONS
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Sound Effects */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-mono text-foreground">
+                  System Sound Effects
+                </Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Enable audio feedback for interactions
+                </p>
+              </div>
+              <Switch
+                checked={settings.sound_enabled}
+                onCheckedChange={(checked) =>
+                  setSettings(prev => ({ ...prev, sound_enabled: checked }))
+                }
+              />
+            </div>
+
+            {/* Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-mono text-foreground">
+                  Desktop Notifications
+                </Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Show browser notifications for important events
+                </p>
+              </div>
+              <Switch
+                checked={settings.notifications_enabled}
+                onCheckedChange={(checked) =>
+                  setSettings(prev => ({ ...prev, notifications_enabled: checked }))
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Data & Privacy */}
+        <Card className="bg-card/50 border-border">
+          <CardHeader>
+            <CardTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
+              <Database className="w-5 h-5" />
+              DATA & PRIVACY
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Auto Save */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-mono text-foreground">
+                  Auto-Save Settings
+                </Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Automatically save changes to your preferences
+                </p>
+              </div>
+              <Switch
+                checked={settings.auto_save_enabled}
+                onCheckedChange={(checked) =>
+                  setSettings(prev => ({ ...prev, auto_save_enabled: checked }))
+                }
+              />
+            </div>
+
+            {/* Data Backup */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-mono text-foreground">
+                  Cloud Data Backup
+                </Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Backup your data and settings to the cloud
+                </p>
+              </div>
+              <Switch
+                checked={settings.data_backup_enabled}
+                onCheckedChange={(checked) =>
+                  setSettings(prev => ({ ...prev, data_backup_enabled: checked }))
+                }
+              />
+            </div>
+
+            {/* Data Management Actions */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <div className="text-sm font-mono text-primary">DATA MANAGEMENT</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Button variant="outline" size="sm" className="font-mono text-xs">
+                  EXPORT DATA
+                </Button>
+                <Button variant="outline" size="sm" className="font-mono text-xs">
+                  CLEAR CACHE
+                </Button>
+              </div>
+              
+              <div className="bg-background/20 border border-border rounded p-3 text-xs font-mono space-y-1">
+                <div className="text-muted-foreground">DATA USAGE:</div>
+                <div className="text-foreground">• Settings: ~2KB</div>
+                <div className="text-foreground">• Widget Configurations: ~5KB</div>
+                <div className="text-foreground">• Message History: ~150KB</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Performance Settings */}
+        <Card className="bg-card/50 border-border">
+          <CardHeader>
+            <CardTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              PERFORMANCE
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-background/20 border border-border rounded p-3 text-xs font-mono space-y-2">
+              <div className="text-primary font-bold">SYSTEM STATUS:</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-muted-foreground">Memory Usage:</div>
+                  <div className="text-accent">~15MB</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">CPU Usage:</div>
+                  <div className="text-accent">~2%</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Network:</div>
+                  <div className="text-accent">OPTIMAL</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Latency:</div>
+                  <div className="text-accent">~45ms</div>
+                </div>
               </div>
             </div>
           </CardContent>

@@ -135,32 +135,50 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          auto_save_enabled: boolean | null
           created_at: string
+          crt_effects_enabled: boolean | null
+          data_backup_enabled: boolean | null
           id: string
           location_enabled: boolean | null
           location_latitude: number | null
           location_longitude: number | null
           location_name: string | null
+          notifications_enabled: boolean | null
+          sound_enabled: boolean | null
+          theme_mode: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          auto_save_enabled?: boolean | null
           created_at?: string
+          crt_effects_enabled?: boolean | null
+          data_backup_enabled?: boolean | null
           id?: string
           location_enabled?: boolean | null
           location_latitude?: number | null
           location_longitude?: number | null
           location_name?: string | null
+          notifications_enabled?: boolean | null
+          sound_enabled?: boolean | null
+          theme_mode?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          auto_save_enabled?: boolean | null
           created_at?: string
+          crt_effects_enabled?: boolean | null
+          data_backup_enabled?: boolean | null
           id?: string
           location_enabled?: boolean | null
           location_latitude?: number | null
           location_longitude?: number | null
           location_name?: string | null
+          notifications_enabled?: boolean | null
+          sound_enabled?: boolean | null
+          theme_mode?: string | null
           updated_at?: string
           user_id?: string
         }
