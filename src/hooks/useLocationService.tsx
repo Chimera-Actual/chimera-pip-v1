@@ -15,16 +15,6 @@ export const useLocationService = () => {
   const watchIdRef = useRef<number | null>(null);
   const lastLocationRef = useRef<LocationData | null>(null);
 
-  // Early return if settings are not loaded yet
-  if (!settings) {
-    return {
-      isLocationEnabled: false,
-      currentLocation: null,
-      startLocationService: () => {},
-      stopLocationService: () => {},
-    };
-  }
-
   const getCurrentLocation = useCallback((): Promise<LocationData> => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -101,6 +91,8 @@ export const useLocationService = () => {
   }, []);
 
   const updateLocationData = useCallback(async (locationData: LocationData) => {
+    if (!settings) return;
+    
     try {
       // Check if location has changed significantly (more than ~100 meters)
       const hasLocationChanged = !lastLocationRef.current ||
@@ -131,7 +123,7 @@ export const useLocationService = () => {
     } catch (error) {
       console.error('Failed to update location data:', error);
     }
-  }, [settings.location_name, updateSettings, reverseGeocode]);
+  }, [settings, updateSettings, reverseGeocode]);
 
   const pollLocation = useCallback(async () => {
     try {
@@ -148,6 +140,8 @@ export const useLocationService = () => {
   }, [getCurrentLocation, updateLocationData]);
 
   const startLocationService = useCallback(async () => {
+    if (!settings) return;
+    
     console.log('Starting location service...');
 
     // Clear any existing interval
@@ -169,7 +163,7 @@ export const useLocationService = () => {
       console.error('Failed to start location service:', error);
       toast.error('Failed to start location tracking');
     }
-  }, [pollLocation]);
+  }, [settings, pollLocation]);
 
   const stopLocationService = useCallback(() => {
     console.log('Stopping location service...');
@@ -189,7 +183,7 @@ export const useLocationService = () => {
 
   // Effect to start/stop location service based on settings
   useEffect(() => {
-    if (settings.location_enabled) {
+    if (settings?.location_enabled) {
       startLocationService();
     } else {
       stopLocationService();
@@ -199,7 +193,7 @@ export const useLocationService = () => {
     return () => {
       stopLocationService();
     };
-  }, [settings.location_enabled, startLocationService, stopLocationService]);
+  }, [settings?.location_enabled, startLocationService, stopLocationService]);
 
   // Cleanup on component unmount
   useEffect(() => {
@@ -212,6 +206,16 @@ export const useLocationService = () => {
       }
     };
   }, []);
+
+  // Return early if settings are not loaded yet, but after all hooks are called
+  if (!settings) {
+    return {
+      isLocationEnabled: false,
+      currentLocation: null,
+      startLocationService: () => {},
+      stopLocationService: () => {},
+    };
+  }
 
   return {
     isLocationEnabled: settings.location_enabled,
