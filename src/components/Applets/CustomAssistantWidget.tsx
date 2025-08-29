@@ -52,45 +52,57 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Initialize conversation session - single effect to avoid duplicates
   useEffect(() => {
-    if (user && widgetInstanceId) {
+    const initializeSession = async () => {
+      if (!user || !widgetInstanceId) return;
+      
       const newSessionId = `custom-${user.id}-${widgetInstanceId}-${Date.now()}`;
       console.log('CustomAssistantWidget - Setting session ID:', newSessionId, 'for widget:', widgetInstanceId);
       setSessionId(newSessionId);
-      loadConfiguration();
-    }
-  }, [user, widgetInstanceId, settings]);
 
-  useEffect(() => {
-    // Load webhook URL from widget settings if available
-    if (settings?.webhookUrl) {
-      setConfig(prev => ({
-        ...prev,
-        webhookUrl: settings.webhookUrl,
-        name: settings.assistantName || prev.name,
-        systemPrompt: settings.customPrompt || prev.systemPrompt
-      }));
-    } else {
-      loadConfiguration();
-    }
-  }, [settings]);
+      // Create conversation record
+      const { data: conversation, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user.id,
+          session_id: newSessionId,
+          title: `${config.name} - ${widgetInstanceId}`,
+        })
+        .select()
+        .single();
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+      if (error) {
+        console.error('Error creating conversation:', error);
+        toast({
+          title: "Database Error", 
+          description: "Failed to initialize conversation. Messages will not be saved.",
+          variant: "destructive",
+        });
+      } else {
+        setConversationId(conversation.id);
+        console.log('CustomAssistantWidget - Conversation created:', conversation.id, 'for widget:', widgetInstanceId);
+      }
+      
+      // Load configuration after conversation is set up
+      await loadConfiguration();
+    };
 
-  // Load existing messages when sessionId changes
+    initializeSession();
+  }, [user, widgetInstanceId, config.name, toast]);
+
+  // Load existing messages when conversation is ready
   useEffect(() => {
     const loadMessages = async () => {
-      if (!sessionId || !user) return;
+      if (!conversationId || !user) return;
       
-      console.log('CustomAssistantWidget - Loading messages for session:', sessionId, 'widget:', widgetInstanceId);
+      console.log('CustomAssistantWidget - Loading messages for conversation:', conversationId, 'widget:', widgetInstanceId);
       
       try {
         const { data, error } = await supabase
           .from('messages')
           .select('*')
-          .eq('session_id', sessionId)
+          .eq('conversation_id', conversationId)
           .order('created_at', { ascending: true });
 
         if (error) {
@@ -120,7 +132,24 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
     };
 
     loadMessages();
-  }, [sessionId, user, widgetInstanceId]);
+  }, [conversationId, user, widgetInstanceId]);
+
+  // Handle settings updates
+  useEffect(() => {
+    if (settings?.webhookUrl) {
+      setConfig(prev => ({
+        ...prev,
+        webhookUrl: settings.webhookUrl,
+        name: settings.assistantName || prev.name,
+        systemPrompt: settings.customPrompt || prev.systemPrompt
+      }));
+    }
+  }, [settings]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const loadConfiguration = async () => {
     if (!user) return;
