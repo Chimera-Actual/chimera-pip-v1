@@ -25,9 +25,10 @@ const COMMON_TIMEZONES = [
 
 interface ClockWidgetProps {
   settings?: Record<string, any>;
+  onSettingsUpdate?: (settings: Record<string, any>) => void;
 }
 
-export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings = {} }) => {
+export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings = {}, onSettingsUpdate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userTimezone, setUserTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   
@@ -39,6 +40,16 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings = {} }) => {
     { name: 'London', timezone: 'Europe/London' },
     { name: 'Tokyo', timezone: 'Asia/Tokyo' },
   ];
+
+  const toggleTimeFormat = () => {
+    if (onSettingsUpdate) {
+      const newSettings = {
+        ...settings,
+        displayFormat: is24Hour ? '12h' : '24h'
+      };
+      onSettingsUpdate(newSettings);
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -107,9 +118,14 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings = {} }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="font-mono text-xs text-muted-foreground px-2 py-1 bg-background/30 rounded border">
+            <Button
+              variant={is24Hour ? "default" : "outline"}
+              size="sm"
+              onClick={toggleTimeFormat}
+              className="font-mono text-xs"
+            >
               {is24Hour ? '24H' : '12H'}
-            </div>
+            </Button>
           </div>
         </div>
       </div>

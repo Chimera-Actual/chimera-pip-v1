@@ -130,7 +130,10 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     }
 
     const widgetSettings = getWidgetSettings(activeApplet);
-    return <WidgetComponent settings={widgetSettings} />;
+    return <WidgetComponent 
+      settings={widgetSettings} 
+      onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeApplet, newSettings)}
+    />;
   };
 
   if (loading) {
