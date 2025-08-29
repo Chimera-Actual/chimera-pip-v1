@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUserSettings } from '@/hooks/useUserSettings';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LocationData {
   latitude: number;
   longitude: number;
+}
+
+interface UserSettings {
+  location_enabled: boolean;
+  location_latitude?: number;
+  location_longitude?: number;
+  location_name?: string;
 }
 
 type MapLayer = 'standard' | 'satellite' | 'terrain' | 'transport';
@@ -30,20 +38,49 @@ const mapLayers = {
 };
 
 export const MapWidget: React.FC = () => {
-  const { getUserLocation } = useUserSettings();
+  const { user } = useAuth();
   const [location, setLocation] = useState<LocationData>({ latitude: 37.7749, longitude: -122.4194 });
   const [userLocation, setUserLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeLayer, setActiveLayer] = useState<MapLayer>('standard');
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
 
-  // Load persistent location on mount
+  // Load user settings and set location on mount
   useEffect(() => {
-    const persistentLocation = getUserLocation();
-    if (persistentLocation) {
-      setLocation(persistentLocation);
-      setUserLocation(persistentLocation);
-    }
-  }, [getUserLocation]);
+    const loadUserSettings = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        if (data) {
+          setUserSettings(data);
+          
+          // If location is enabled and coordinates are available, use them
+          if (data.location_enabled && data.location_latitude && data.location_longitude) {
+            const savedLocation = {
+              latitude: data.location_latitude,
+              longitude: data.location_longitude
+            };
+            setLocation(savedLocation);
+            setUserLocation(savedLocation);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user settings:', error);
+      }
+    };
+
+    loadUserSettings();
+  }, [user]);
 
   const getCurrentLocation = () => {
     setLoading(true);
