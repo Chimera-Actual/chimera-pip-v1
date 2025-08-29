@@ -54,7 +54,9 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
 
   useEffect(() => {
     if (user && widgetInstanceId) {
-      setSessionId(`custom-${user.id}-${widgetInstanceId}-${Date.now()}`);
+      const newSessionId = `custom-${user.id}-${widgetInstanceId}-${Date.now()}`;
+      console.log('CustomAssistantWidget - Setting session ID:', newSessionId, 'for widget:', widgetInstanceId);
+      setSessionId(newSessionId);
       loadConfiguration();
     }
   }, [user, widgetInstanceId, settings]);
@@ -76,6 +78,49 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Load existing messages when sessionId changes
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!sessionId || !user) return;
+      
+      console.log('CustomAssistantWidget - Loading messages for session:', sessionId, 'widget:', widgetInstanceId);
+      
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Error loading messages:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const loadedMessages: Message[] = data.map(msg => ({
+            id: msg.id,
+            type: msg.role as 'user' | 'assistant',
+            content: msg.content,
+            timestamp: new Date(msg.created_at),
+            isImage: msg.content.startsWith('data:image/')
+          }));
+          
+          console.log('CustomAssistantWidget - Loaded', loadedMessages.length, 'messages for widget:', widgetInstanceId);
+          setMessages(loadedMessages);
+        } else {
+          console.log('CustomAssistantWidget - No existing messages found for widget:', widgetInstanceId);
+          setMessages([]);
+        }
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        setMessages([]);
+      }
+    };
+
+    loadMessages();
+  }, [sessionId, user, widgetInstanceId]);
 
   const loadConfiguration = async () => {
     if (!user) return;
@@ -277,6 +322,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
   };
 
   const clearConversation = () => {
+    console.log('CustomAssistantWidget - Clearing conversation for widget:', widgetInstanceId, 'session:', sessionId);
     setMessages([]);
     setConversationId(null);
     toast({
