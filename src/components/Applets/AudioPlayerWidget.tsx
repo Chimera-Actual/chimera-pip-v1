@@ -199,45 +199,28 @@ export const AudioPlayerWidget: React.FC = () => {
     if (!file || !user) return;
 
     try {
-      // Create unique filename with user ID folder structure
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      // Upload to Supabase storage
-      const { data, error } = await supabase.storage
-        .from('audio')
-        .upload(fileName, file);
-
-      if (error) {
-        console.error('Error uploading file:', error);
-        return;
-      }
-
-      // Get signed URL for private bucket access (authenticated users only)
-      const { data: urlData, error: urlError } = await supabase.storage
-        .from('audio')
-        .createSignedUrl(fileName, 60 * 60 * 24); // 24 hour expiry
-
-      if (urlError || !urlData) {
-        console.error('Error creating signed URL:', urlError);
-        return;
-      }
+      // For now, use blob URL for immediate playback (simpler debugging)
+      const blobUrl = URL.createObjectURL(file);
+      console.log('Created blob URL:', blobUrl);
 
       const track: AudioTrack = {
         id: `file-${Date.now()}`,
         title: file.name,
-        url: urlData.signedUrl
+        url: blobUrl
       };
       
       const newPlaylist = [...playlist, track];
       setPlaylist(newPlaylist);
       
-      // Save updated playlist to settings
-      await savePlaylistToSettings(newPlaylist);
+      // Save updated playlist to settings (without blob URLs since they're temporary)
+      const persistentPlaylist = newPlaylist.filter(t => !t.url.startsWith('blob:'));
+      await savePlaylistToSettings(persistentPlaylist);
       
       if (!currentTrack) {
         setCurrentTrack(track);
       }
+      
+      console.log('Track added to playlist:', track.title);
     } catch (error) {
       console.error('Error handling file upload:', error);
     }
@@ -277,13 +260,26 @@ export const AudioPlayerWidget: React.FC = () => {
     }
   };
 
-  const playTrack = (track: AudioTrack) => {
+  const playTrack = async (track: AudioTrack) => {
+    console.log('Playing track:', track.title, 'URL:', track.url);
     setCurrentTrack(track);
+    
     if (audioRef.current) {
-      audioRef.current.src = track.url;
-      audioRef.current.load();
-      audioRef.current.play();
-      setIsPlaying(true);
+      try {
+        audioRef.current.src = track.url;
+        audioRef.current.load();
+        
+        // Wait for the audio to be ready to play
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+          console.log('Track started playing successfully');
+        }
+      } catch (error) {
+        console.error('Error playing track:', error);
+        setIsPlaying(false);
+      }
     }
   };
 
@@ -361,9 +357,31 @@ export const AudioPlayerWidget: React.FC = () => {
         ref={audioRef}
         onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
         onDurationChange={() => setDuration(audioRef.current?.duration || 0)}
-        onEnded={settings.loop ? () => audioRef.current?.play() : nextTrack}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onEnded={() => {
+          console.log('Audio ended, loop:', settings.loop);
+          if (settings.loop && currentTrack) {
+            console.log('Looping current track');
+            audioRef.current?.play();
+          } else {
+            console.log('Moving to next track');
+            nextTrack();
+          }
+        }}
+        onPlay={() => {
+          console.log('Audio started playing');
+          setIsPlaying(true);
+        }}
+        onPause={() => {
+          console.log('Audio paused');
+          setIsPlaying(false);
+        }}
+        onError={(e) => {
+          console.error('Audio error:', e);
+          console.error('Current src:', audioRef.current?.src);
+        }}
+        onLoadStart={() => console.log('Audio load started')}
+        onCanPlay={() => console.log('Audio can play')}
+        crossOrigin="anonymous"
       />
 
       {/* Header */}
