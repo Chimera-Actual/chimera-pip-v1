@@ -52,7 +52,7 @@ export const WidgetRenameDialog: React.FC<WidgetRenameDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[70vh] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-mono text-primary flex items-center gap-2">
             <Edit className="w-4 h-4" />
@@ -60,62 +60,64 @@ export const WidgetRenameDialog: React.FC<WidgetRenameDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 p-3 bg-muted/30 rounded border">
-            <span className="text-xl">{widget.widget_definition?.icon}</span>
-            <div>
-              <div className="text-sm font-mono font-medium">
-                {widget.widget_definition?.name}
+        <div className="overflow-y-auto max-h-[50vh] pr-2">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded border">
+              <span className="text-xl">{widget.widget_definition?.icon}</span>
+              <div>
+                <div className="text-sm font-mono font-medium">
+                  {widget.widget_definition?.name}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {widget.widget_definition?.description}
+                </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="widget-name" className="text-sm font-mono">
+                Custom Name
+              </Label>
+              <Input
+                id="widget-name"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="Enter custom widget name..."
+                className="font-mono"
+                maxLength={50}
+              />
               <div className="text-xs text-muted-foreground">
-                {widget.widget_definition?.description}
+                Leave empty to use default name
               </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="widget-name" className="text-sm font-mono">
-              Custom Name
-            </Label>
-            <Input
-              id="widget-name"
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Enter custom widget name..."
-              className="font-mono"
-              maxLength={50}
-            />
-            <div className="text-xs text-muted-foreground">
-              Leave empty to use default name
+            <div className="flex gap-2 justify-end pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                className="font-mono text-xs"
+                disabled={isSaving}
+              >
+                Reset to Default
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="font-mono"
+                disabled={isSaving}
+              >
+                <X className="w-4 h-4 mr-1" />
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="font-mono"
+                disabled={isSaving || !customName.trim()}
+              >
+                <Save className="w-4 h-4 mr-1" />
+                {isSaving ? 'Saving...' : 'Save Name'}
+              </Button>
             </div>
-          </div>
-
-          <div className="flex gap-2 justify-end pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              className="font-mono text-xs"
-              disabled={isSaving}
-            >
-              Reset to Default
-            </Button>
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="font-mono"
-              disabled={isSaving}
-            >
-              <X className="w-4 h-4 mr-1" />
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="font-mono"
-              disabled={isSaving || !customName.trim()}
-            >
-              <Save className="w-4 h-4 mr-1" />
-              {isSaving ? 'Saving...' : 'Save Name'}
-            </Button>
           </div>
         </div>
       </DialogContent>

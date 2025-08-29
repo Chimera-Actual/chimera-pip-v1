@@ -109,7 +109,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-card border-border">
+      <DialogContent className="max-w-2xl max-h-[80vh] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
             <Settings className="w-5 h-5" />
@@ -117,7 +117,9 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        {renderSettingsComponent()}
+        <div className="overflow-y-auto max-h-[60vh] pr-2">
+          {renderSettingsComponent()}
+        </div>
       </DialogContent>
     </Dialog>
   );

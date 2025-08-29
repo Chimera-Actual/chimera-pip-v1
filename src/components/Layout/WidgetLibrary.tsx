@@ -56,7 +56,7 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] bg-card border-border">
+      <DialogContent className="max-w-4xl max-h-[85vh] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
             <Package className="w-5 h-5" />
@@ -93,7 +93,7 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
           </div>
 
           {/* Widget Grid */}
-          <ScrollArea className="h-96">
+          <div className="overflow-y-auto max-h-[60vh] pr-2">
             {filteredWidgets.length === 0 ? (
               <div className="text-center py-8">
                 <Package className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
@@ -147,7 +147,7 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
                 ))}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

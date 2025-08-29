@@ -180,14 +180,15 @@ export const TabManager: React.FC<TabManagerProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] bg-card border-border">
+      <DialogContent className="max-w-3xl max-h-[85vh] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow">
             TAB MANAGEMENT
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="overflow-y-auto max-h-[70vh] pr-2">
+          <div className="space-y-6 py-2">
           {/* Create New Tab */}
           <Card className="bg-background/30 border-border">
             <CardContent className="p-4">
@@ -376,6 +377,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
             <div>• Font size affects tab title display</div>
             <div>• At least one tab must remain</div>
             <div>• Deleting a tab removes all its widgets</div>
+          </div>
           </div>
         </div>
       </DialogContent>
