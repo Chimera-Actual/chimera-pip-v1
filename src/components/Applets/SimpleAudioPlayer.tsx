@@ -294,7 +294,16 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
           waveformSize === 'large' ? 'h-60' :
           'h-32'
         }`}>
-          <div className="absolute top-2 right-2 z-10 flex gap-1">
+          {/* Waveform container - full size */}
+          <div className="absolute inset-0">
+            <SimpleWaveform 
+              isPlaying={isPlaying}
+              style={settings?.waveformStyle || 'bars'}
+              color={settings?.waveformColor || 'primary'}
+            />
+          </div>
+          {/* Size controls positioned outside waveform area */}
+          <div className="absolute -bottom-8 right-2 flex gap-1 bg-background/80 backdrop-blur-sm rounded p-1">
             <Button
               onClick={() => handleWaveformSizeChange('small')}
               size="sm"
@@ -319,13 +328,6 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
             >
               L
             </Button>
-          </div>
-          <div className="absolute inset-0 p-4">
-            <SimpleWaveform 
-              isPlaying={isPlaying}
-              style={settings?.waveformStyle || 'bars'}
-              color={settings?.waveformColor || 'primary'}
-            />
           </div>
         </div>
       )}

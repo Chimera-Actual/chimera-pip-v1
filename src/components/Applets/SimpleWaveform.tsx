@@ -165,28 +165,31 @@ export const SimpleWaveform: React.FC<SimpleWaveformProps> = ({
 
   // Animation loop
   useEffect(() => {
+    if (!canvasRef.current) return;
+
     let startTime = Date.now();
+    let animationActive = true;
 
     const animate = () => {
+      if (!animationActive) return;
+      
       const currentTime = Date.now() - startTime;
       draw(currentTime);
       
-      if (isPlaying) {
-        animationRef.current = requestAnimationFrame(animate);
-      } else {
-        // Draw one final frame when paused
-        draw(currentTime);
-      }
+      // Always continue animation to keep it smooth
+      animationRef.current = requestAnimationFrame(animate);
     };
 
+    // Start animation immediately
     animationRef.current = requestAnimationFrame(animate);
 
     return () => {
+      animationActive = false;
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isPlaying, style, color]);
+  }, [style, color]); // Remove isPlaying dependency to keep animation running
 
   // Handle canvas resize
   useEffect(() => {
@@ -215,15 +218,15 @@ export const SimpleWaveform: React.FC<SimpleWaveformProps> = ({
   }, []);
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-background/20 border border-border rounded">
+    <div className="relative w-full h-full overflow-hidden bg-background/20 rounded">
       <canvas
         ref={canvasRef}
         className="w-full h-full block"
         style={{ background: 'transparent' }}
       />
       {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-xs text-muted-foreground font-mono">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-xs text-muted-foreground font-mono bg-background/60 px-2 py-1 rounded">
             ⏸ PAUSED
           </div>
         </div>
