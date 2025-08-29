@@ -106,6 +106,52 @@ export const useWidgetManager = () => {
     if (!user) return;
 
     try {
+      // First check if there's already an active widget instance of this type in this tab
+      const existingWidget = userWidgetInstances.find(
+        w => w.widget_id === widgetId && w.tab_id === tabId && w.is_active
+      );
+
+      if (existingWidget) {
+        // Widget already exists and is active, no need to create a new one
+        return existingWidget;
+      }
+
+      // Check if there's an inactive widget instance we can reactivate
+      const inactiveWidget = userWidgetInstances.find(
+        w => w.widget_id === widgetId && w.tab_id === tabId && !w.is_active
+      );
+
+      if (inactiveWidget) {
+        // Reactivate the existing widget instance
+        const { data, error } = await supabase
+          .from('user_widget_instances')
+          .update({ is_active: true })
+          .eq('id', inactiveWidget.id)
+          .eq('user_id', user.id)
+          .select(`
+            *,
+            widget_definition:widget_definitions(*)
+          `)
+          .single();
+
+        if (error) throw error;
+        
+        if (data) {
+          const transformedData = {
+            ...data,
+            widget_definition: data.widget_definition ? {
+              ...data.widget_definition,
+              default_settings: (data.widget_definition.default_settings as Record<string, any>) || {}
+            } : undefined
+          };
+          setUserWidgetInstances(prev =>
+            prev.map(w => w.id === inactiveWidget.id ? transformedData : w)
+          );
+          return transformedData;
+        }
+      }
+
+      // No existing widget found, create a new one
       // Get the highest position in this tab
       const existingWidgets = userWidgetInstances.filter(
         w => w.tab_id === tabId && w.is_active
@@ -114,7 +160,7 @@ export const useWidgetManager = () => {
 
       const { data, error } = await supabase
         .from('user_widget_instances')
-        .upsert({
+        .insert({
           user_id: user.id,
           widget_id: widgetId,
           tab_id: tabId,
@@ -137,11 +183,8 @@ export const useWidgetManager = () => {
             default_settings: (data.widget_definition.default_settings as Record<string, any>) || {}
           } : undefined
         };
-        setUserWidgetInstances(prev => {
-          // Don't filter anything - just add the new widget instance
-          // Multiple instances of the same widget type are allowed
-          return [...prev, transformedData];
-        });
+        setUserWidgetInstances(prev => [...prev, transformedData]);
+        return transformedData;
       }
       
       return data;
