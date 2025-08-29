@@ -1,12 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Trash2, GripVertical } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { AudioWaveform } from './AudioWaveform';
+import { useAudio } from '@/contexts/AudioContext';
 import {
   DndContext,
   closestCenter,
@@ -32,14 +30,7 @@ interface AudioTrack {
   title: string;
   url: string;
   duration?: number;
-  storagePath?: string; // Store the Supabase storage path for uploaded files
-}
-
-interface PlayerSettings {
-  volume: number;
-  autoplay: boolean;
-  loop: boolean;
-  playlist: AudioTrack[];
+  storagePath?: string;
 }
 
 // Sortable Track Item Component
@@ -111,21 +102,25 @@ const SortableTrack: React.FC<SortableTrackProps> = ({ track, isActive, onPlay, 
 };
 
 export const AudioPlayerWidget: React.FC = () => {
-  const { user } = useAuth();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState([75]);
-  const [playlist, setPlaylist] = useState<AudioTrack[]>([]);
-  const [settings, setSettings] = useState<PlayerSettings>({
-    volume: 75,
-    autoplay: false,
-    loop: false,
-    playlist: []
-  });
-
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const {
+    isPlaying,
+    currentTrack,
+    currentTime,
+    duration,
+    volume,
+    playlist,
+    audioRef,
+    playTrack,
+    togglePlayPause,
+    stopPlayback,
+    nextTrack,
+    prevTrack,
+    setVolume,
+    removeTrack,
+    reorderPlaylist,
+    handleFileUpload,
+  } = useAudio();
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Drag and drop sensors
@@ -136,198 +131,10 @@ export const AudioPlayerWidget: React.FC = () => {
     })
   );
 
-  // Load user settings
-  useEffect(() => {
-    const loadSettings = async () => {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('user_widget_settings')
-          .select('settings')
-          .eq('user_id', user.id)
-          .eq('widget_id', 'audio-system')
-          .single();
-
-        if (data?.settings && typeof data.settings === 'object') {
-          const loadedSettings = data.settings as Partial<PlayerSettings>;
-          setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
-          setPlaylist(loadedSettings.playlist || []);
-          if (loadedSettings.volume !== undefined) {
-            setVolume([loadedSettings.volume]);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading player settings:', error);
-      }
-    };
-
-    loadSettings();
-  }, [user]);
-
-  // Update audio volume when slider changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume[0] / 100;
-    }
-  }, [volume]);
-
-  // Save playlist to settings
-  const savePlaylistToSettings = async (newPlaylist: AudioTrack[]) => {
-    if (!user) return;
-
-    try {
-      const updatedSettings = { ...settings, playlist: newPlaylist };
-      
-      await supabase
-        .from('user_widget_settings')
-        .upsert({
-          user_id: user.id,
-          widget_id: 'audio-system',
-          settings: updatedSettings as any // Type assertion for JSON compatibility
-        });
-      
-      setSettings(updatedSettings);
-    } catch (error) {
-      console.error('Error saving playlist:', error);
-    }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    try {
-      console.log('Uploading file:', file.name);
-      
-      // Create unique filename with user ID folder structure
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      // Upload to Supabase storage
-      const { data, error } = await supabase.storage
-        .from('audio')
-        .upload(fileName, file);
-
-      if (error) {
-        console.error('Error uploading file:', error);
-        return;
-      }
-
-      console.log('File uploaded successfully:', data.path);
-
-      // Get signed URL for private bucket access (24 hour expiry)
-      const { data: urlData, error: urlError } = await supabase.storage
-        .from('audio')
-        .createSignedUrl(fileName, 60 * 60 * 24);
-
-      if (urlError || !urlData) {
-        console.error('Error creating signed URL:', urlError);
-        return;
-      }
-
-      const track: AudioTrack = {
-        id: `file-${Date.now()}`,
-        title: file.name,
-        url: urlData.signedUrl,
-        storagePath: fileName // Store the path for future signed URL generation
-      };
-      
-      const newPlaylist = [...playlist, track];
-      setPlaylist(newPlaylist);
-      
-      // Save updated playlist to settings
-      await savePlaylistToSettings(newPlaylist);
-      
-      if (!currentTrack) {
-        setCurrentTrack(track);
-      }
-      
-      console.log('Track added to playlist:', track.title);
-    } catch (error) {
-      console.error('Error handling file upload:', error);
-    }
-  };
-
-
-  const removeTrack = async (trackId: string) => {
-    const newPlaylist = playlist.filter(track => track.id !== trackId);
-    setPlaylist(newPlaylist);
-    
-    // Save updated playlist to settings
-    await savePlaylistToSettings(newPlaylist);
-    
-    if (currentTrack?.id === trackId) {
-      setCurrentTrack(newPlaylist[0] || null);
-      setIsPlaying(false);
-    }
-  };
-
-  const playTrack = async (track: AudioTrack) => {
-    console.log('Playing track:', track.title, 'URL:', track.url);
-    setCurrentTrack(track);
-    
-    if (audioRef.current) {
-      try {
-        audioRef.current.src = track.url;
-        audioRef.current.load();
-        
-        // Wait for the audio to be ready to play
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          await playPromise;
-          setIsPlaying(true);
-          console.log('Track started playing successfully');
-        }
-      } catch (error) {
-        console.error('Error playing track:', error);
-        setIsPlaying(false);
-      }
-    }
-  };
-
-  const togglePlayPause = () => {
-    // If no current track but playlist has tracks, start with first track
-    if (!currentTrack && playlist.length > 0) {
-      playTrack(playlist[0]);
-      return;
-    }
-
-    if (!currentTrack || !audioRef.current) return;
-
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
-
-  const stopPlayback = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      setCurrentTime(0);
-    }
-  };
-
-  const nextTrack = () => {
-    if (!currentTrack) return;
-    const currentIndex = playlist.findIndex(track => track.id === currentTrack.id);
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    if (playlist[nextIndex]) {
-      playTrack(playlist[nextIndex]);
-    }
-  };
-
-  const prevTrack = () => {
-    if (!currentTrack) return;
-    const currentIndex = playlist.findIndex(track => track.id === currentTrack.id);
-    const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-    if (playlist[prevIndex]) {
-      playTrack(playlist[prevIndex]);
+    if (file) {
+      await handleFileUpload(file);
     }
   };
 
@@ -346,46 +153,12 @@ export const AudioPlayerWidget: React.FC = () => {
       const newIndex = playlist.findIndex((track) => track.id === over?.id);
       
       const newPlaylist = arrayMove(playlist, oldIndex, newIndex);
-      setPlaylist(newPlaylist);
-      
-      // Save reordered playlist to settings
-      await savePlaylistToSettings(newPlaylist);
+      await reorderPlaylist(newPlaylist);
     }
   };
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-card">
-      {/* Audio Element */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
-        onDurationChange={() => setDuration(audioRef.current?.duration || 0)}
-        onEnded={() => {
-          console.log('Audio ended, loop:', settings.loop);
-          if (settings.loop && currentTrack) {
-            console.log('Looping current track');
-            audioRef.current?.play();
-          } else {
-            console.log('Moving to next track');
-            nextTrack();
-          }
-        }}
-        onPlay={() => {
-          console.log('Audio started playing');
-          setIsPlaying(true);
-        }}
-        onPause={() => {
-          console.log('Audio paused');
-          setIsPlaying(false);
-        }}
-        onError={(e) => {
-          console.error('Audio error:', e);
-          console.error('Current src:', audioRef.current?.src);
-        }}
-        onLoadStart={() => console.log('Audio load started')}
-        onCanPlay={() => console.log('Audio can play')}
-        crossOrigin="anonymous"
-      />
 
       {/* Header */}
       <div className="flex-shrink-0 h-16 bg-background/50 border-b border-border px-4 flex items-center justify-between">
@@ -419,7 +192,6 @@ export const AudioPlayerWidget: React.FC = () => {
               onValueChange={(value) => {
                 if (audioRef.current) {
                   audioRef.current.currentTime = value[0];
-                  setCurrentTime(value[0]);
                 }
               }}
               max={duration}
@@ -491,9 +263,8 @@ export const AudioPlayerWidget: React.FC = () => {
             ref={fileInputRef}
             type="file"
             accept="audio/*"
-            onChange={handleFileUpload}
+            onChange={handleFileChange}
             className="hidden"
-            multiple
           />
           <Button
             onClick={() => fileInputRef.current?.click()}
