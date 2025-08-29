@@ -32,7 +32,7 @@ interface AudioContextType {
   
   // Actions
   playTrack: (track: AudioTrack) => Promise<void>;
-  togglePlayPause: () => void;
+  togglePlayPause: () => Promise<void>;
   stopPlayback: () => void;
   nextTrack: () => void;
   prevTrack: () => void;
@@ -338,9 +338,9 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     }
   };
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     if (!currentTrack && playlist.length > 0) {
-      playTrack(playlist[0]);
+      await playTrack(playlist[0]);
       return;
     }
 
@@ -350,8 +350,20 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play();
-      setIsPlaying(true);
+      try {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+        }
+      } catch (error) {
+        console.error('Error playing audio:', error);
+        setIsPlaying(false);
+        // Try to refresh the URL if it's expired
+        if (currentTrack?.storagePath) {
+          await refreshTrackUrl(currentTrack);
+        }
+      }
     }
   };
 
