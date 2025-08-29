@@ -28,25 +28,22 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     removeWidgetFromTab,
     updateWidgetSettings,
     getWidgetSettings,
-    loading
+    loading,
+    userWidgetInstances
   } = useWidgetManager();
   
   const { toast } = useToast();
-  const [widgets, setWidgets] = useState<UserWidgetInstance[]>([]);
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
 
-  // Load widgets when tab ID changes
+  // Get widgets for current tab directly from the hook
+  const widgets = getActiveWidgetsForTab(tabId);
+
+  // Set first widget as active if none selected or current doesn't exist
   useEffect(() => {
-    if (!loading) {
-      const activeWidgets = getActiveWidgetsForTab(tabId);
-      setWidgets(activeWidgets);
-      
-      // Set first widget as active if none selected or current doesn't exist
-      if (activeWidgets.length > 0 && !activeWidgets.find(w => w.widget_id === activeApplet)) {
-        onAppletChange(activeWidgets[0].widget_id);
-      }
+    if (!loading && widgets.length > 0 && !widgets.find(w => w.widget_id === activeApplet)) {
+      onAppletChange(widgets[0].widget_id);
     }
-  }, [tabId, loading]);
+  }, [widgets, activeApplet, onAppletChange, loading]);
 
   const handleRemoveWidget = async (instanceId: string, widgetId: string) => {
     try {
@@ -54,7 +51,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       
       // If we removed the active widget, switch to another one
       if (widgetId === activeApplet) {
-        const remainingWidgets = widgets.filter(w => w.id !== instanceId);
+        const remainingWidgets = getActiveWidgetsForTab(tabId);
         if (remainingWidgets.length > 0) {
           onAppletChange(remainingWidgets[0].widget_id);
         }
