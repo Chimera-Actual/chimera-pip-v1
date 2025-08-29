@@ -1,54 +1,91 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mic, MicOff, Play, Pause, Square, Volume2, VolumeX } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Mic, MicOff, Play, Pause, Square, Volume2, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
-interface AudioData {
+interface AudioSettings {
+  selectedVoice: string;
+  autoRecord: boolean;
+  playbackSpeed: number;
+  enableVAD: boolean;
+}
+
+interface Recording {
   id: string;
-  name: string;
   timestamp: Date;
   duration: number;
-  audioUrl?: string;
+  blob: Blob;
+  transcription?: string;
 }
+
+const voices = [
+  { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger' },
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah' },
+  { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura' },
+  { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George' },
+  { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum' },
+  { id: 'SAz9YHcvj6GT2YYXdXww', name: 'River' },
+  { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam' },
+  { id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte' }
+];
 
 export const AudioWidget: React.FC = () => {
   const { user } = useAuth();
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [selectedRecording, setSelectedRecording] = useState<Recording | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [playbackTime, setPlaybackTime] = useState(0);
-  const [volume, setVolume] = useState(0.7);
-  const [audioLevel, setAudioLevel] = useState(0);
-  const [recordings, setRecordings] = useState<AudioData[]>([]);
-  const [selectedRecording, setSelectedRecording] = useState<string>('');
-  const [status, setStatus] = useState<'ready' | 'recording' | 'processing' | 'playing'>('ready');
+  const [volume, setVolume] = useState([75]);
+  const [settings, setSettings] = useState<AudioSettings>({
+    selectedVoice: 'Aria',
+    autoRecord: false,
+    playbackSpeed: 1.0,
+    enableVAD: true
+  });
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const playbackTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
+  // Load user settings
   useEffect(() => {
-    return () => {
-      stopRecording();
-      stopPlayback();
-      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-      if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    const loadSettings = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('user_widget_settings')
+          .select('settings')
+          .eq('user_id', user.id)
+          .eq('widget_id', 'audio-system')
+          .single();
+
+        if (data?.settings && typeof data.settings === 'object') {
+          setSettings(prevSettings => ({ ...prevSettings, ...(data.settings as Partial<AudioSettings>) }));
+        }
+      } catch (error) {
+        console.error('Error loading audio settings:', error);
+      }
     };
-  }, []);
+
+    loadSettings();
+  }, [user]);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 24000,
+          sampleRate: 44100,
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
@@ -56,58 +93,40 @@ export const AudioWidget: React.FC = () => {
         }
       });
 
-      // Setup audio context for level monitoring
-      audioContextRef.current = new AudioContext({ sampleRate: 24000 });
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      source.connect(analyserRef.current);
-
-      analyserRef.current.fftSize = 256;
-      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-
-      const updateAudioLevel = () => {
-        if (analyserRef.current && isRecording) {
-          analyserRef.current.getByteFrequencyData(dataArray);
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          setAudioLevel(average);
-          animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
-        }
-      };
-
-      mediaRecorderRef.current = new MediaRecorder(stream, {
+      audioStreamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
       });
 
-      const chunks: Blob[] = [];
-      mediaRecorderRef.current.ondataavailable = (event) => {
+      const chunks: BlobPart[] = [];
+      mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunks.push(event.data);
         }
       };
 
-      mediaRecorderRef.current.onstop = () => {
+      mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(blob);
-        const newRecording: AudioData = {
-          id: `recording-${Date.now()}`,
-          name: `Recording ${recordings.length + 1}`,
+        const recording: Recording = {
+          id: `rec-${Date.now()}`,
           timestamp: new Date(),
           duration: recordingTime,
-          audioUrl
+          blob
         };
-        setRecordings(prev => [...prev, newRecording]);
-        setSelectedRecording(newRecording.id);
         
-        // Cleanup
-        stream.getTracks().forEach(track => track.stop());
-        setAudioLevel(0);
+        setRecordings(prev => [recording, ...prev]);
+        setSelectedRecording(recording);
+        setRecordingTime(0);
+        
+        // Auto-transcribe if enabled
+        if (settings.enableVAD) {
+          transcribeAudio(recording);
+        }
       };
 
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
       setIsRecording(true);
-      setStatus('recording');
-      setRecordingTime(0);
-      mediaRecorderRef.current.start();
-      updateAudioLevel();
 
       // Start timer
       recordingTimerRef.current = setInterval(() => {
@@ -116,7 +135,6 @@ export const AudioWidget: React.FC = () => {
 
     } catch (error) {
       console.error('Error starting recording:', error);
-      setStatus('ready');
     }
   };
 
@@ -124,253 +142,184 @@ export const AudioWidget: React.FC = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      setStatus('ready');
       
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
         recordingTimerRef.current = null;
       }
-      
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
-      
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
+
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
       }
     }
   };
 
-  const playRecording = (recordingId: string) => {
-    const recording = recordings.find(r => r.id === recordingId);
-    if (!recording?.audioUrl) return;
-
-    if (audioRef.current) {
-      audioRef.current.pause();
+  const playRecording = (recording: Recording) => {
+    if (isPlaying) {
+      audioElementRef.current?.pause();
+      setIsPlaying(false);
+      return;
     }
 
-    audioRef.current = new Audio(recording.audioUrl);
-    audioRef.current.volume = isMuted ? 0 : volume;
+    const audio = new Audio(URL.createObjectURL(recording.blob));
+    audio.volume = volume[0] / 100;
+    audio.playbackRate = settings.playbackSpeed;
     
-    audioRef.current.onended = () => {
+    audio.onended = () => {
       setIsPlaying(false);
-      setStatus('ready');
-      setPlaybackTime(0);
-      if (playbackTimerRef.current) {
-        clearInterval(playbackTimerRef.current);
-        playbackTimerRef.current = null;
-      }
     };
 
-    audioRef.current.play();
+    audio.play();
+    audioElementRef.current = audio;
     setIsPlaying(true);
-    setStatus('playing');
-    setPlaybackTime(0);
-
-    playbackTimerRef.current = setInterval(() => {
-      if (audioRef.current) {
-        setPlaybackTime(audioRef.current.currentTime);
-      }
-    }, 100);
   };
 
-  const stopPlayback = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setIsPlaying(false);
-    setStatus('ready');
-    setPlaybackTime(0);
-    if (playbackTimerRef.current) {
-      clearInterval(playbackTimerRef.current);
-      playbackTimerRef.current = null;
-    }
-  };
+  const transcribeAudio = async (recording: Recording) => {
+    try {
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        
+        const { data, error } = await supabase.functions.invoke('voice-to-text', {
+          body: { audio: base64 }
+        });
 
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? volume : 0;
+        if (data?.text) {
+          setRecordings(prev => 
+            prev.map(rec => 
+              rec.id === recording.id 
+                ? { ...rec, transcription: data.text }
+                : rec
+            )
+          );
+        }
+      };
+      reader.readAsDataURL(recording.blob);
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
     }
   };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
+    const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getStatusColor = () => {
-    switch (status) {
-      case 'recording': return 'text-red-400';
-      case 'playing': return 'text-green-400';
-      case 'processing': return 'text-yellow-400';
-      default: return 'text-primary';
-    }
-  };
-
-  const selectedRecordingData = recordings.find(r => r.id === selectedRecording);
-
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-card border border-border">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-card">
       {/* Header */}
-      <div className="flex-shrink-0 h-16 bg-card border-b border-border px-4 flex items-center justify-between">
+      <div className="flex-shrink-0 h-16 bg-background/50 border-b border-border px-4 flex items-center justify-between">
         <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
-          ◈ AUDIO SYSTEM
+          🔊 AUDIO SYSTEM
         </span>
-        <div className={`text-sm font-mono uppercase tracking-wide ${getStatusColor()}`}>
-          {status === 'recording' && '● REC'}
-          {status === 'playing' && '▶ PLAY'}
-          {status === 'processing' && '⧗ PROC'}
-          {status === 'ready' && '◯ READY'}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Volume2 size={16} className="text-muted-foreground" />
+            <Slider
+              value={volume}
+              onValueChange={setVolume}
+              max={100}
+              step={1}
+              className="w-20"
+            />
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-        
+      <div className="flex-1 p-4 space-y-4 overflow-hidden">
         {/* Recording Controls */}
-        <div className="bg-background/50 border border-border rounded-lg p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-mono text-primary uppercase tracking-wide">
-              Recording Control
-            </h3>
-            <span className="text-xs font-mono text-muted-foreground">
-              {formatTime(recordingTime)}
-            </span>
+        <div className="bg-background/30 border border-border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <Label className="text-sm font-mono text-primary uppercase">RECORDING STATION</Label>
+            <div className="text-xs font-mono text-muted-foreground">
+              {isRecording ? `◉ REC ${formatTime(recordingTime)}` : '● STANDBY'}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
             <Button
               onClick={isRecording ? stopRecording : startRecording}
-              disabled={status === 'processing'}
-              variant={isRecording ? "destructive" : "default"}
-              size="sm"
-              className="h-12 w-12 rounded-full p-0"
+              size="lg"
+              className={`w-16 h-16 rounded-full font-mono ${
+                isRecording 
+                  ? 'bg-destructive hover:bg-destructive/80 animate-pulse' 
+                  : 'bg-primary hover:bg-primary/80'
+              }`}
             >
-              {isRecording ? <Square size={20} /> : <Mic size={20} />}
+              {isRecording ? <Square size={24} /> : <Mic size={24} />}
             </Button>
 
-            {/* Audio Level Meter */}
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-muted-foreground">LEVEL</span>
-                <span className="text-xs font-mono text-primary">{Math.round(audioLevel)}</span>
+            <div className="flex-1">
+              <div className="text-sm font-mono text-foreground mb-1">
+                {isRecording ? 'RECORDING IN PROGRESS' : 'READY TO RECORD'}
               </div>
-              <Progress 
-                value={audioLevel} 
-                max={255}
-                className="h-2 bg-background/50" 
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Playback Controls */}
-        <div className="bg-background/50 border border-border rounded-lg p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-mono text-primary uppercase tracking-wide">
-              Playback Control
-            </h3>
-            <span className="text-xs font-mono text-muted-foreground">
-              {formatTime(playbackTime)} / {selectedRecordingData ? formatTime(selectedRecordingData.duration) : '00:00'}
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            <Select value={selectedRecording} onValueChange={setSelectedRecording}>
-              <SelectTrigger className="w-full bg-background/50 border-border font-mono">
-                <SelectValue placeholder="Select recording..." />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                {recordings.map((recording) => (
-                  <SelectItem key={recording.id} value={recording.id} className="font-mono">
-                    {recording.name} - {formatTime(recording.duration)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => isPlaying ? stopPlayback() : playRecording(selectedRecording)}
-                disabled={!selectedRecording}
-                variant="outline"
-                size="sm"
-                className="h-10 w-10 rounded-full p-0"
-              >
-                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-              </Button>
-
-              <Button
-                onClick={stopPlayback}
-                disabled={!isPlaying}
-                variant="outline"
-                size="sm"
-                className="h-10 w-10 rounded-full p-0"
-              >
-                <Square size={16} />
-              </Button>
-
-              <div className="flex-1">
-                {selectedRecordingData && (
-                  <Progress 
-                    value={(playbackTime / selectedRecordingData.duration) * 100} 
-                    className="h-2 bg-background/50"
-                  />
-                )}
+              <div className="text-xs text-muted-foreground font-mono">
+                Voice: {settings.selectedVoice} | VAD: {settings.enableVAD ? 'ON' : 'OFF'}
               </div>
-
-              <Button
-                onClick={toggleMute}
-                variant="ghost"
-                size="sm"
-                className="h-10 w-10 rounded-full p-0"
-              >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </Button>
             </div>
           </div>
         </div>
 
         {/* Recording List */}
-        <div className="bg-background/50 border border-border rounded-lg p-4 space-y-3">
-          <h3 className="text-sm font-mono text-primary uppercase tracking-wide">
-            Recordings ({recordings.length})
-          </h3>
-          
-          <div className="space-y-2 max-h-32 overflow-y-auto">
-            {recordings.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground text-sm font-mono">
-                NO RECORDINGS
-                <br />
-                <span className="text-xs">Click the record button to start</span>
-              </div>
-            ) : (
-              recordings.map((recording) => (
-                <div
-                  key={recording.id}
-                  className={`p-2 rounded border cursor-pointer transition-colors ${
-                    selectedRecording === recording.id 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border bg-background/30 hover:bg-background/50'
-                  }`}
-                  onClick={() => setSelectedRecording(recording.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-mono text-foreground">{recording.name}</span>
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {formatTime(recording.duration)}
-                    </span>
-                  </div>
+        <div className="flex-1 bg-background/30 border border-border rounded-lg p-4 overflow-hidden">
+          <div className="flex items-center justify-between mb-4">
+            <Label className="text-sm font-mono text-primary uppercase">
+              RECORDINGS ({recordings.length})
+            </Label>
+          </div>
+
+          <div className="space-y-2 overflow-y-auto max-h-60">
+            {recordings.map((recording) => (
+              <div
+                key={recording.id}
+                className="bg-card/50 border border-border rounded p-3 space-y-2"
+              >
+                <div className="flex items-center justify-between">
                   <div className="text-xs font-mono text-muted-foreground">
                     {recording.timestamp.toLocaleTimeString()}
                   </div>
+                  <div className="text-xs font-mono text-muted-foreground">
+                    {formatTime(recording.duration)}
+                  </div>
                 </div>
-              ))
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => playRecording(recording)}
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0"
+                  >
+                    {isPlaying && selectedRecording?.id === recording.id ? 
+                      <Pause size={14} /> : <Play size={14} />
+                    }
+                  </Button>
+
+                  <div className="flex-1 min-w-0">
+                    {recording.transcription ? (
+                      <div className="text-xs text-foreground font-mono truncate">
+                        "{recording.transcription}"
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground font-mono">
+                        Tap to transcribe...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {recordings.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground text-sm font-mono">
+                NO RECORDINGS AVAILABLE
+                <br />
+                <span className="text-xs">Press the record button to begin</span>
+              </div>
             )}
           </div>
         </div>
