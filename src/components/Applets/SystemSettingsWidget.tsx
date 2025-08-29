@@ -103,6 +103,8 @@ export const SystemSettingsWidget: React.FC = () => {
           notifications_enabled: settings.notifications_enabled,
           auto_save_enabled: settings.auto_save_enabled,
           data_backup_enabled: settings.data_backup_enabled,
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;
