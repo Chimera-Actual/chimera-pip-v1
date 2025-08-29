@@ -45,10 +45,10 @@ interface AudioContextType {
   saveWidgetPlaylist: (widgetInstanceId: string, playlist: AudioTrack[]) => Promise<void>;
 }
 
-const AudioContext = createContext<AudioContextType | undefined>(undefined);
+const AudioContextInstance = createContext<AudioContextType | undefined>(undefined);
 
 export const useAudio = () => {
-  const context = useContext(AudioContext);
+  const context = useContext(AudioContextInstance);
   if (!context) {
     throw new Error('useAudio must be used within an AudioProvider');
   }
@@ -425,7 +425,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   };
 
   return (
-    <AudioContext.Provider value={value}>
+    <AudioContextInstance.Provider value={value}>
       {/* Global audio element */}
       <audio
         ref={audioRef}
@@ -464,6 +464,6 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         preload="metadata"
       />
       {children}
-    </AudioContext.Provider>
+    </AudioContextInstance.Provider>
   );
 };
