@@ -57,31 +57,36 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
     const initializeSession = async () => {
       if (!user || !widgetInstanceId) return;
       
+      // Generate session ID only once per widget instance
       const newSessionId = `custom-${user.id}-${widgetInstanceId}-${Date.now()}`;
       console.log('CustomAssistantWidget - Setting session ID:', newSessionId, 'for widget:', widgetInstanceId);
       setSessionId(newSessionId);
 
-      // Create conversation record
-      const { data: conversation, error } = await supabase
-        .from('conversations')
-        .insert({
-          user_id: user.id,
-          session_id: newSessionId,
-          title: `${config.name} - ${widgetInstanceId}`,
-        })
-        .select()
-        .single();
+      try {
+        // Create conversation record
+        const { data: conversation, error } = await supabase
+          .from('conversations')
+          .insert({
+            user_id: user.id,
+            session_id: newSessionId,
+            title: `${config.name} - ${widgetInstanceId}`,
+          })
+          .select()
+          .single();
 
-      if (error) {
-        console.error('Error creating conversation:', error);
-        toast({
-          title: "Database Error", 
-          description: "Failed to initialize conversation. Messages will not be saved.",
-          variant: "destructive",
-        });
-      } else {
-        setConversationId(conversation.id);
-        console.log('CustomAssistantWidget - Conversation created:', conversation.id, 'for widget:', widgetInstanceId);
+        if (error) {
+          console.error('Error creating conversation:', error);
+          toast({
+            title: "Database Error", 
+            description: "Failed to initialize conversation. Messages will not be saved.",
+            variant: "destructive",
+          });
+        } else {
+          setConversationId(conversation.id);
+          console.log('CustomAssistantWidget - Conversation created:', conversation.id, 'for widget:', widgetInstanceId);
+        }
+      } catch (error) {
+        console.error('Error in conversation initialization:', error);
       }
       
       // Load configuration after conversation is set up
@@ -89,7 +94,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
     };
 
     initializeSession();
-  }, [user, widgetInstanceId, config.name, toast]);
+  }, [user, widgetInstanceId]); // Removed config.name and toast from dependencies
 
   // Load existing messages when conversation is ready
   useEffect(() => {

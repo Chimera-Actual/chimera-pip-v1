@@ -138,8 +138,9 @@ export const useWidgetManager = () => {
           } : undefined
         };
         setUserWidgetInstances(prev => {
-          const filtered = prev.filter(w => !(w.widget_id === widgetId && w.tab_id === tabId));
-          return [...filtered, transformedData];
+          // Don't filter anything - just add the new widget instance
+          // Multiple instances of the same widget type are allowed
+          return [...prev, transformedData];
         });
       }
       
