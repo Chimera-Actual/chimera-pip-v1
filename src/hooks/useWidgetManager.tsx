@@ -171,6 +171,8 @@ export const useWidgetManager = () => {
   const updateWidgetSettings = async (instanceId: string, settings: Record<string, any>) => {
     if (!user) return;
 
+    console.log('updateWidgetSettings called with instanceId:', instanceId, 'settings:', settings);
+
     try {
       const { data, error } = await supabase
         .from('user_widget_settings')
@@ -191,6 +193,7 @@ export const useWidgetManager = () => {
           ...data,
           settings: (data.settings as Record<string, any>) || {}
         };
+        console.log('Settings saved successfully:', transformedData);
         setUserWidgetSettings(prev => {
           const filtered = prev.filter(s => s.widget_id !== instanceId);
           return [...filtered, transformedData];
@@ -205,14 +208,22 @@ export const useWidgetManager = () => {
   };
 
   const getWidgetSettings = (instanceId: string): Record<string, any> => {
+    console.log('getWidgetSettings called with instanceId:', instanceId);
     const instance = userWidgetInstances.find(i => i.id === instanceId);
     const widgetSettings = userWidgetSettings.find(s => s.widget_id === instanceId);
     const widgetDefinition = availableWidgets.find(w => w.id === instance?.widget_id);
     
-    return {
+    const result = {
       ...widgetDefinition?.default_settings,
       ...widgetSettings?.settings,
     };
+    
+    console.log('getWidgetSettings result:', result);
+    console.log('Instance:', instance);
+    console.log('Widget settings from DB:', widgetSettings);
+    console.log('Widget definition defaults:', widgetDefinition?.default_settings);
+    
+    return result;
   };
 
   const getActiveWidgetsForTab = (tabId: string): UserWidgetInstance[] => {
