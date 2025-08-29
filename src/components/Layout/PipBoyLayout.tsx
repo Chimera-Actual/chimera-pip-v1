@@ -148,43 +148,49 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button
-              onClick={() => setShowTabManager(true)}
-              variant="ghost"
-              size="sm"
-              className="font-mono text-xs opacity-70 hover:opacity-100"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              MANAGE TABS
-            </Button>
             <UserAvatar />
           </div>
         </div>
 
         {/* Tab Navigation */}
         <div className="flex-shrink-0 border-b border-border bg-card/50">
-          <TabsList className="w-full h-14 bg-transparent rounded-none border-none p-0">
-            {userTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                onDragOver={(e) => handleTabDragOver(e, tab.id)}
-                onDragLeave={handleTabDragLeave}
-                onDrop={(e) => handleTabDrop(e, tab.id)}
-                className={`flex-1 h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider text-sm hover:bg-muted/50 transition-all duration-200 ${
-                  dragOverTab === tab.id && dragOverTab !== activeTab
-                    ? 'bg-primary/10 border-b-2 border-primary/50 shadow-inner'
-                    : ''
-                }`}
+          <div className="flex items-center">
+            <TabsList className="flex-1 h-14 bg-transparent rounded-none border-none p-0">
+              {userTabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  onDragOver={(e) => handleTabDragOver(e, tab.id)}
+                  onDragLeave={handleTabDragLeave}
+                  onDrop={(e) => handleTabDrop(e, tab.id)}
+                  className={`flex-1 h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider text-sm hover:bg-muted/50 transition-all duration-200 ${
+                    dragOverTab === tab.id && dragOverTab !== activeTab
+                      ? 'bg-primary/10 border-b-2 border-primary/50 shadow-inner'
+                      : ''
+                  }`}
+                >
+                  <span className="mr-2 text-lg">{tab.icon}</span>
+                  {tab.name}
+                  {dragOverTab === tab.id && dragOverTab !== activeTab && (
+                    <span className="ml-2 text-xs opacity-70">DROP HERE</span>
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            {/* Manage Tabs Button */}
+            <div className="px-4">
+              <Button
+                onClick={() => setShowTabManager(true)}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 opacity-70 hover:opacity-100 hover:bg-primary/10"
+                title="Manage Tabs"
               >
-                <span className="mr-2 text-lg">{tab.icon}</span>
-                {tab.name}
-                {dragOverTab === tab.id && dragOverTab !== activeTab && (
-                  <span className="ml-2 text-xs opacity-70">DROP HERE</span>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                <Settings className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Tab Content */}
