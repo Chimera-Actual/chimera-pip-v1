@@ -44,10 +44,11 @@ const COMMON_TIMEZONES = [{
 }];
 interface ClockWidgetProps {
   settings?: Record<string, any>;
+  widgetName?: string;
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
-export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUpdate }) => {
+export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, onSettingsUpdate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userTimezone, setUserTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [isAddingClock, setIsAddingClock] = useState(false);
@@ -156,7 +157,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUp
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-primary font-mono text-lg uppercase tracking-wider crt-glow">
-              ◐ CHRONOMETER
+              ◐ {widgetName || 'CHRONOMETER'}
             </span>
           </div>
           

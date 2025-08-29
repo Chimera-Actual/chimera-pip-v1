@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { AppletType } from './PipBoyLayout';
-import { Settings, X, Plus } from 'lucide-react';
+import { Settings, X, Plus, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
 import { WidgetLibrary } from './WidgetLibrary';
 import { WidgetSettings } from './WidgetSettings';
+import { WidgetRenameDialog } from './WidgetRenameDialog';
 import { useToast } from '@/hooks/use-toast';
 
 interface AppletContainerProps {
@@ -28,6 +29,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     removeWidgetFromTab,
     updateWidgetSettings,
     getWidgetSettings,
+    updateWidgetName,
     loading,
     userWidgetInstances
   } = useWidgetManager();
@@ -35,7 +37,9 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   const { toast } = useToast();
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [showWidgetSettings, setShowWidgetSettings] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [selectedWidgetForSettings, setSelectedWidgetForSettings] = useState<UserWidgetInstance | null>(null);
+  const [selectedWidgetForRename, setSelectedWidgetForRename] = useState<UserWidgetInstance | null>(null);
 
   // Get widgets for current tab directly from the hook
   const widgets = getActiveWidgetsForTab(tabId);
@@ -98,6 +102,32 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     setSelectedWidgetForSettings(null);
   };
 
+  const handleOpenWidgetRename = (widget: UserWidgetInstance) => {
+    setSelectedWidgetForRename(widget);
+    setShowRenameDialog(true);
+  };
+
+  const handleCloseWidgetRename = () => {
+    setShowRenameDialog(false);
+    setSelectedWidgetForRename(null);
+  };
+
+  const handleWidgetRename = async (instanceId: string, newName: string) => {
+    try {
+      await updateWidgetName(instanceId, newName);
+      toast({
+        title: "Widget Renamed",
+        description: "Widget name has been updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to rename widget",
+        variant: "destructive"
+      });
+    }
+  };
+
   const renderActiveWidget = () => {
     const activeWidget = widgets.find(w => w.widget_id === activeApplet);
     if (!activeWidget?.widget_definition) {
@@ -130,8 +160,10 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     }
 
     const widgetSettings = getWidgetSettings(activeApplet);
+    const widgetName = activeWidget.custom_name || activeWidget.widget_definition.name;
     return <WidgetComponent 
       settings={widgetSettings} 
+      widgetName={widgetName}
       onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeApplet, newSettings)}
     />;
   };
@@ -179,7 +211,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
                     <span className="text-lg">{widget.widget_definition?.icon}</span>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-mono font-medium text-foreground truncate">
-                        {widget.widget_definition?.name}
+                        {widget.custom_name || widget.widget_definition?.name}
                       </div>
                       <div className="text-xs text-muted-foreground font-mono truncate">
                         {widget.widget_definition?.description}
@@ -187,6 +219,17 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
                     </div>
                   </div>
                   <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenWidgetRename(widget);
+                      }}
+                      className="opacity-70 hover:opacity-100 p-1 h-6 w-6"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -248,6 +291,14 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         widget={selectedWidgetForSettings}
         onSettingsUpdate={updateWidgetSettings}
         currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.widget_id) : {}}
+      />
+
+      {/* Widget Rename Dialog */}
+      <WidgetRenameDialog
+        isOpen={showRenameDialog}
+        onClose={handleCloseWidgetRename}
+        widget={selectedWidgetForRename}
+        onRename={handleWidgetRename}
       />
     </div>
   );

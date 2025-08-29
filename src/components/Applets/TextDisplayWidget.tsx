@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 interface TextDisplayWidgetProps {
   settings?: Record<string, any>;
+  widgetName?: string;
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
@@ -18,7 +19,7 @@ type TextSize = 'sm' | 'base' | 'lg' | 'xl' | '2xl';
 type TextAlign = 'left' | 'center' | 'right';
 type ColorTheme = 'default' | 'primary' | 'accent' | 'muted' | 'success' | 'warning' | 'destructive';
 
-export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, onSettingsUpdate }) => {
+export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, widgetName, onSettingsUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');

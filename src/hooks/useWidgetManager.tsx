@@ -19,6 +19,7 @@ export interface UserWidgetInstance {
   tab_id: string;
   position: number;
   is_active: boolean;
+  custom_name?: string;
   widget_definition?: WidgetDefinition;
 }
 
@@ -248,6 +249,33 @@ export const useWidgetManager = () => {
     }
   };
 
+  const updateWidgetName = async (instanceId: string, customName: string) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_widget_instances')
+        .update({ custom_name: customName })
+        .eq('id', instanceId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setUserWidgetInstances(prev =>
+          prev.map(w => w.id === instanceId ? { ...w, custom_name: customName } : w)
+        );
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error updating widget name:', error);
+      throw error;
+    }
+  };
+
   return {
     availableWidgets,
     userWidgetInstances,
@@ -260,6 +288,7 @@ export const useWidgetManager = () => {
     getActiveWidgetsForTab,
     getAvailableWidgetsForTab,
     updateWidgetPosition,
+    updateWidgetName,
     refreshData: loadWidgetData,
   };
 };

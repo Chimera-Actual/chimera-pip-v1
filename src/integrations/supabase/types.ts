@@ -220,6 +220,7 @@ export type Database = {
       user_widget_instances: {
         Row: {
           created_at: string
+          custom_name: string | null
           id: string
           is_active: boolean | null
           position: number | null
@@ -230,6 +231,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_name?: string | null
           id?: string
           is_active?: boolean | null
           position?: number | null
@@ -240,6 +242,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_name?: string | null
           id?: string
           is_active?: boolean | null
           position?: number | null

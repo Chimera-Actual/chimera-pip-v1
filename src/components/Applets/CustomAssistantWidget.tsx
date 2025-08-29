@@ -28,10 +28,11 @@ interface CustomAssistantConfig {
 
 interface CustomAssistantWidgetProps {
   settings?: Record<string, any>;
+  widgetName?: string;
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
-export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ settings, onSettingsUpdate }) => {
+export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ settings, widgetName, onSettingsUpdate }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
