@@ -98,7 +98,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         .from('user_widget_settings')
         .select('settings')
         .eq('user_id', user.id)
-        .eq('widget_id', widgetInstanceId)
+        .eq('widget_instance_id', widgetInstanceId)
         .single();
 
       if (data?.settings && typeof data.settings === 'object') {
@@ -161,7 +161,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         .from('user_widget_settings')
         .upsert({
           user_id: user.id,
-          widget_id: widgetInstanceId,
+          widget_instance_id: widgetInstanceId,
           settings: updatedSettings as any
         });
       

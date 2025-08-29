@@ -278,7 +278,7 @@ export type Database = {
           settings: Json | null
           updated_at: string
           user_id: string
-          widget_id: string
+          widget_instance_id: string
         }
         Insert: {
           created_at?: string
@@ -286,7 +286,7 @@ export type Database = {
           settings?: Json | null
           updated_at?: string
           user_id: string
-          widget_id: string
+          widget_instance_id: string
         }
         Update: {
           created_at?: string
@@ -294,14 +294,14 @@ export type Database = {
           settings?: Json | null
           updated_at?: string
           user_id?: string
-          widget_id?: string
+          widget_instance_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_widget_settings_widget_id_fkey"
-            columns: ["widget_id"]
+            foreignKeyName: "fk_widget_instance"
+            columns: ["widget_instance_id"]
             isOneToOne: false
-            referencedRelation: "widget_definitions"
+            referencedRelation: "user_widget_instances"
             referencedColumns: ["id"]
           },
         ]

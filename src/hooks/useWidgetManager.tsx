@@ -26,7 +26,7 @@ export interface UserWidgetInstance {
 export interface UserWidgetSettings {
   id: string;
   user_id: string;
-  widget_id: string;
+  widget_instance_id: string;
   settings: Record<string, any>;
 }
 
@@ -171,7 +171,7 @@ export const useWidgetManager = () => {
     }
   };
 
-  const updateWidgetSettings = async (widgetId: string, settings: Record<string, any>) => {
+  const updateWidgetSettings = async (widgetInstanceId: string, settings: Record<string, any>) => {
     if (!user) return;
 
     try {
@@ -179,10 +179,10 @@ export const useWidgetManager = () => {
         .from('user_widget_settings')
         .upsert({
           user_id: user.id,
-          widget_id: widgetId,
+          widget_instance_id: widgetInstanceId,
           settings: settings,
         }, {
-          onConflict: 'user_id,widget_id'
+          onConflict: 'user_id,widget_instance_id'
         })
         .select()
         .single();
@@ -195,7 +195,7 @@ export const useWidgetManager = () => {
           settings: (data.settings as Record<string, any>) || {}
         };
         setUserWidgetSettings(prev => {
-          const filtered = prev.filter(s => s.widget_id !== widgetId);
+          const filtered = prev.filter(s => s.widget_instance_id !== widgetInstanceId);
           return [...filtered, transformedData];
         });
       }
@@ -207,9 +207,10 @@ export const useWidgetManager = () => {
     }
   };
 
-  const getWidgetSettings = (widgetId: string): Record<string, any> => {
-    const widgetSettings = userWidgetSettings.find(s => s.widget_id === widgetId);
-    const widgetDefinition = availableWidgets.find(w => w.id === widgetId);
+  const getWidgetSettings = (widgetInstanceId: string): Record<string, any> => {
+    const widgetSettings = userWidgetSettings.find(s => s.widget_instance_id === widgetInstanceId);
+    const widgetInstance = userWidgetInstances.find(i => i.id === widgetInstanceId);
+    const widgetDefinition = availableWidgets.find(w => w.id === widgetInstance?.widget_id);
     
     return {
       ...widgetDefinition?.default_settings,
