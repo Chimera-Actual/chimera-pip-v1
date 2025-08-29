@@ -30,6 +30,8 @@ export interface UserWidgetSettings {
   settings: Record<string, any>;
 }
 
+import { cleanupWidgetFiles } from '@/lib/widgetCleanup';
+
 export const useWidgetManager = () => {
   const [availableWidgets, setAvailableWidgets] = useState<WidgetDefinition[]>([]);
   const [userWidgetInstances, setUserWidgetInstances] = useState<UserWidgetInstance[]>([]);
@@ -198,6 +200,9 @@ export const useWidgetManager = () => {
     if (!user) return;
 
     try {
+      // First, cleanup associated files for this widget instance
+      await cleanupWidgetFiles(instanceId);
+
       const { error } = await supabase
         .from('user_widget_instances')
         .update({ is_active: false })

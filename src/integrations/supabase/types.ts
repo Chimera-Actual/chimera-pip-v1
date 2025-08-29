@@ -346,6 +346,47 @@ export type Database = {
         }
         Relationships: []
       }
+      widget_instance_audio: {
+        Row: {
+          audio_duration: number | null
+          audio_path: string
+          audio_title: string
+          created_at: string | null
+          id: string
+          position: number | null
+          updated_at: string | null
+          widget_instance_id: string
+        }
+        Insert: {
+          audio_duration?: number | null
+          audio_path: string
+          audio_title: string
+          created_at?: string | null
+          id?: string
+          position?: number | null
+          updated_at?: string | null
+          widget_instance_id: string
+        }
+        Update: {
+          audio_duration?: number | null
+          audio_path?: string
+          audio_title?: string
+          created_at?: string | null
+          id?: string
+          position?: number | null
+          updated_at?: string | null
+          widget_instance_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_instance_audio_widget_instance_id_fkey"
+            columns: ["widget_instance_id"]
+            isOneToOne: false
+            referencedRelation: "user_widget_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_instance_images: {
         Row: {
           created_at: string | null

@@ -14,6 +14,7 @@ interface Track {
   url: string;
   duration?: number;
   storagePath?: string;
+  position?: number;
 }
 
 interface AudioPlayerProps {
@@ -46,9 +47,74 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   // Load playlist from database
   useEffect(() => {
     if (user && widgetInstanceId) {
-      loadPlaylist();
+      migrateAndLoadPlaylist();
     }
   }, [user, widgetInstanceId]);
+
+  const migrateAndLoadPlaylist = async () => {
+    // First check if we need to migrate from old JSON format
+    await migrateLegacyPlaylist();
+    // Then load the playlist normally
+    await loadPlaylist();
+  };
+
+  const migrateLegacyPlaylist = async () => {
+    if (!user || !widgetInstanceId) return;
+
+    try {
+      // Check for legacy playlist data in settings
+      const { data, error } = await supabase
+        .from('user_widget_settings')
+        .select('settings')
+        .eq('user_id', user.id)
+        .eq('widget_instance_id', widgetInstanceId)
+        .maybeSingle();
+
+      if (error || !data?.settings) return;
+
+      const settingsData = data.settings as any;
+      if (settingsData.playlist && Array.isArray(settingsData.playlist) && settingsData.playlist.length > 0) {
+        console.log('Migrating legacy audio playlist for widget instance:', widgetInstanceId);
+
+        // Check if we already have audio files in the new table
+        const { data: existingAudio } = await supabase
+          .from('widget_instance_audio')
+          .select('id')
+          .eq('widget_instance_id', widgetInstanceId)
+          .limit(1);
+
+        if (!existingAudio || existingAudio.length === 0) {
+          // Migrate each track to the new table
+          for (let i = 0; i < settingsData.playlist.length; i++) {
+            const track = settingsData.playlist[i];
+            if (track.title && track.storagePath) {
+              await supabase
+                .from('widget_instance_audio')
+                .insert({
+                  widget_instance_id: widgetInstanceId,
+                  audio_path: track.storagePath,
+                  audio_title: track.title,
+                  audio_duration: track.duration || null,
+                  position: i
+                });
+            }
+          }
+
+          // Remove playlist from settings after successful migration
+          const { playlist, ...cleanSettings } = settingsData;
+          await supabase
+            .from('user_widget_settings')
+            .update({ settings: cleanSettings })
+            .eq('user_id', user.id)
+            .eq('widget_instance_id', widgetInstanceId);
+
+          console.log('Legacy playlist migration completed');
+        }
+      }
+    } catch (error) {
+      console.error('Error migrating legacy playlist:', error);
+    }
+  };
 
   // Audio event listeners
   useEffect(() => {
@@ -95,55 +161,71 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
 
   const loadPlaylist = async () => {
+    if (!user || !widgetInstanceId) return;
+    
     try {
-      const { data, error } = await supabase
-        .from('user_widget_settings')
-        .select('settings')
-        .eq('user_id', user!.id)
+      // Load audio files from normalized table
+      const { data: audioFiles, error } = await supabase
+        .from('widget_instance_audio')
+        .select('*')
         .eq('widget_instance_id', widgetInstanceId)
-        .maybeSingle();
+        .order('position', { ascending: true });
 
-      if (data?.settings && typeof data.settings === 'object') {
-        const settingsData = data.settings as any;
-        if (settingsData.playlist && Array.isArray(settingsData.playlist)) {
-          // Regenerate signed URLs for stored tracks
-          const refreshedPlaylist = await Promise.all(
-            settingsData.playlist.map(async (track: any) => {
-              if (track.storagePath) {
-                try {
-                  // Generate fresh signed URL
-                  const { data: urlData, error: urlError } = await supabase.storage
-                    .from('audio')
-                    .createSignedUrl(track.storagePath, 60 * 60 * 24 * 7); // 7 days
+      if (error) {
+        console.error('Error loading audio files:', error);
+        return;
+      }
 
-                  if (!urlError && urlData) {
-                    return {
-                      ...track,
-                      url: urlData.signedUrl
-                    };
-                  }
-                } catch (error) {
-                  console.error('Error refreshing URL for track:', track.title, error);
-                }
+      if (audioFiles && audioFiles.length > 0) {
+        // Generate fresh signed URLs for all tracks
+        const refreshedPlaylist = await Promise.all(
+          audioFiles.map(async (audioFile) => {
+            try {
+              // Generate fresh signed URL
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from('audio')
+                .createSignedUrl(audioFile.audio_path, 60 * 60 * 24 * 7); // 7 days
+
+              if (!urlError && urlData) {
+                return {
+                  id: audioFile.id,
+                  title: audioFile.audio_title,
+                  url: urlData.signedUrl,
+                  duration: audioFile.audio_duration ? Number(audioFile.audio_duration) : undefined,
+                  storagePath: audioFile.audio_path,
+                  position: audioFile.position
+                };
               }
-              // Return track as-is if URL refresh failed
-              return track;
-            })
-          );
-          
-          setPlaylist(refreshedPlaylist);
-        }
+            } catch (error) {
+              console.error('Error refreshing URL for track:', audioFile.audio_title, error);
+            }
+            
+            // Return track with empty URL if refresh failed
+            return {
+              id: audioFile.id,
+              title: audioFile.audio_title,
+              url: '',
+              duration: audioFile.audio_duration ? Number(audioFile.audio_duration) : undefined,
+              storagePath: audioFile.audio_path,
+              position: audioFile.position
+            };
+          })
+        );
+        
+        setPlaylist(refreshedPlaylist);
+      } else {
+        setPlaylist([]);
       }
     } catch (error) {
       console.error('Error loading playlist:', error);
     }
   };
 
-  const savePlaylist = async (newPlaylist: Track[]) => {
+  const saveVolumeSettings = async (newVolume: number) => {
     try {
       const settingsData = {
-        playlist: newPlaylist,
-        volume,
+        volume: newVolume,
+        showWaveform: settings?.showWaveform !== false,
         ...settings
       };
 
@@ -153,9 +235,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           user_id: user!.id,
           widget_instance_id: widgetInstanceId!,
           settings: settingsData as any
+        }, {
+          onConflict: 'user_id,widget_instance_id'
         });
     } catch (error) {
-      console.error('Error saving playlist:', error);
+      console.error('Error saving volume settings:', error);
     }
   };
 
@@ -214,6 +298,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     if (audioRef.current) {
       audioRef.current.volume = newVolume / 100;
     }
+    saveVolumeSettings(newVolume);
     if (onSettingsUpdate) {
       onSettingsUpdate({ ...settings, volume: newVolume });
     }
@@ -227,9 +312,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     try {
       setIsLoading(true);
       
-      // Generate unique file name
+      // Generate unique file name with widget instance path
       const fileExt = file.name.split('.').pop() || 'mp3';
-      const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${user.id}/widgets/${widgetInstanceId}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
@@ -243,6 +328,25 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         throw uploadError;
       }
 
+      // Get the next position in the playlist
+      const nextPosition = Math.max(...playlist.map(t => t.position || 0), -1) + 1;
+
+      // Save audio file record to database
+      const { data: audioRecord, error: dbError } = await supabase
+        .from('widget_instance_audio')
+        .insert({
+          widget_instance_id: widgetInstanceId,
+          audio_path: fileName,
+          audio_title: file.name.replace(/\.[^/.]+$/, ''),
+          position: nextPosition
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        throw dbError;
+      }
+
       // Get signed URL for playback
       const { data: urlData, error: urlError } = await supabase.storage
         .from('audio')
@@ -252,17 +356,17 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         throw urlError || new Error('Could not get file URL');
       }
 
-      // Add to playlist
-      const newTrack: Track & { storagePath: string } = {
-        id: Date.now().toString(),
-        title: file.name.replace(/\.[^/.]+$/, ''),
+      // Add to local playlist
+      const newTrack: Track = {
+        id: audioRecord.id,
+        title: audioRecord.audio_title,
         url: urlData.signedUrl,
-        storagePath: fileName
+        storagePath: fileName,
+        position: nextPosition
       };
 
-      const newPlaylist = [...playlist, newTrack];
+      const newPlaylist = [...playlist, newTrack].sort((a, b) => (a.position || 0) - (b.position || 0));
       setPlaylist(newPlaylist);
-      await savePlaylist(newPlaylist);
       
       toast.success('Audio file uploaded successfully!');
     } catch (error) {
@@ -277,13 +381,30 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   };
 
   const removeTrack = async (trackId: string) => {
-    const newPlaylist = playlist.filter(t => t.id !== trackId);
-    setPlaylist(newPlaylist);
-    await savePlaylist(newPlaylist);
-    
-    if (currentTrack?.id === trackId) {
-      setCurrentTrack(null);
-      stopPlayback();
+    try {
+      // Remove from database
+      const { error } = await supabase
+        .from('widget_instance_audio')
+        .delete()
+        .eq('id', trackId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Remove from local playlist
+      const newPlaylist = playlist.filter(t => t.id !== trackId);
+      setPlaylist(newPlaylist);
+      
+      if (currentTrack?.id === trackId) {
+        setCurrentTrack(null);
+        stopPlayback();
+      }
+      
+      toast.success('Track removed successfully');
+    } catch (error) {
+      console.error('Error removing track:', error);
+      toast.error('Failed to remove track');
     }
   };
 

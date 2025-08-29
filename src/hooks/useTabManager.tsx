@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
+import { cleanupTabFiles } from '@/lib/widgetCleanup';
+
 export interface UserTab {
   id: string;
   user_id: string;
@@ -149,14 +151,17 @@ export const useTabManager = () => {
     if (!user) return;
 
     try {
-      // First, remove all widgets from this tab
+      // First, cleanup all files associated with widgets in this tab
+      await cleanupTabFiles(tabId);
+
+      // Then, remove all widgets from this tab
       await supabase
         .from('user_widget_instances')
         .update({ is_active: false })
         .eq('tab_id', tabId)
         .eq('user_id', user.id);
 
-      // Then soft delete the tab
+      // Finally, soft delete the tab
       const { error } = await supabase
         .from('user_tabs')
         .update({ is_active: false })
