@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useUserSettings } from '@/hooks/useUserSettings';
+import { supabase } from '@/integrations/supabase/client';
 
 interface WeatherData {
   current: {
@@ -24,7 +25,45 @@ interface WeatherData {
   }>;
 }
 
-// Mock weather data - will be replaced with API data later
+// Fetch weather data from OpenWeather API via edge function
+const fetchWeatherData = async (
+  location?: { latitude: number; longitude: number; name?: string }, 
+  tempUnit: string = 'celsius'
+): Promise<WeatherData> => {
+  try {
+    const units = tempUnit === 'fahrenheit' ? 'imperial' : 'metric';
+    
+    // Use provided location or default coordinates (San Francisco)
+    const lat = location?.latitude || 37.7749;
+    const lon = location?.longitude || -122.4194;
+    
+    const { data, error } = await supabase.functions.invoke('get-weather', {
+      body: {
+        latitude: lat,
+        longitude: lon,
+        units: units
+      }
+    });
+
+    if (error) {
+      console.error('Error calling weather function:', error);
+      throw new Error(error.message || 'Failed to fetch weather data');
+    }
+
+    // If we have a custom location name from user settings, use it
+    if (location?.name && data.current) {
+      data.current.location = location.name;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Weather API error:', error);
+    // Return mock data as fallback
+    return getMockWeatherData(location, tempUnit);
+  }
+};
+
+// Mock weather data as fallback
 const getMockWeatherData = (location?: { latitude: number; longitude: number; name?: string }, tempUnit: string = 'celsius'): WeatherData => {
   const tempCelsius = 18;
   const tempFahrenheit = Math.round((tempCelsius * 9/5) + 32);
@@ -88,23 +127,45 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
   const [weather, setWeather] = useState<WeatherData>(getMockWeatherData(undefined, temperatureUnit));
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [error, setError] = useState<string | null>(null);
 
   // Update weather data when user location or settings change
   useEffect(() => {
     const updateWeatherData = async () => {
-      const persistentLocation = await getUserLocation();
-      setWeather(getMockWeatherData(persistentLocation, temperatureUnit));
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const persistentLocation = await getUserLocation();
+        const weatherData = await fetchWeatherData(persistentLocation, temperatureUnit);
+        setWeather(weatherData);
+        setLastUpdated(new Date());
+      } catch (err) {
+        console.error('Failed to update weather data:', err);
+        setError('Failed to load weather data');
+      } finally {
+        setLoading(false);
+      }
     };
+    
     updateWeatherData();
   }, [temperatureUnit]);
 
-  const refreshWeather = () => {
+  const refreshWeather = async () => {
     setLoading(true);
-    // Simulate API call delay
-    setTimeout(() => {
+    setError(null);
+    
+    try {
+      const persistentLocation = await getUserLocation();
+      const weatherData = await fetchWeatherData(persistentLocation, temperatureUnit);
+      setWeather(weatherData);
       setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Failed to refresh weather data:', err);
+      setError('Failed to refresh weather data');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const formatTime = (date: Date) => {
@@ -126,6 +187,11 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
           <div className="text-xs font-mono text-muted-foreground">
             LAST UPDATE: {formatTime(lastUpdated)}
           </div>
+          {error && (
+            <div className="text-xs font-mono text-destructive">
+              ⚠ {error}
+            </div>
+          )}
           <Button 
             onClick={refreshWeather} 
             disabled={loading}
