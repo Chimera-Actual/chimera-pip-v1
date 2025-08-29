@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Save, Plus, Upload, Palette, RotateCcw } from 'lucide-react';
+import { Save, Plus, Upload, Palette, RotateCcw, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ImageContainer {
@@ -119,6 +119,51 @@ export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({
     const availableLayouts = LAYOUT_CONFIGURATIONS[newCount as keyof typeof LAYOUT_CONFIGURATIONS] || [];
     if (availableLayouts.length > 0) {
       setLayoutPattern(availableLayouts[0].name);
+    }
+  };
+
+  const removeContainer = (index: number) => {
+    if (containers.length > 1) {
+      const newContainers = containers.filter((_, i) => i !== index);
+      // Update IDs to be sequential
+      const updatedContainers = newContainers.map((container, i) => ({
+        ...container,
+        id: (i + 1).toString()
+      }));
+      setContainers(updatedContainers);
+      
+      // Adjust container count if needed
+      const newCount = Math.min(containerCount, updatedContainers.length);
+      setContainerCount(newCount);
+      
+      // Reset layout pattern for new count
+      const availableLayouts = LAYOUT_CONFIGURATIONS[newCount as keyof typeof LAYOUT_CONFIGURATIONS] || [];
+      if (availableLayouts.length > 0) {
+        setLayoutPattern(availableLayouts[0].name);
+      }
+      
+      toast({
+        title: "Container Removed",
+        description: "Image container has been removed",
+      });
+    }
+  };
+
+  const moveContainer = (index: number, direction: 'up' | 'down') => {
+    const newContainers = [...containers];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    if (targetIndex >= 0 && targetIndex < newContainers.length) {
+      // Swap containers
+      [newContainers[index], newContainers[targetIndex]] = [newContainers[targetIndex], newContainers[index]];
+      
+      // Update IDs to maintain sequential order
+      const updatedContainers = newContainers.map((container, i) => ({
+        ...container,
+        id: (i + 1).toString()
+      }));
+      
+      setContainers(updatedContainers);
     }
   };
 
@@ -307,9 +352,46 @@ export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({
           {containers.slice(0, containerCount).map((container, index) => (
             <Card key={container.id} className="border-border">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-mono text-foreground">
-                  Container {index + 1}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-mono text-foreground">
+                    Container {index + 1}
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    {/* Move Up Button */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => moveContainer(index, 'up')}
+                      disabled={index === 0}
+                      className="p-1 h-6 w-6"
+                    >
+                      <ChevronUp className="w-3 h-3" />
+                    </Button>
+                    {/* Move Down Button */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => moveContainer(index, 'down')}
+                      disabled={index === containerCount - 1}
+                      className="p-1 h-6 w-6"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                    {/* Remove Button */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeContainer(index)}
+                      disabled={containers.length <= 1}
+                      className="p-1 h-6 w-6 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
