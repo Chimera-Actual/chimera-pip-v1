@@ -15,6 +15,7 @@ interface WidgetSettingsProps {
   onClose: () => void;
   widget: UserWidgetInstance | null;
   onSettingsUpdate: (widgetId: string, settings: Record<string, any>) => void;
+  onWidgetNameUpdate?: (widgetId: string, name: string) => void;
   currentSettings: Record<string, any>;
 }
 
@@ -23,6 +24,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
   onClose,
   widget,
   onSettingsUpdate,
+  onWidgetNameUpdate,
   currentSettings,
 }) => {
   if (!widget?.widget_definition) return null;
@@ -41,7 +43,13 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
         return (
           <CustomAssistantSettings
             settings={currentSettings}
-            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
+            onSettingsChange={(settings) => {
+              onSettingsUpdate(widget.id, settings);
+              // Also update the widget name if assistantName changed
+              if (settings.assistantName && onWidgetNameUpdate) {
+                onWidgetNameUpdate(widget.id, settings.assistantName);
+              }
+            }}
             onClose={onClose}
           />
         );

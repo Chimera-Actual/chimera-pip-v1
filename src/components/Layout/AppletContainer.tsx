@@ -410,6 +410,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         onClose={handleCloseWidgetSettings}
         widget={selectedWidgetForSettings}
         onSettingsUpdate={updateWidgetSettings}
+        onWidgetNameUpdate={updateWidgetName}
         currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.id) : {}}
       />
 
