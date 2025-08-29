@@ -93,13 +93,24 @@ export const useTabManager = () => {
     if (!user) return null;
 
     try {
+      const normalizedName = name.toUpperCase();
+      
+      // Check for duplicate names
+      const existingTab = userTabs.find(tab => 
+        tab.name.toUpperCase() === normalizedName && tab.is_active
+      );
+      
+      if (existingTab) {
+        throw new Error(`A tab named "${normalizedName}" already exists`);
+      }
+      
       const maxPosition = Math.max(...userTabs.map(t => t.position), -1);
       
       const { data, error } = await supabase
         .from('user_tabs')
         .insert({
           user_id: user.id,
-          name: name.toUpperCase(),
+          name: normalizedName,
           icon: icon,
           position: maxPosition + 1,
           font_size: fontSize,

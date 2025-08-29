@@ -48,12 +48,11 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   // Get widgets for current tab directly from the hook
   const widgets = getActiveWidgetsForTab(tabId);
   
-  // Auto-hide sidebar when there's only one widget, show when there are multiple
+  // Initialize sidebar visibility state
   useEffect(() => {
+    // Auto-hide sidebar when there's only one widget, but allow manual control
     if (widgets.length <= 1) {
       setShowSidebar(false);
-    } else if (widgets.length > 1) {
-      setShowSidebar(true);
     }
   }, [widgets.length]);
 
@@ -312,18 +311,16 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Toggle Button for Single Widget Mode */}
-      {widgets.length === 1 && (
-        <Button
-          onClick={() => setShowSidebar(!showSidebar)}
-          variant="ghost"
-          size="sm"
-          className="absolute top-4 left-4 z-50 bg-background/80 hover:bg-background border border-border"
-          title={showSidebar ? "Hide sidebar" : "Show sidebar"}
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      )}
+      {/* Toggle Button - Always Available */}
+      <Button
+        onClick={() => setShowSidebar(!showSidebar)}
+        variant="ghost"
+        size="sm"
+        className="absolute top-4 left-4 z-50 bg-background/80 hover:bg-background border border-border"
+        title={showSidebar ? "Hide sidebar" : "Show sidebar"}
+      >
+        <Settings className="h-4 w-4" />
+      </Button>
 
       {/* Sidebar */}
       {showSidebar && (
@@ -424,7 +421,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       )}
 
       {/* Main Content */}
-      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full'} ${widgets.length === 1 ? 'pt-16' : ''}`}>
+      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full'} pt-16`}>
         {renderActiveWidget()}
       </div>
 
