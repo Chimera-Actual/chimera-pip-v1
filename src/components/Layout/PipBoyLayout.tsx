@@ -97,7 +97,7 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
         <div className="flex-shrink-0 h-16 bg-card border-b border-border px-6 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-mono font-bold text-primary crt-glow uppercase tracking-wider">
-              PIP-BOY 3000
+              CHIMERA-PIP 3000
             </h1>
           </div>
           
