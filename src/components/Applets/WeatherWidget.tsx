@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface WeatherData {
   current: {
@@ -24,9 +25,9 @@ interface WeatherData {
 }
 
 // Mock weather data - will be replaced with API data later
-const mockWeatherData: WeatherData = {
+const getMockWeatherData = (location?: { latitude: number; longitude: number; name?: string }): WeatherData => ({
   current: {
-    location: "San Francisco, CA",
+    location: location?.name || "San Francisco, CA",
     temperature: 18,
     condition: "Partly Cloudy",
     humidity: 65,
@@ -63,12 +64,19 @@ const mockWeatherData: WeatherData = {
       windSpeed: 15
     }
   ]
-};
+});
 
 export const WeatherWidget: React.FC = () => {
-  const [weather, setWeather] = useState<WeatherData>(mockWeatherData);
+  const { getUserLocation } = useUserSettings();
+  const [weather, setWeather] = useState<WeatherData>(getMockWeatherData());
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  // Update weather data when user location changes
+  useEffect(() => {
+    const persistentLocation = getUserLocation();
+    setWeather(getMockWeatherData(persistentLocation));
+  }, [getUserLocation]);
 
   const refreshWeather = () => {
     setLoading(true);

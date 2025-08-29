@@ -7,6 +7,7 @@ import { MapWidget } from '../Applets/MapWidget';
 import { ClockWidget } from '../Applets/ClockWidget';
 import { UserInfoWidget } from '../Applets/UserInfoWidget';
 import { WeatherWidget } from '../Applets/WeatherWidget';
+import { SystemSettingsWidget } from '../Applets/SystemSettingsWidget';
 import { UserAvatar } from './UserAvatar';
 
 export type AppletType = 'user-info' | 'user-profile' | 'clock' | 'map' | 'weather' | 'email' | 'calendar' | 'radio' | 'browser' | 'chat' | 'voice' | 'system-settings';
@@ -59,7 +60,7 @@ const defaultTabs: TabCategory[] = [
     id: 'settings',
     name: 'SETTINGS',
     applets: [
-      { id: 'system-settings', name: 'SYSTEM', icon: '⚙', component: () => <div className="h-full flex flex-col bg-card border border-border items-center justify-center text-muted-foreground p-8"><div className="text-center">System settings coming soon...</div></div> },
+      { id: 'system-settings', name: 'SYSTEM', icon: '⚙', component: SystemSettingsWidget },
     ]
   },
 ];

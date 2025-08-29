@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface LocationData {
   latitude: number;
@@ -29,10 +30,20 @@ const mapLayers = {
 };
 
 export const MapWidget: React.FC = () => {
+  const { getUserLocation } = useUserSettings();
   const [location, setLocation] = useState<LocationData>({ latitude: 37.7749, longitude: -122.4194 });
   const [userLocation, setUserLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeLayer, setActiveLayer] = useState<MapLayer>('standard');
+
+  // Load persistent location on mount
+  useEffect(() => {
+    const persistentLocation = getUserLocation();
+    if (persistentLocation) {
+      setLocation(persistentLocation);
+      setUserLocation(persistentLocation);
+    }
+  }, [getUserLocation]);
 
   const getCurrentLocation = () => {
     setLoading(true);
