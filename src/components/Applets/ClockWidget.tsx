@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Globe, Settings, Plus, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Clock, Globe } from 'lucide-react';
 
 interface WorldClock {
   id: string;
@@ -127,52 +126,6 @@ export const ClockWidget: React.FC = () => {
             >
               {is24Hour ? '24H' : '12H'}
             </Button>
-            <Dialog open={isAddingClock} onOpenChange={setIsAddingClock}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="font-mono text-xs">
-                  <Settings className="w-4 h-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border">
-                <DialogHeader>
-                  <DialogTitle className="text-primary font-mono">Manage World Clocks</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Select value={newTimezone} onValueChange={setNewTimezone}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select timezone..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COMMON_TIMEZONES.map((tz) => (
-                          <SelectItem key={tz.value} value={tz.value}>
-                            {tz.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={addWorldClock} disabled={!newTimezone || worldClocks.length >= 6}>
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {worldClocks.map((clock) => (
-                      <div key={clock.id} className="flex items-center justify-between p-2 border border-border rounded">
-                        <span className="font-mono text-sm">{clock.label}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeWorldClock(clock.id)}
-                          disabled={worldClocks.length <= 1}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
       </div>

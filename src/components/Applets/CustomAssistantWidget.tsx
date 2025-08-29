@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Send, User, Bot, Settings, Webhook, Save } from 'lucide-react';
+import { Send, User, Bot, Webhook } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,7 +32,7 @@ export const CustomAssistantWidget: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
+  
   const [config, setConfig] = useState<CustomAssistantConfig>({
     name: 'Custom Assistant',
     description: 'Customizable AI assistant',
@@ -102,7 +102,6 @@ export const CustomAssistantWidget: React.FC = () => {
         title: "Configuration Saved",
         description: "Custom assistant settings have been updated",
       });
-      setShowSettings(false);
     } catch (error) {
       console.error('Error saving configuration:', error);
       toast({
@@ -119,10 +118,9 @@ export const CustomAssistantWidget: React.FC = () => {
     if (!config.webhookUrl.trim()) {
       toast({
         title: "Configuration Required",
-        description: "Please configure the webhook URL in settings",
+        description: "Please configure the webhook URL in settings (use the gear icon in the sidebar)",
         variant: "destructive"
       });
-      setShowSettings(true);
       return;
     }
 
@@ -239,82 +237,6 @@ export const CustomAssistantWidget: React.FC = () => {
           >
             CLEAR
           </Button>
-          
-          <Dialog open={showSettings} onOpenChange={setShowSettings}>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 opacity-70 hover:opacity-100"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-card border-border">
-              <DialogHeader>
-                <DialogTitle className="text-primary font-mono">CUSTOM ASSISTANT CONFIGURATION</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-mono">Assistant Name</Label>
-                    <Input
-                      value={config.name}
-                      onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
-                      className="font-mono bg-background/50 border-border"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-mono">Icon</Label>
-                    <Input
-                      value={config.icon}
-                      onChange={(e) => setConfig(prev => ({ ...prev, icon: e.target.value }))}
-                      className="font-mono bg-background/50 border-border"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-mono">Description</Label>
-                  <Input
-                    value={config.description}
-                    onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
-                    className="font-mono bg-background/50 border-border"
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-mono">Webhook URL</Label>
-                  <Input
-                    value={config.webhookUrl}
-                    onChange={(e) => setConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                    placeholder="https://your-webhook-endpoint.com/chat"
-                    className="font-mono bg-background/50 border-border"
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-mono">System Prompt</Label>
-                  <Textarea
-                    value={config.systemPrompt}
-                    onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                    placeholder="Define how your assistant should behave..."
-                    className="font-mono bg-background/50 border-border h-24"
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button onClick={saveConfiguration} className="font-mono">
-                    <Save className="w-4 h-4 mr-2" />
-                    SAVE CONFIG
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowSettings(false)} className="font-mono">
-                    CANCEL
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
@@ -338,14 +260,6 @@ export const CustomAssistantWidget: React.FC = () => {
                       <div className="text-xs text-muted-foreground font-mono mb-3">
                         Set up your webhook URL to start chatting
                       </div>
-                      <Button 
-                        onClick={() => setShowSettings(true)}
-                        size="sm"
-                        className="font-mono"
-                      >
-                        <Settings className="w-4 h-4 mr-1" />
-                        CONFIGURE
-                      </Button>
                     </CardContent>
                   </Card>
                 ) : (

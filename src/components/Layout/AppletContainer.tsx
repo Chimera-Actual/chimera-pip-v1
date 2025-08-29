@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
 import { WidgetLibrary } from './WidgetLibrary';
+import { WidgetSettings } from './WidgetSettings';
 import { useToast } from '@/hooks/use-toast';
-import { ChatInterface } from '../Applets/ChatInterface';
 
 interface AppletContainerProps {
   activeApplet: string;
@@ -34,6 +34,8 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   
   const { toast } = useToast();
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
+  const [showWidgetSettings, setShowWidgetSettings] = useState(false);
+  const [selectedWidgetForSettings, setSelectedWidgetForSettings] = useState<UserWidgetInstance | null>(null);
 
   // Get widgets for current tab directly from the hook
   const widgets = getActiveWidgetsForTab(tabId);
@@ -84,6 +86,16 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         variant: "destructive"
       });
     }
+  };
+
+  const handleOpenWidgetSettings = (widget: UserWidgetInstance) => {
+    setSelectedWidgetForSettings(widget);
+    setShowWidgetSettings(true);
+  };
+
+  const handleCloseWidgetSettings = () => {
+    setShowWidgetSettings(false);
+    setSelectedWidgetForSettings(null);
   };
 
   const renderActiveWidget = () => {
@@ -177,7 +189,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // TODO: Implement widget settings
+                        handleOpenWidgetSettings(widget);
                       }}
                       className="opacity-70 hover:opacity-100 p-1 h-6 w-6"
                     >
@@ -224,6 +236,15 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         availableWidgets={getAvailableWidgetsForTab(tabId)}
         onAddWidget={handleAddWidget}
         tabCategory={tabName}
+      />
+
+      {/* Widget Settings Dialog */}
+      <WidgetSettings
+        isOpen={showWidgetSettings}
+        onClose={handleCloseWidgetSettings}
+        widget={selectedWidgetForSettings}
+        onSettingsUpdate={updateWidgetSettings}
+        currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.widget_id) : {}}
       />
     </div>
   );
