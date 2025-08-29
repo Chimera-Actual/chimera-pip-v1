@@ -141,11 +141,13 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
   } = useAudio();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [localWaveformSize, setLocalWaveformSize] = useState(settings?.waveformSize || 'medium');
+  
+  // Initialize waveform size state
+  const [currentWaveformSize, setCurrentWaveformSize] = useState(settings?.waveformSize || 'medium');
 
   // Handle waveform size change
   const handleWaveformSizeChange = (newSize: string) => {
-    setLocalWaveformSize(newSize);
+    setCurrentWaveformSize(newSize);
     if (onSettingsUpdate) {
       onSettingsUpdate({
         ...settings,
@@ -153,9 +155,6 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
       });
     }
   };
-
-  // Get current waveform size for display
-  const currentWaveformSize = localWaveformSize || settings?.waveformSize || 'medium';
 
   // Drag and drop sensors
   const sensors = useSensors(
