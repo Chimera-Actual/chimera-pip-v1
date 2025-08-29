@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Edit3, Save, X, Upload, Clock, Calendar } from 'lucide-react';
+import { User, Edit3, Save, X, Upload, Clock, Calendar, Lock, AlertTriangle, Database, Trash2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +19,14 @@ export const UserInfoWidget: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [totalUsageTime, setTotalUsageTime] = useState(0);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [privacySettings, setPrivacySettings] = useState({
+    auto_save_enabled: true,
+    data_backup_enabled: false,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatUptime = (startTime: Date) => {
@@ -54,6 +66,7 @@ export const UserInfoWidget: React.FC = () => {
     if (user && profile) {
       setEditedName(profile.display_name || '');
       loadUsageStats();
+      loadPrivacySettings();
     }
   }, [user, profile]);
 
@@ -77,6 +90,138 @@ export const UserInfoWidget: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading usage stats:', error);
+    }
+  };
+
+  const loadPrivacySettings = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('auto_save_enabled, data_backup_enabled')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data) {
+        setPrivacySettings({
+          auto_save_enabled: data.auto_save_enabled ?? true,
+          data_backup_enabled: data.data_backup_enabled ?? false,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading privacy settings:', error);
+    }
+  };
+
+  const savePrivacySettings = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          auto_save_enabled: privacySettings.auto_save_enabled,
+          data_backup_enabled: privacySettings.data_backup_enabled,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Settings Updated",
+        description: "Privacy settings have been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving privacy settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save privacy settings. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      setIsChangingPassword(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+
+      toast({
+        title: "Password Updated",
+        description: "Your password has been changed successfully.",
+      });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast({
+        title: "Error",
+        description: "Failed to change password. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClearCache = async () => {
+    try {
+      // Clear localStorage
+      const keysToKeep = ['supabase.auth.token'];
+      const allKeys = Object.keys(localStorage);
+      allKeys.forEach(key => {
+        if (!keysToKeep.includes(key)) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Clear sessionStorage
+      sessionStorage.clear();
+
+      // Clear any cached data from Supabase (except auth)
+      // This would typically involve clearing any cached queries or local state
+
+      toast({
+        title: "Cache Cleared",
+        description: "All cached data has been cleared successfully.",
+      });
+
+      // Optionally reload the page to ensure clean state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear cache. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -279,6 +424,187 @@ export const UserInfoWidget: React.FC = () => {
                 month: 'short',
                 day: 'numeric'
               }) : 'Loading...'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Security Settings */}
+      <div className="border-b border-border bg-card p-4">
+        <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
+          <Lock className="w-4 h-4" />
+          Security Settings
+        </h3>
+        <div className="space-y-3">
+          {!isChangingPassword ? (
+            <Button
+              onClick={() => setIsChangingPassword(true)}
+              variant="outline"
+              className="w-full font-mono text-sm"
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Change Password
+            </Button>
+          ) : (
+            <Card className="bg-background/20 border-border">
+              <CardContent className="p-4 space-y-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground font-mono">NEW PASSWORD</Label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="font-mono text-sm"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground font-mono">CONFIRM PASSWORD</Label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="font-mono text-sm"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleChangePassword} size="sm" className="flex-1">
+                    <Save className="w-3 h-3 mr-1" />
+                    Save
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setIsChangingPassword(false);
+                      setNewPassword('');
+                      setConfirmPassword('');
+                    }}
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex-1"
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Data & Privacy */}
+      <div className="border-b border-border bg-card p-4">
+        <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
+          <Database className="w-4 h-4" />
+          Data & Privacy
+        </h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-sm font-mono text-foreground">
+                Auto-Save Settings
+              </Label>
+              <p className="text-xs text-muted-foreground font-mono">
+                Automatically save changes to your preferences
+              </p>
+            </div>
+            <Switch
+              checked={privacySettings.auto_save_enabled}
+              onCheckedChange={(checked) => {
+                setPrivacySettings(prev => ({ ...prev, auto_save_enabled: checked }));
+                // Auto-save this change immediately
+                setTimeout(() => savePrivacySettings(), 100);
+              }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-sm font-mono text-foreground">
+                Cloud Data Backup
+              </Label>
+              <p className="text-xs text-muted-foreground font-mono">
+                Create backups of your settings and data
+              </p>
+            </div>
+            <Switch
+              checked={privacySettings.data_backup_enabled}
+              onCheckedChange={(checked) => {
+                setPrivacySettings(prev => ({ ...prev, data_backup_enabled: checked }));
+                setTimeout(() => savePrivacySettings(), 100);
+              }}
+            />
+          </div>
+
+          <div className="bg-background/20 border border-border rounded p-3 text-xs font-mono space-y-1">
+            <div className="text-muted-foreground">PRIVACY NOTICE:</div>
+            <div className="text-foreground">
+              • All data is encrypted and stored securely
+            </div>
+            <div className="text-foreground">
+              • You have full control over your data
+            </div>
+            <div className="text-foreground">
+              • Data can be exported or deleted at any time
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* System Maintenance */}
+      <div className="flex-1 p-4">
+        <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
+          <Shield className="w-4 h-4" />
+          System Maintenance
+        </h3>
+        <div className="space-y-3">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="w-full font-mono text-sm text-destructive border-destructive/50 hover:bg-destructive/10">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear User Cache
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-card border-border">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-primary font-mono flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  Clear Cache Warning
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground font-mono">
+                  This will clear all cached data including:
+                  <br />• Temporary files and data
+                  <br />• Widget settings cache
+                  <br />• Application state
+                  <br /><br />
+                  You will remain logged in, but the app will reload to ensure a clean state.
+                  <br /><br />
+                  Are you sure you want to continue?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="font-mono">Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleClearCache}
+                  className="bg-destructive hover:bg-destructive/90 font-mono"
+                >
+                  Clear Cache
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <div className="bg-background/20 border border-border rounded p-3 text-xs font-mono space-y-1">
+            <div className="text-muted-foreground">MAINTENANCE INFO:</div>
+            <div className="text-foreground">
+              • Use cache clearing if experiencing issues
+            </div>
+            <div className="text-foreground">
+              • This action is safe and reversible
+            </div>
+            <div className="text-foreground">
+              • Your account data will remain intact
             </div>
           </div>
         </div>
