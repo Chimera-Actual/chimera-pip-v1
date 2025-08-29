@@ -155,7 +155,6 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUp
       <div className="flex-shrink-0 border-b border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary crt-glow" />
             <span className="text-primary font-mono text-lg uppercase tracking-wider crt-glow">
               ◐ CHRONOMETER
             </span>
