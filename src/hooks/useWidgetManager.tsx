@@ -16,7 +16,7 @@ export interface UserWidgetInstance {
   id: string;
   user_id: string;
   widget_id: string;
-  tab_category: string;
+  tab_id: string;
   position: number;
   is_active: boolean;
   widget_definition?: WidgetDefinition;
@@ -101,13 +101,13 @@ export const useWidgetManager = () => {
     }
   };
 
-  const addWidgetToTab = async (widgetId: string, tabCategory: string) => {
+  const addWidgetToTab = async (widgetId: string, tabId: string) => {
     if (!user) return;
 
     try {
       // Get the highest position in this tab
       const existingWidgets = userWidgetInstances.filter(
-        w => w.tab_category === tabCategory && w.is_active
+        w => w.tab_id === tabId && w.is_active
       );
       const maxPosition = Math.max(...existingWidgets.map(w => w.position), -1);
 
@@ -116,7 +116,7 @@ export const useWidgetManager = () => {
         .upsert({
           user_id: user.id,
           widget_id: widgetId,
-          tab_category: tabCategory,
+          tab_id: tabId,
           position: maxPosition + 1,
           is_active: true,
         })
@@ -137,7 +137,7 @@ export const useWidgetManager = () => {
           } : undefined
         };
         setUserWidgetInstances(prev => {
-          const filtered = prev.filter(w => !(w.widget_id === widgetId && w.tab_category === tabCategory));
+          const filtered = prev.filter(w => !(w.widget_id === widgetId && w.tab_id === tabId));
           return [...filtered, transformedData];
         });
       }
@@ -214,14 +214,14 @@ export const useWidgetManager = () => {
     };
   };
 
-  const getActiveWidgetsForTab = (tabCategory: string): UserWidgetInstance[] => {
+  const getActiveWidgetsForTab = (tabId: string): UserWidgetInstance[] => {
     return userWidgetInstances
-      .filter(w => w.tab_category === tabCategory && w.is_active)
+      .filter(w => w.tab_id === tabId && w.is_active)
       .sort((a, b) => a.position - b.position);
   };
 
-  const getAvailableWidgetsForTab = (tabCategory: string): WidgetDefinition[] => {
-    const activeWidgetIds = getActiveWidgetsForTab(tabCategory).map(w => w.widget_id);
+  const getAvailableWidgetsForTab = (tabId: string): WidgetDefinition[] => {
+    const activeWidgetIds = getActiveWidgetsForTab(tabId).map(w => w.widget_id);
     return availableWidgets.filter(w => !activeWidgetIds.includes(w.id));
   };
 

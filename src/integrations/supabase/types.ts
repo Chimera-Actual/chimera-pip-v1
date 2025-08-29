@@ -166,6 +166,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tabs: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          position: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          position?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_widget_instances: {
         Row: {
           created_at: string
@@ -173,6 +206,7 @@ export type Database = {
           is_active: boolean | null
           position: number | null
           tab_category: string
+          tab_id: string | null
           updated_at: string
           user_id: string
           widget_id: string
@@ -183,6 +217,7 @@ export type Database = {
           is_active?: boolean | null
           position?: number | null
           tab_category: string
+          tab_id?: string | null
           updated_at?: string
           user_id: string
           widget_id: string
@@ -193,11 +228,19 @@ export type Database = {
           is_active?: boolean | null
           position?: number | null
           tab_category?: string
+          tab_id?: string | null
           updated_at?: string
           user_id?: string
           widget_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_widget_instances_tab_id_fkey"
+            columns: ["tab_id"]
+            isOneToOne: false
+            referencedRelation: "user_tabs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_widget_instances_widget_id_fkey"
             columns: ["widget_id"]
