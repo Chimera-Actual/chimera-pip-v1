@@ -252,18 +252,31 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
         conversation_id: conversationId,
       });
 
-      // Send to webhook
+      // Send to webhook with all AI parameters
+      const webhookPayload = {
+        message: userMessage.content,
+        system_prompt: settings?.customPrompt || config.systemPrompt,
+        session_id: sessionId,
+        user_id: user?.id,
+        max_tokens: settings?.maxTokens || 150,
+        temperature: settings?.temperature || 0.7,
+        enable_history: settings?.enableHistory ?? true,
+        assistant_name: settings?.assistantName || config.name
+      };
+
+      // Add API key to headers if provided
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (settings?.apiKey) {
+        headers['Authorization'] = `Bearer ${settings.apiKey}`;
+      }
+
       const response = await fetch(config.webhookUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          system_prompt: config.systemPrompt,
-          session_id: sessionId,
-          user_id: user?.id
-        })
+        headers,
+        body: JSON.stringify(webhookPayload)
       });
 
       let assistantContent = 'No response received from webhook.';

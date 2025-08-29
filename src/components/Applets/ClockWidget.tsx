@@ -171,14 +171,17 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
         <div className="flex-1 flex flex-col justify-center items-center space-y-6">
           {/* Main Time Display */}
           <div className="text-center">
-            <div className="font-['VT323'] text-primary text-7xl lg:text-9xl crt-glow leading-none tracking-wider bg-background/20 border-2 border-primary/30 rounded-lg px-8 py-4 backdrop-blur-sm shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-              {formatTime(currentTime, userTimezone, is24Hour)}
+            <div className="relative">
+              <div className="font-['VT323'] text-primary text-6xl lg:text-8xl crt-glow leading-none tracking-wider bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/50 rounded-xl px-6 py-3 backdrop-blur-sm shadow-[0_0_50px_rgba(34,197,94,0.4)] animate-pulse">
+                {formatTime(currentTime, userTimezone, is24Hour)}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-primary/5 to-primary/10 rounded-xl pointer-events-none"></div>
             </div>
-            <div className="font-['VT323'] text-muted-foreground text-2xl lg:text-3xl mt-4 tracking-wider">
+            <div className="font-['VT323'] text-accent text-xl lg:text-2xl mt-3 tracking-wider opacity-90">
               {formatDate(currentTime, userTimezone)}
             </div>
-            <div className="font-mono text-sm text-muted-foreground mt-2 opacity-75">
-              {userTimezone.replace('_', ' ').toUpperCase()}
+            <div className="font-mono text-xs text-muted-foreground mt-1 opacity-60 uppercase tracking-widest">
+              {userTimezone.replace('_', ' ')}
             </div>
           </div>
 
@@ -188,10 +191,13 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
       {/* World Clocks Strip */}
       <div className="flex-shrink-0 border-b border-border bg-background/50 p-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {worldClocks.map(clock => <div key={clock.id} className="bg-background/20 border-2 border-primary/30 rounded p-2 text-center backdrop-blur-sm">
-              <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">{clock.label}</div>
+          {worldClocks.map(clock => <div key={clock.id} className="bg-background/20 border-2 border-primary/30 rounded p-3 text-center backdrop-blur-sm">
+              <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1">{clock.label}</div>
               <div className="font-['VT323'] text-primary text-lg crt-glow">
                 {formatTime(currentTime, clock.timezone, is24Hour)}
+              </div>
+              <div className="text-xs text-muted-foreground font-mono mt-1 opacity-75">
+                {formatDate(currentTime, clock.timezone)}
               </div>
             </div>)}
         </div>

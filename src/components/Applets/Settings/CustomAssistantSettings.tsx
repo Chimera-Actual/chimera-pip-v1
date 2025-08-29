@@ -21,7 +21,6 @@ export const CustomAssistantSettings: React.FC<CustomAssistantSettingsProps> = (
 }) => {
   const { toast } = useToast();
   const [assistantName, setAssistantName] = useState(settings.assistantName || 'CUSTOM AI');
-  const [personality, setPersonality] = useState(settings.personality || 'helpful');
   const [webhookUrl, setWebhookUrl] = useState(settings.webhookUrl || '');
   const [apiKey, setApiKey] = useState(settings.apiKey || '');
   const [maxTokens, setMaxTokens] = useState(settings.maxTokens || 150);
@@ -76,7 +75,6 @@ export const CustomAssistantSettings: React.FC<CustomAssistantSettingsProps> = (
   const handleSave = () => {
     const newSettings = {
       assistantName,
-      personality,
       webhookUrl,
       apiKey,
       maxTokens,
@@ -99,32 +97,14 @@ export const CustomAssistantSettings: React.FC<CustomAssistantSettingsProps> = (
       <div className="space-y-4">
         <Label className="text-sm font-mono text-primary">BASIC CONFIGURATION</Label>
         
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-xs font-mono text-foreground">ASSISTANT NAME</Label>
-            <Input
-              value={assistantName}
-              onChange={(e) => setAssistantName(e.target.value)}
-              placeholder="CUSTOM AI"
-              className="font-mono bg-background/50 border-border"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label className="text-xs font-mono text-foreground">PERSONALITY</Label>
-            <Select value={personality} onValueChange={setPersonality}>
-              <SelectTrigger className="font-mono bg-background/50 border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                <SelectItem value="helpful" className="font-mono">Helpful Assistant</SelectItem>
-                <SelectItem value="creative" className="font-mono">Creative Writer</SelectItem>
-                <SelectItem value="analytical" className="font-mono">Analytical Expert</SelectItem>
-                <SelectItem value="casual" className="font-mono">Casual Friend</SelectItem>
-                <SelectItem value="professional" className="font-mono">Professional Advisor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label className="text-xs font-mono text-foreground">ASSISTANT NAME</Label>
+          <Input
+            value={assistantName}
+            onChange={(e) => setAssistantName(e.target.value)}
+            placeholder="CUSTOM AI"
+            className="font-mono bg-background/50 border-border"
+          />
         </div>
       </div>
 
@@ -209,9 +189,9 @@ export const CustomAssistantSettings: React.FC<CustomAssistantSettingsProps> = (
         </div>
       </div>
 
-      {/* Custom Prompt */}
+      {/* System Message */}
       <div className="space-y-4">
-        <Label className="text-sm font-mono text-primary">CUSTOM SYSTEM PROMPT</Label>
+        <Label className="text-sm font-mono text-primary">SYSTEM MESSAGE</Label>
         <Textarea
           value={customPrompt}
           onChange={(e) => setCustomPrompt(e.target.value)}
