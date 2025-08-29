@@ -38,11 +38,11 @@ export const OscilloscopeWaveform: React.FC<OscilloscopeWaveformProps> = ({
       const height = canvas.height / devicePixelRatio;
       
       // Clear canvas with dark background
-      ctx.fillStyle = 'hsl(var(--background))';
+      ctx.fillStyle = '#0a0a0a';
       ctx.fillRect(0, 0, width, height);
 
       // Draw oscilloscope grid
-      ctx.strokeStyle = 'hsla(var(--primary), 0.2)';
+      ctx.strokeStyle = 'rgba(0, 255, 100, 0.2)';
       ctx.lineWidth = 0.5;
       
       // Horizontal grid lines
@@ -64,7 +64,7 @@ export const OscilloscopeWaveform: React.FC<OscilloscopeWaveformProps> = ({
       }
 
       // Draw center horizontal line (stronger)
-      ctx.strokeStyle = 'hsla(var(--primary), 0.4)';
+      ctx.strokeStyle = 'rgba(0, 255, 100, 0.4)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
@@ -78,9 +78,9 @@ export const OscilloscopeWaveform: React.FC<OscilloscopeWaveformProps> = ({
         
         // Create glowing effect with multiple passes
         const colors = [
-          { color: 'hsla(var(--primary), 0.3)', width: 6 },
-          { color: 'hsla(var(--primary), 0.6)', width: 3 },
-          { color: 'hsl(var(--primary))', width: 1.5 }
+          { color: 'rgba(0, 255, 100, 0.3)', width: 6 },
+          { color: 'rgba(0, 255, 100, 0.6)', width: 3 },
+          { color: 'rgb(0, 255, 100)', width: 1.5 }
         ];
 
         colors.forEach(({ color, width: lineWidth }) => {
@@ -113,7 +113,7 @@ export const OscilloscopeWaveform: React.FC<OscilloscopeWaveformProps> = ({
         });
 
         // Add phosphor dots for extra retro effect
-        ctx.fillStyle = 'hsl(var(--primary))';
+        ctx.fillStyle = 'rgb(0, 255, 100)';
         for (let i = 0; i < points; i += 4) {
           const x = (width / points) * i;
           const freq1 = 0.02 + Math.sin(time * 0.1) * 0.01;
@@ -135,11 +135,11 @@ export const OscilloscopeWaveform: React.FC<OscilloscopeWaveformProps> = ({
         const beamX = ((time * 50) % (width + 100)) - 50;
         if (beamX >= 0 && beamX <= width) {
           const gradient = ctx.createLinearGradient(beamX - 20, 0, beamX + 20, 0);
-          gradient.addColorStop(0, 'hsla(var(--primary), 0)');
-          gradient.addColorStop(0.3, 'hsla(var(--primary), 0.1)');
-          gradient.addColorStop(0.5, 'hsla(var(--primary), 0.3)');
-          gradient.addColorStop(0.7, 'hsla(var(--primary), 0.1)');
-          gradient.addColorStop(1, 'hsla(var(--primary), 0)');
+          gradient.addColorStop(0, 'rgba(0, 255, 100, 0)');
+          gradient.addColorStop(0.3, 'rgba(0, 255, 100, 0.1)');
+          gradient.addColorStop(0.5, 'rgba(0, 255, 100, 0.3)');
+          gradient.addColorStop(0.7, 'rgba(0, 255, 100, 0.1)');
+          gradient.addColorStop(1, 'rgba(0, 255, 100, 0)');
           
           ctx.fillStyle = gradient;
           ctx.fillRect(beamX - 20, 0, 40, height);
@@ -147,7 +147,7 @@ export const OscilloscopeWaveform: React.FC<OscilloscopeWaveformProps> = ({
 
       } else {
         // Static flatline when paused
-        ctx.strokeStyle = 'hsla(var(--primary), 0.6)';
+        ctx.strokeStyle = 'rgba(0, 255, 100, 0.6)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, height / 2);
@@ -155,7 +155,7 @@ export const OscilloscopeWaveform: React.FC<OscilloscopeWaveformProps> = ({
         ctx.stroke();
 
         // Add some static dots
-        ctx.fillStyle = 'hsla(var(--primary), 0.3)';
+        ctx.fillStyle = 'rgba(0, 255, 100, 0.3)';
         for (let i = 0; i < width; i += 20) {
           if (Math.random() > 0.7) {
             ctx.beginPath();
