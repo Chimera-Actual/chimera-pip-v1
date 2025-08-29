@@ -46,7 +46,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         onAppletChange(activeWidgets[0].widget_id);
       }
     }
-  }, [tabId, loading, getActiveWidgetsForTab, activeApplet, onAppletChange]);
+  }, [tabId, loading]);
 
   const handleRemoveWidget = async (instanceId: string, widgetId: string) => {
     try {
