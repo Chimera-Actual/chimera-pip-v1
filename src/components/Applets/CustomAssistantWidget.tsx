@@ -195,7 +195,23 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
       
       if (response.ok) {
         const data = await response.json();
-        assistantContent = data.response || data.message || data.content || assistantContent;
+        console.log('Webhook response:', data);
+        
+        // Handle different response formats
+        if (Array.isArray(data)) {
+          // Handle array format like [{"output": "..."}]
+          if (data.length > 0 && data[0].output) {
+            assistantContent = data[0].output;
+          } else if (data.length > 0 && typeof data[0] === 'string') {
+            assistantContent = data[0];
+          }
+        } else if (typeof data === 'object' && data !== null) {
+          // Handle object format like {"response": "...", "message": "...", etc.}
+          assistantContent = data.output || data.response || data.message || data.content || data.text || assistantContent;
+        } else if (typeof data === 'string') {
+          // Handle plain string responses
+          assistantContent = data;
+        }
       } else {
         assistantContent = `Webhook error: ${response.status} ${response.statusText}`;
       }
