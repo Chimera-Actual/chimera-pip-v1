@@ -3,10 +3,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Plus, Trash2 } from 'lucide-react';
+import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Plus, Trash2, GripVertical } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { AudioWaveform } from './AudioWaveform';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import {
+  CSS,
+} from '@dnd-kit/utilities';
 
 interface AudioTrack {
   id: string;
@@ -21,6 +40,74 @@ interface PlayerSettings {
   loop: boolean;
   playlist: AudioTrack[];
 }
+
+// Sortable Track Item Component
+interface SortableTrackProps {
+  track: AudioTrack;
+  isActive: boolean;
+  onPlay: (track: AudioTrack) => void;
+  onRemove: (trackId: string) => void;
+}
+
+const SortableTrack: React.FC<SortableTrackProps> = ({ track, isActive, onPlay, onRemove }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: track.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-3 rounded border cursor-pointer transition-colors ${
+        isActive
+          ? 'bg-primary/20 border-primary'
+          : 'bg-background/30 border-border hover:bg-background/50'
+      }`}
+      onClick={() => onPlay(track)}
+    >
+      <div className="flex items-center gap-2">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab hover:cursor-grabbing text-muted-foreground"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={16} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-mono text-foreground truncate">
+            {track.title}
+          </div>
+          <div className="text-xs text-muted-foreground font-mono truncate">
+            {track.url}
+          </div>
+        </div>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(track.id);
+          }}
+          size="sm"
+          variant="ghost"
+          className="ml-2 h-6 w-6 p-0 text-destructive hover:text-destructive"
+        >
+          <Trash2 size={12} />
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 export const AudioPlayerWidget: React.FC = () => {
   const { user } = useAuth();
@@ -41,6 +128,14 @@ export const AudioPlayerWidget: React.FC = () => {
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Load user settings
   useEffect(() => {
@@ -118,15 +213,20 @@ export const AudioPlayerWidget: React.FC = () => {
         return;
       }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL for private bucket access (authenticated users only)
+      const { data: urlData, error: urlError } = await supabase.storage
         .from('audio')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24); // 24 hour expiry
+
+      if (urlError || !urlData) {
+        console.error('Error creating signed URL:', urlError);
+        return;
+      }
 
       const track: AudioTrack = {
         id: `file-${Date.now()}`,
         title: file.name,
-        url: publicUrl
+        url: urlData.signedUrl
       };
       
       const newPlaylist = [...playlist, track];
@@ -236,6 +336,22 @@ export const AudioPlayerWidget: React.FC = () => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle drag end for reordering playlist
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = playlist.findIndex((track) => track.id === active.id);
+      const newIndex = playlist.findIndex((track) => track.id === over?.id);
+      
+      const newPlaylist = arrayMove(playlist, oldIndex, newIndex);
+      setPlaylist(newPlaylist);
+      
+      // Save reordered playlist to settings
+      await savePlaylistToSettings(newPlaylist);
+    }
   };
 
   return (
@@ -410,41 +526,28 @@ export const AudioPlayerWidget: React.FC = () => {
               <span className="text-xs">Add URLs or upload files to begin</span>
             </div>
           ) : (
-            <div className="space-y-2">
-              {playlist.map((track) => (
-                <div
-                  key={track.id}
-                  className={`p-3 rounded border cursor-pointer transition-colors ${
-                    currentTrack?.id === track.id
-                      ? 'bg-primary/20 border-primary'
-                      : 'bg-background/30 border-border hover:bg-background/50'
-                  }`}
-                  onClick={() => playTrack(track)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-mono text-foreground truncate">
-                        {track.title}
-                      </div>
-                      <div className="text-xs text-muted-foreground font-mono truncate">
-                        {track.url}
-                      </div>
-                    </div>
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeTrack(track.id);
-                      }}
-                      size="sm"
-                      variant="ghost"
-                      className="ml-2 h-6 w-6 p-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 size={12} />
-                    </Button>
-                  </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={playlist.map(track => track.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {playlist.map((track) => (
+                    <SortableTrack
+                      key={track.id}
+                      track={track}
+                      isActive={currentTrack?.id === track.id}
+                      onPlay={playTrack}
+                      onRemove={removeTrack}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </div>
