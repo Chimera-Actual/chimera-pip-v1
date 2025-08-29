@@ -90,18 +90,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   };
 
   const renderActiveWidget = () => {
-    // Special handling for assistant tab
-    if (tabCategory === 'assistant') {
-      const mockAssistant = {
-        id: 'general',
-        name: 'GENERAL AI',
-        description: 'General purpose AI assistant',
-        webhookUrl: '',
-        icon: '◎'
-      };
-      return <ChatInterface selectedAssistant={mockAssistant} />;
-    }
-
     const activeWidget = widgets.find(w => w.widget_id === activeApplet);
     if (!activeWidget?.widget_definition) {
       return (
@@ -147,14 +135,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     );
   }
 
-  // Special handling for assistant tab - no sidebar needed
-  if (tabCategory === 'assistant') {
-    return (
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {renderActiveWidget()}
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-full overflow-hidden">

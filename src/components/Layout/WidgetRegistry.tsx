@@ -8,6 +8,10 @@ import { CalendarWidget } from '@/components/Applets/CalendarWidget';
 import { RadioWidget } from '@/components/Applets/RadioWidget';
 import { BrowserWidget } from '@/components/Applets/BrowserWidget';
 import { SystemSettingsWidget } from '@/components/Applets/SystemSettingsWidget';
+import { ClaudeAssistantWidget } from '@/components/Applets/ClaudeAssistantWidget';
+import { GPTAssistantWidget } from '@/components/Applets/GPTAssistantWidget';
+import { VoiceAssistantWidget } from '@/components/Applets/VoiceAssistantWidget';
+import { CustomAssistantWidget } from '@/components/Applets/CustomAssistantWidget';
 
 export const WIDGET_COMPONENTS = {
   MapWidget,
@@ -19,6 +23,10 @@ export const WIDGET_COMPONENTS = {
   RadioWidget,
   BrowserWidget,
   SystemSettingsWidget,
+  ClaudeAssistantWidget,
+  GPTAssistantWidget,
+  VoiceAssistantWidget,
+  CustomAssistantWidget,
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;

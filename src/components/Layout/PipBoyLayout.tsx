@@ -12,7 +12,7 @@ import { UserAvatar } from './UserAvatar';
 
 export type AppletType = 'user-info' | 'user-profile' | 'clock' | 'map' | 'weather' | 'email' | 'calendar' | 'radio' | 'browser' | 'chat' | 'voice' | 'system-settings';
 
-export type TabType = 'status' | 'apps' | 'assistant' | 'settings';
+export type TabType = 'status' | 'apps' | 'settings';
 
 export interface Applet {
   id: AppletType;
@@ -47,13 +47,6 @@ const defaultTabs: TabCategory[] = [
       { id: 'calendar', name: 'CALENDAR', icon: '◔', component: () => <div className="h-full flex flex-col bg-card border border-border items-center justify-center text-muted-foreground p-8"><div className="text-center">Calendar widget coming soon...</div></div> },
       { id: 'radio', name: 'RADIO', icon: '♫', component: () => <div className="h-full flex flex-col bg-card border border-border items-center justify-center text-muted-foreground p-8"><div className="text-center">Radio widget coming soon...</div></div> },
       { id: 'browser', name: 'BROWSER', icon: '⌘', component: () => <div className="h-full flex flex-col bg-card border border-border items-center justify-center text-muted-foreground p-8"><div className="text-center">Browser widget coming soon...</div></div> },
-    ]
-  },
-  {
-    id: 'assistant',
-    name: 'ASSISTANT',
-    applets: [
-      { id: 'chat', name: 'AI AGENTS', icon: '◎', component: ChatInterface },
     ]
   },
   {
