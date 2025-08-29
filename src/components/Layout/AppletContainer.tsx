@@ -320,7 +320,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         onClick={() => setShowSidebar(!showSidebar)}
         variant="ghost"
         size="sm"
-        className={`${showSidebar ? 'absolute top-4 right-4 z-50' : 'absolute top-4 left-4 z-50'} bg-background/80 hover:bg-background border border-border`}
+        className={`${showSidebar ? 'absolute top-4 left-64 z-50' : 'absolute top-4 left-4 z-50'} bg-background/80 hover:bg-background border border-border`}
         title={showSidebar ? "Hide sidebar" : "Show sidebar"}
       >
         <Menu className="h-4 w-4" />
