@@ -56,7 +56,21 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
       setSessionId(`custom-${user.id}-${Date.now()}`);
       loadConfiguration();
     }
-  }, [user]);
+  }, [user, settings]);
+
+  useEffect(() => {
+    // Load webhook URL from widget settings if available
+    if (settings?.webhookUrl) {
+      setConfig(prev => ({
+        ...prev,
+        webhookUrl: settings.webhookUrl,
+        name: settings.assistantName || prev.name,
+        systemPrompt: settings.customPrompt || prev.systemPrompt
+      }));
+    } else {
+      loadConfiguration();
+    }
+  }, [settings]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,6 +79,18 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
   const loadConfiguration = async () => {
     if (!user) return;
 
+    // If we have settings from the widget, prioritize those
+    if (settings?.webhookUrl) {
+      setConfig(prev => ({
+        ...prev,
+        webhookUrl: settings.webhookUrl,
+        name: settings.assistantName || prev.name,
+        systemPrompt: settings.customPrompt || prev.systemPrompt
+      }));
+      return;
+    }
+
+    // Fallback to database configuration
     try {
       const { data, error } = await supabase
         .from('assistant_webhooks')
@@ -125,7 +151,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
     if (!config.webhookUrl.trim()) {
       toast({
         title: "Configuration Required",
-        description: "Please configure the webhook URL in settings (use the gear icon in the sidebar)",
+        description: "Please configure the webhook URL in the widget settings (use the gear icon on the widget)",
         variant: "destructive"
       });
       return;
