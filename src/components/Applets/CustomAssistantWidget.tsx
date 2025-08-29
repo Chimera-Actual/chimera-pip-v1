@@ -53,11 +53,11 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user) {
-      setSessionId(`custom-${user.id}-${Date.now()}`);
+    if (user && widgetInstanceId) {
+      setSessionId(`custom-${user.id}-${widgetInstanceId}-${Date.now()}`);
       loadConfiguration();
     }
-  }, [user, settings]);
+  }, [user, widgetInstanceId, settings]);
 
   useEffect(() => {
     // Load webhook URL from widget settings if available
