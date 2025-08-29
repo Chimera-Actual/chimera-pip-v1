@@ -299,7 +299,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       {/* Waveform */}
       {settings?.showWaveform !== false && (
-        <div className="flex-shrink-0 h-24">
+        <div className="flex-shrink-0 h-72">
           <OscilloscopeWaveform 
             isPlaying={isPlaying} 
             className="h-full"
