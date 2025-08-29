@@ -369,7 +369,8 @@ export const TabManager: React.FC<TabManagerProps> = ({
             </ScrollArea>
           </div>
 
-          <div className="text-xs text-muted-foreground font-mono space-y-1 bg-background/20 border border-border rounded p-3">
+          {/* Help text moved inside the dialog content */}
+          <div className="text-xs text-muted-foreground font-mono space-y-1 bg-background/20 border border-border rounded p-3 mt-4">
             <div>• Drag tabs to reorder them</div>
             <div>• Tab names must be unique</div>
             <div>• Font size affects tab title display</div>
