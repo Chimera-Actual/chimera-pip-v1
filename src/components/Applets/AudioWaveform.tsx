@@ -18,12 +18,15 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize Web Audio API
+  // Initialize Web Audio API - only once per component instance
   useEffect(() => {
-    if (!audioElement || isInitialized) return;
+    if (!audioElement || isInitialized || sourceRef.current) return;
 
     const initializeAudio = async () => {
       try {
+        // Check if already connected to avoid creating multiple sources
+        if (sourceRef.current) return;
+        
         // Create audio context
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         
@@ -32,7 +35,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         analyserRef.current.fftSize = 256;
         analyserRef.current.smoothingTimeConstant = 0.8;
 
-        // Create source and connect
+        // Create source and connect - only if not already connected
         sourceRef.current = audioContextRef.current.createMediaElementSource(audioElement);
         sourceRef.current.connect(analyserRef.current);
         analyserRef.current.connect(audioContextRef.current.destination);
@@ -40,6 +43,10 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing audio context:', error);
+        // If it fails due to already being connected, just enable the visualization anyway
+        if (error instanceof Error && error.message.includes('already connected')) {
+          setIsInitialized(true);
+        }
       }
     };
 
@@ -57,7 +64,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [audioElement, isInitialized]);
+  }, [audioElement]);
 
   // Drawing function
   const draw = () => {

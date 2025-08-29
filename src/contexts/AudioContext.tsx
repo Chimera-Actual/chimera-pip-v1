@@ -74,7 +74,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Load user settings
+  // Load user settings and refresh URLs if needed
   useEffect(() => {
     const loadSettings = async () => {
       if (!user) return;
@@ -90,7 +90,30 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         if (data?.settings && typeof data.settings === 'object') {
           const loadedSettings = data.settings as Partial<PlayerSettings>;
           setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
-          setPlaylist(loadedSettings.playlist || []);
+          
+          // Refresh URLs for stored tracks
+          if (loadedSettings.playlist) {
+            const refreshedPlaylist = await Promise.all(
+              loadedSettings.playlist.map(async (track) => {
+                if (track.storagePath) {
+                  try {
+                    const { data: urlData } = await supabase.storage
+                      .from('audio')
+                      .createSignedUrl(track.storagePath, 60 * 60 * 24 * 7);
+                    
+                    if (urlData?.signedUrl) {
+                      return { ...track, url: urlData.signedUrl };
+                    }
+                  } catch (e) {
+                    console.error('Failed to refresh URL for track:', track.title);
+                  }
+                }
+                return track;
+              })
+            );
+            setPlaylist(refreshedPlaylist);
+          }
+          
           if (loadedSettings.volume !== undefined) {
             setVolumeState([loadedSettings.volume]);
           }
@@ -151,9 +174,10 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
       console.log('File uploaded successfully:', data.path);
 
+      // Create a longer-lasting signed URL (7 days)
       const { data: urlData, error: urlError } = await supabase.storage
         .from('audio')
-        .createSignedUrl(fileName, 60 * 60 * 24);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7);
 
       if (urlError || !urlData) {
         console.error('Error creating signed URL:', urlError);
