@@ -22,14 +22,20 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize Web Audio API - only once per component instance
+  // Initialize Web Audio API - only once per audio element
   useEffect(() => {
-    if (!audioElement || isInitialized) return;
+    if (!audioElement) return;
 
     const initializeAudio = async () => {
       try {
-        // Check if already connected to avoid creating multiple sources
-        if (sourceRef.current) return;
+        // Check if audio element already has a source node connected
+        if ((audioElement as any).__audioSourceConnected) {
+          // Audio element is already connected to Web Audio API, just get the existing analyzer
+          if (audioContextRef.current && analyserRef.current) {
+            setIsInitialized(true);
+            return;
+          }
+        }
         
         // Create audio context only if we don't have one
         if (!audioContextRef.current) {
@@ -37,51 +43,58 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         }
         
         // Create analyser
-        analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 256;
-        analyserRef.current.smoothingTimeConstant = 0.8;
+        if (!analyserRef.current) {
+          analyserRef.current = audioContextRef.current.createAnalyser();
+          analyserRef.current.fftSize = 256;
+          analyserRef.current.smoothingTimeConstant = 0.8;
+        }
 
         // Only create source if not already connected
-        if (!sourceRef.current) {
+        if (!sourceRef.current && !(audioElement as any).__audioSourceConnected) {
           sourceRef.current = audioContextRef.current.createMediaElementSource(audioElement);
           sourceRef.current.connect(analyserRef.current);
           analyserRef.current.connect(audioContextRef.current.destination);
+          // Mark the audio element as connected
+          (audioElement as any).__audioSourceConnected = true;
+        }
+
+        // Resume context if suspended
+        if (audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume();
         }
 
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing audio context:', error);
-        // If it fails due to already being connected, try to reuse existing connection
+        // If it fails due to already being connected, that's actually fine
         if (error instanceof Error && error.message.includes('already connected')) {
-          // Try to create a new context and analyser without the source
-          try {
-            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-            analyserRef.current = audioContextRef.current.createAnalyser();
-            analyserRef.current.fftSize = 256;
-            analyserRef.current.smoothingTimeConstant = 0.8;
-            setIsInitialized(true);
-          } catch (fallbackError) {
-            console.error('Fallback initialization failed:', fallbackError);
-          }
+          console.log('Audio element already connected to Web Audio API, reusing connection');
+          setIsInitialized(true);
         }
       }
     };
 
-    // Wait for user interaction before initializing
+    // Wait for user interaction before initializing if needed
     const handleUserInteraction = () => {
       initializeAudio();
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
 
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('keydown', handleUserInteraction);
+    // Try to initialize immediately, fall back to waiting for interaction
+    try {
+      initializeAudio();
+    } catch (error) {
+      // If immediate initialization fails, wait for user interaction
+      document.addEventListener('click', handleUserInteraction);
+      document.addEventListener('keydown', handleUserInteraction);
+    }
 
     return () => {
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [audioElement, isInitialized]);
+  }, [audioElement]);
 
   // Drawing function
   const draw = () => {
