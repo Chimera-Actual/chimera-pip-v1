@@ -209,8 +209,13 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
             responseText = data[0];
           }
         } else if (typeof data === 'object' && data !== null) {
-          // Handle object format like {"response": "...", "message": "...", etc.}
-          responseText = data.output || data.response || data.message || data.content || data.text || '';
+          // Handle nested object format like {"data": {"_type": "String", "value": "..."}}
+          if (data.data && data.data.value) {
+            responseText = data.data.value;
+          } else {
+            // Handle flat object format like {"response": "...", "message": "...", etc.}
+            responseText = data.output || data.response || data.message || data.content || data.text || '';
+          }
         } else if (typeof data === 'string') {
           // Handle plain string responses
           responseText = data;
