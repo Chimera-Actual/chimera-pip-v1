@@ -425,7 +425,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       )}
 
       {/* Main Content */}
-      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full'} pt-16`}>
+      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full pt-16'}`}>
         {renderActiveWidget()}
       </div>
 
