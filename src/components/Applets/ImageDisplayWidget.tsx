@@ -7,12 +7,14 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 interface ImageDisplayWidgetProps {
   settings?: Record<string, any>;
   widgetName?: string;
+  widgetInstanceId?: string;
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
 export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({ 
   settings, 
-  widgetName, 
+  widgetName,
+  widgetInstanceId,
   onSettingsUpdate 
 }) => {
   const [fullscreenImage, setFullscreenImage] = useState<{url: string, title: string} | null>(null);

@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface TextDisplayWidgetProps {
   settings?: Record<string, any>;
   widgetName?: string;
+  widgetInstanceId?: string;
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
-export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, widgetName, onSettingsUpdate }) => {
+export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   // Get current settings with defaults
   const containerCount = settings?.containerCount || 1;
   const layoutPattern = settings?.layoutPattern || '1';

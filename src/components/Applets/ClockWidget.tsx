@@ -45,10 +45,11 @@ const COMMON_TIMEZONES = [{
 interface ClockWidgetProps {
   settings?: Record<string, any>;
   widgetName?: string;
+  widgetInstanceId?: string;
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
-export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, onSettingsUpdate }) => {
+export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userTimezone, setUserTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [isAddingClock, setIsAddingClock] = useState(false);

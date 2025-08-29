@@ -59,6 +59,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
             settings={currentSettings}
             onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
             onClose={onClose}
+            widgetInstanceId={widget.id}
           />
         );
       case 'MapWidget':

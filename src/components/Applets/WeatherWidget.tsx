@@ -66,7 +66,14 @@ const getMockWeatherData = (location?: { latitude: number; longitude: number; na
   ]
 });
 
-export const WeatherWidget: React.FC = () => {
+interface WeatherWidgetProps {
+  settings?: Record<string, any>;
+  widgetName?: string;
+  widgetInstanceId?: string;
+  onSettingsUpdate?: (newSettings: Record<string, any>) => void;
+}
+
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const { getUserLocation } = useUserSettings();
   const [weather, setWeather] = useState<WeatherData>(getMockWeatherData());
   const [loading, setLoading] = useState(false);

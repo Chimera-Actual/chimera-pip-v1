@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Save, Plus, Upload, Palette, RotateCcw, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ImageContainer {
   id: string;
@@ -22,6 +24,7 @@ interface ImageDisplaySettingsProps {
   settings: Record<string, any>;
   onSettingsChange: (settings: Record<string, any>) => void;
   onClose: () => void;
+  widgetInstanceId?: string;
 }
 
 const LAYOUT_CONFIGURATIONS = {
@@ -65,11 +68,13 @@ const LAYOUT_CONFIGURATIONS = {
   ]
 };
 
-export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({
-  settings,
-  onSettingsChange,
-  onClose
+export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({ 
+  settings, 
+  onSettingsChange, 
+  onClose,
+  widgetInstanceId 
 }) => {
+  const { user } = useAuth();
   const [containerCount, setContainerCount] = useState(settings.containerCount || 1);
   const [layoutPattern, setLayoutPattern] = useState(settings.layoutPattern || '1');
   const [containers, setContainers] = useState<ImageContainer[]>(
@@ -173,17 +178,78 @@ export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({
     setContainers(newContainers);
   };
 
-  const handleImageUpload = (index: number, file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageUrl = e.target?.result as string;
-      updateContainer(index, 'imageUrl', imageUrl);
+  const handleImageUpload = async (index: number, file: File) => {
+    if (!user || !widgetInstanceId) {
+      toast({
+        title: "Error",
+        description: "User not authenticated or widget instance missing",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Create unique file path
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user.id}/widgets/${widgetInstanceId}/${fileName}`;
+
+      // Upload to Supabase storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        toast({
+          title: "Upload Error",
+          description: "Failed to upload image",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+      if (!urlData?.publicUrl) {
+        console.error('Error getting public URL');
+        return;
+      }
+
+      // Save image reference in widget_instance_images table
+      const { error: dbError } = await supabase
+        .from('widget_instance_images')
+        .insert({
+          widget_instance_id: widgetInstanceId,
+          image_path: filePath,
+          image_purpose: `container_${containers[index].id}`
+        });
+
+      if (dbError) {
+        console.error('Error saving image reference:', dbError);
+      }
+
+      // Update container with the new image URL
+      updateContainer(index, 'imageUrl', urlData.publicUrl);
       toast({
         title: "Image Uploaded",
         description: "Image has been successfully uploaded",
       });
-    };
-    reader.readAsDataURL(file);
+
+    } catch (error) {
+      console.error('Error in handleImageUpload:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    }
   };
 
   const convertToMonochrome = async (index: number, originalImageUrl: string, color: string) => {

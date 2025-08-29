@@ -37,7 +37,14 @@ const mapLayers = {
   }
 };
 
-export const MapWidget: React.FC = () => {
+interface MapWidgetProps {
+  settings?: Record<string, any>;
+  widgetName?: string;
+  widgetInstanceId?: string;
+  onSettingsUpdate?: (newSettings: Record<string, any>) => void;
+}
+
+export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const { user } = useAuth();
   const [location, setLocation] = useState<LocationData>({ latitude: 37.7749, longitude: -122.4194 });
   const [userLocation, setUserLocation] = useState<LocationData | null>(null);

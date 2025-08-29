@@ -339,6 +339,41 @@ export type Database = {
         }
         Relationships: []
       }
+      widget_instance_images: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_path: string
+          image_purpose: string
+          updated_at: string | null
+          widget_instance_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_path: string
+          image_purpose?: string
+          updated_at?: string | null
+          widget_instance_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_path?: string
+          image_purpose?: string
+          updated_at?: string | null
+          widget_instance_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_instance_images_widget_instance_id_fkey"
+            columns: ["widget_instance_id"]
+            isOneToOne: false
+            referencedRelation: "user_widget_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
