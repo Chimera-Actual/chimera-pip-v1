@@ -15,6 +15,10 @@ interface PlayerSettings {
   autoplay: boolean;
   loop: boolean;
   playlist: AudioTrack[];
+  waveformStyle?: string;
+  waveformColor?: string;
+  waveformSize?: string;
+  showWaveform?: boolean;
 }
 
 interface AudioContextType {
@@ -72,7 +76,11 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     volume: 75,
     autoplay: false,
     loop: false,
-    playlist: []
+    playlist: [],
+    waveformStyle: 'bars',
+    waveformColor: 'primary',
+    waveformSize: 'medium',
+    showWaveform: true
   });
   
   const volumeSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -314,53 +322,128 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   };
 
   const playTrack = async (track: AudioTrack) => {
-    console.log('Playing track:', track.title, 'URL:', track.url);
+    console.log('=== PLAY TRACK CALLED ===');
+    console.log('Track:', track.title, 'URL:', track.url);
+    console.log('Audio element exists:', !!audioRef.current);
+    console.log('Audio element readyState:', audioRef.current?.readyState);
+    console.log('Audio element src before:', audioRef.current?.src);
     
     if (audioRef.current) {
       try {
-        // Only change source if it's different to prevent unnecessary reloads
-        if (audioRef.current.src !== track.url) {
-          audioRef.current.src = track.url;
-          audioRef.current.load();
-        }
+        // Always set the source and load to ensure fresh state
+        audioRef.current.src = track.url;
+        console.log('Audio element src after setting:', audioRef.current.src);
+        audioRef.current.load();
         
         setCurrentTrack(track);
+        console.log('Current track set to:', track.title);
+        
+        // Wait for loadeddata event before trying to play
+        await new Promise((resolve, reject) => {
+          const onLoadedData = () => {
+            console.log('Audio loaded data, ready to play');
+            audioRef.current?.removeEventListener('loadeddata', onLoadedData);
+            audioRef.current?.removeEventListener('error', onError);
+            resolve(true);
+          };
+          
+          const onError = (error: any) => {
+            console.error('Audio load error:', error);
+            audioRef.current?.removeEventListener('loadeddata', onLoadedData);
+            audioRef.current?.removeEventListener('error', onError);
+            reject(error);
+          };
+          
+          audioRef.current?.addEventListener('loadeddata', onLoadedData);
+          audioRef.current?.addEventListener('error', onError);
+          
+          // Timeout after 10 seconds
+          setTimeout(() => {
+            audioRef.current?.removeEventListener('loadeddata', onLoadedData);
+            audioRef.current?.removeEventListener('error', onError);
+            console.warn('Audio load timeout, trying to play anyway');
+            resolve(true);
+          }, 10000);
+        });
         
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           await playPromise;
-          console.log('Track started playing successfully');
+          console.log('=== TRACK STARTED PLAYING SUCCESSFULLY ===');
+          setIsPlaying(true);
         }
       } catch (error) {
-        console.error('Error playing track:', error);
+        console.error('=== ERROR PLAYING TRACK ===');
+        console.error('Error details:', error);
+        console.error('Audio element src:', audioRef.current?.src);
+        console.error('Audio element readyState:', audioRef.current?.readyState);
+        console.error('Audio element networkState:', audioRef.current?.networkState);
         setIsPlaying(false);
+        
+        // Try to refresh URL if it's a network/URL issue
+        if (track.storagePath) {
+          console.log('Attempting to refresh track URL...');
+          await refreshTrackUrl(track);
+        }
       }
+    } else {
+      console.error('=== NO AUDIO ELEMENT AVAILABLE ===');
     }
   };
 
   const togglePlayPause = async () => {
+    console.log('=== TOGGLE PLAY/PAUSE CALLED ===');
+    console.log('Current playing state:', isPlaying);
+    console.log('Current track:', currentTrack?.title);
+    console.log('Playlist length:', playlist.length);
+    console.log('Audio element exists:', !!audioRef.current);
+    
     if (!currentTrack && playlist.length > 0) {
+      console.log('No current track, playing first track from playlist');
       await playTrack(playlist[0]);
       return;
     }
 
-    if (!currentTrack || !audioRef.current) return;
+    if (!currentTrack || !audioRef.current) {
+      console.error('Cannot toggle: no current track or audio element');
+      console.error('Current track:', currentTrack);
+      console.error('Audio element:', audioRef.current);
+      return;
+    }
+
+    console.log('Audio element ready state:', audioRef.current.readyState);
+    console.log('Audio element paused:', audioRef.current.paused);
+    console.log('Audio element src:', audioRef.current.src);
 
     if (isPlaying) {
+      console.log('Pausing audio...');
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
+      console.log('Playing audio...');
       try {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           await playPromise;
+          console.log('=== AUDIO PLAY PROMISE RESOLVED ===');
           setIsPlaying(true);
         }
       } catch (error) {
-        console.error('Error playing audio:', error);
+        console.error('=== ERROR IN TOGGLE PLAY/PAUSE ===');
+        console.error('Play error:', error);
+        console.error('Audio element state:', {
+          readyState: audioRef.current?.readyState,
+          networkState: audioRef.current?.networkState,
+          paused: audioRef.current?.paused,
+          ended: audioRef.current?.ended,
+          currentTime: audioRef.current?.currentTime,
+          duration: audioRef.current?.duration,
+          src: audioRef.current?.src
+        });
         setIsPlaying(false);
         // Try to refresh the URL if it's expired
         if (currentTrack?.storagePath) {
+          console.log('Attempting to refresh expired URL...');
           await refreshTrackUrl(currentTrack);
         }
       }
@@ -481,18 +564,31 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     saveWidgetPlaylist,
   };
 
+  // Fix audio element event handling to be more reliable
   return (
     <AudioContextInstance.Provider value={value}>
-      {/* Global audio element */}
+      {/* Global audio element with improved error handling */}
       <audio
         ref={audioRef}
-        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
-        onDurationChange={() => setDuration(audioRef.current?.duration || 0)}
+        onTimeUpdate={(e) => {
+          const currentTime = (e.target as HTMLAudioElement).currentTime || 0;
+          setCurrentTime(currentTime);
+        }}
+        onDurationChange={(e) => {
+          const duration = (e.target as HTMLAudioElement).duration || 0;
+          setDuration(duration);
+        }}
         onEnded={() => {
           console.log('Audio ended, loop:', settings.loop);
+          setIsPlaying(false);
           if (settings.loop && currentTrack) {
             console.log('Looping current track');
-            audioRef.current?.play();
+            setTimeout(() => {
+              if (audioRef.current) {
+                audioRef.current.currentTime = 0;
+                audioRef.current.play().catch(err => console.error('Error looping:', err));
+              }
+            }, 100);
           } else {
             console.log('Moving to next track');
             nextTrack();
@@ -509,13 +605,19 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         onError={(e) => {
           console.error('Audio error:', e);
           console.error('Current src:', audioRef.current?.src);
+          setIsPlaying(false);
           // Try to refresh the URL if it's expired
           if (currentTrack?.storagePath) {
+            console.log('Attempting to refresh expired URL...');
             refreshTrackUrl(currentTrack);
           }
         }}
         onLoadStart={() => console.log('Audio load started')}
         onCanPlay={() => console.log('Audio can play')}
+        onLoadedData={() => console.log('Audio loaded data')}
+        onStalled={() => console.log('Audio stalled')}
+        onSuspend={() => console.log('Audio suspended')}
+        onWaiting={() => console.log('Audio waiting')}
         crossOrigin="anonymous"
         style={{ display: 'none' }}
         preload="metadata"

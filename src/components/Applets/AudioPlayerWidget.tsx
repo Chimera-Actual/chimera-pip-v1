@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -112,11 +112,13 @@ interface AudioPlayerWidgetProps {
     waveformSize?: string;
     showWaveform?: boolean;
   };
+  onSettingsUpdate?: (settings: any) => void;
 }
 
 export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ 
   widgetInstanceId, 
-  settings 
+  settings,
+  onSettingsUpdate 
 }) => {
   const {
     isPlaying,
@@ -139,6 +141,21 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
   } = useAudio();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [localWaveformSize, setLocalWaveformSize] = useState(settings?.waveformSize || 'medium');
+
+  // Handle waveform size change
+  const handleWaveformSizeChange = (newSize: string) => {
+    setLocalWaveformSize(newSize);
+    if (onSettingsUpdate) {
+      onSettingsUpdate({
+        ...settings,
+        waveformSize: newSize
+      });
+    }
+  };
+
+  // Get current waveform size for display
+  const currentWaveformSize = localWaveformSize || settings?.waveformSize || 'medium';
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -207,18 +224,47 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
 
       {/* Audio Waveform Visualization - At Top */}
       {settings?.showWaveform !== false && (
-        <div className={`flex-shrink-0 bg-background/20 border-b border-border p-4 ${
-          settings?.waveformSize === 'small' ? 'h-16' :
-          settings?.waveformSize === 'large' ? 'h-32' :
-          'h-24'
+        <div className={`flex-shrink-0 bg-background/20 border-b border-border ${
+          currentWaveformSize === 'small' ? 'h-16' :
+          currentWaveformSize === 'large' ? 'h-48' :
+          'h-32'
         }`}>
-          <AudioWaveform 
-            audioElement={audioRef.current}
-            isPlaying={isPlaying}
-            className="h-full"
-            style={settings?.waveformStyle || 'bars'}
-            color={settings?.waveformColor || 'primary'}
-          />
+          {/* Waveform Size Controls */}
+          <div className="flex justify-end p-2 gap-1">
+            <Button
+              onClick={() => handleWaveformSizeChange('small')}
+              size="sm"
+              variant={currentWaveformSize === 'small' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-xs font-mono"
+            >
+              S
+            </Button>
+            <Button
+              onClick={() => handleWaveformSizeChange('medium')}
+              size="sm"
+              variant={currentWaveformSize === 'medium' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-xs font-mono"
+            >
+              M
+            </Button>
+            <Button
+              onClick={() => handleWaveformSizeChange('large')}
+              size="sm"
+              variant={currentWaveformSize === 'large' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-xs font-mono"
+            >
+              L
+            </Button>
+          </div>
+          <div className="h-full p-4 pt-0">
+            <AudioWaveform 
+              audioElement={audioRef.current}
+              isPlaying={isPlaying}
+              className="h-full"
+              style={settings?.waveformStyle || 'bars'}
+              color={settings?.waveformColor || 'primary'}
+            />
+          </div>
         </div>
       )}
 

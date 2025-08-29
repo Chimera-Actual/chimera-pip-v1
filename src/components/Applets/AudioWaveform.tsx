@@ -22,19 +22,16 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize Web Audio API - only once per audio element
+  // Initialize Web Audio API - more carefully to avoid disrupting normal playback
   useEffect(() => {
     if (!audioElement) return;
 
     const initializeAudio = async () => {
       try {
-        // Check if audio element already has a source node connected
-        if ((audioElement as any).__audioSourceConnected) {
-          // Audio element is already connected to Web Audio API, just get the existing analyzer
-          if (audioContextRef.current && analyserRef.current) {
-            setIsInitialized(true);
-            return;
-          }
+        // Only initialize if user wants waveform visualization and no conflicts exist
+        if ((audioElement as any).__lovableAudioAnalyzing) {
+          console.log('Audio element already being analyzed by another waveform component');
+          return;
         }
         
         // Create audio context only if we don't have one
@@ -49,13 +46,20 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           analyserRef.current.smoothingTimeConstant = 0.8;
         }
 
-        // Only create source if not already connected
+        // Only create source if not already connected and safe to do so
         if (!sourceRef.current && !(audioElement as any).__audioSourceConnected) {
-          sourceRef.current = audioContextRef.current.createMediaElementSource(audioElement);
-          sourceRef.current.connect(analyserRef.current);
-          analyserRef.current.connect(audioContextRef.current.destination);
-          // Mark the audio element as connected
-          (audioElement as any).__audioSourceConnected = true;
+          try {
+            sourceRef.current = audioContextRef.current.createMediaElementSource(audioElement);
+            sourceRef.current.connect(analyserRef.current);
+            analyserRef.current.connect(audioContextRef.current.destination);
+            // Mark the audio element as connected and being analyzed
+            (audioElement as any).__audioSourceConnected = true;
+            (audioElement as any).__lovableAudioAnalyzing = true;
+          } catch (sourceError) {
+            console.warn('Could not create audio source for waveform - audio will still play normally:', sourceError);
+            // Don't fail completely, just disable waveform analysis
+            return;
+          }
         }
 
         // Resume context if suspended
@@ -65,12 +69,9 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
         setIsInitialized(true);
       } catch (error) {
-        console.error('Error initializing audio context:', error);
-        // If it fails due to already being connected, that's actually fine
-        if (error instanceof Error && error.message.includes('already connected')) {
-          console.log('Audio element already connected to Web Audio API, reusing connection');
-          setIsInitialized(true);
-        }
+        console.warn('Waveform initialization failed - audio will play normally:', error);
+        // Don't block audio playback if waveform fails
+        setIsInitialized(false);
       }
     };
 
@@ -93,6 +94,10 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     return () => {
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
+      // Clean up our marker when component unmounts
+      if (audioElement) {
+        (audioElement as any).__lovableAudioAnalyzing = false;
+      }
     };
   }, [audioElement]);
 
