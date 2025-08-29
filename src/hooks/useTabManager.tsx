@@ -9,12 +9,13 @@ export interface UserTab {
   icon: string;
   position: number;
   is_active: boolean;
+  font_size?: string;
 }
 
 const DEFAULT_TABS = [
-  { name: 'STATUS', icon: '◉', position: 0 },
-  { name: 'APPS', icon: '◈', position: 1 },
-  { name: 'SETTINGS', icon: '⚙', position: 2 },
+  { name: 'STATUS', icon: '◉', position: 0, font_size: 'text-sm' },
+  { name: 'APPS', icon: '◈', position: 1, font_size: 'text-sm' },
+  { name: 'SETTINGS', icon: '⚙', position: 2, font_size: 'text-sm' },
 ];
 
 export const useTabManager = () => {
@@ -68,6 +69,7 @@ export const useTabManager = () => {
         name: tab.name,
         icon: tab.icon,
         position: tab.position,
+        font_size: tab.font_size,
         is_active: true,
       }));
 
@@ -85,7 +87,7 @@ export const useTabManager = () => {
     }
   };
 
-  const createTab = async (name: string, icon: string = '◉') => {
+  const createTab = async (name: string, icon: string = '◉', fontSize: string = 'text-sm') => {
     if (!user) return null;
 
     try {
@@ -98,6 +100,7 @@ export const useTabManager = () => {
           name: name.toUpperCase(),
           icon: icon,
           position: maxPosition + 1,
+          font_size: fontSize,
           is_active: true,
         })
         .select()
@@ -116,7 +119,7 @@ export const useTabManager = () => {
     return null;
   };
 
-  const updateTab = async (tabId: string, updates: Partial<Pick<UserTab, 'name' | 'icon'>>) => {
+  const updateTab = async (tabId: string, updates: Partial<Pick<UserTab, 'name' | 'icon' | 'font_size'>>) => {
     if (!user) return;
 
     try {

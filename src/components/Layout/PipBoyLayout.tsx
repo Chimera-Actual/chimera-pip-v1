@@ -55,9 +55,9 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
     }
   }, [userTabs, activeTab]);
 
-  const handleCreateTab = async (name: string, icon: string) => {
+  const handleCreateTab = async (name: string, icon: string, fontSize: string) => {
     try {
-      const newTab = await createTab(name, icon);
+      const newTab = await createTab(name, icon, fontSize);
       if (newTab) {
         setActiveTab(newTab.id);
       }
@@ -163,7 +163,7 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
                   onDragOver={(e) => handleTabDragOver(e, tab.id)}
                   onDragLeave={handleTabDragLeave}
                   onDrop={(e) => handleTabDrop(e, tab.id)}
-                  className={`flex-1 h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider text-sm hover:bg-muted/50 transition-all duration-200 ${
+                  className={`flex-1 h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider hover:bg-muted/50 transition-all duration-200 ${tab.font_size || 'text-sm'} ${
                     dragOverTab === tab.id && dragOverTab !== activeTab
                       ? 'bg-primary/10 border-b-2 border-primary/50 shadow-inner'
                       : ''
