@@ -72,7 +72,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
         }
       }
     }
-  }, [userSettings?.location_latitude, userSettings?.location_longitude, userSettings?.location_enabled, userLocation, autoFollow]);
+  }, [userSettings?.location_latitude, userSettings?.location_longitude, userSettings?.location_enabled, autoFollow]);
 
   // Initialize location on mount
   useEffect(() => {
