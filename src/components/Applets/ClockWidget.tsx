@@ -55,19 +55,27 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUp
 
   // Use settings from props, with defaults
   const is24Hour = settings?.displayFormat === '24h' || false;
-  const worldClocks: WorldClock[] = settings?.timeZones || [{
-    id: '1',
-    label: 'UTC',
-    timezone: 'UTC'
-  }, {
-    id: '2',
-    label: 'London',
-    timezone: 'Europe/London'
-  }, {
-    id: '3',
-    label: 'Tokyo',
-    timezone: 'Asia/Tokyo'
-  }];
+  
+  // Convert timezone settings to WorldClock format if needed
+  const worldClocks: WorldClock[] = settings?.timeZones 
+    ? settings.timeZones.map((tz: any, index: number) => ({
+        id: tz.id || String(index + 1),
+        label: tz.name || tz.label || tz.timezone.split('/').pop()?.replace('_', ' ') || 'Unknown',
+        timezone: tz.timezone
+      }))
+    : [{
+        id: '1',
+        label: 'UTC',
+        timezone: 'UTC'
+      }, {
+        id: '2',
+        label: 'London',
+        timezone: 'Europe/London'
+      }, {
+        id: '3',
+        label: 'Tokyo',
+        timezone: 'Asia/Tokyo'
+      }];
 
   useEffect(() => {
     const timer = setInterval(() => {
