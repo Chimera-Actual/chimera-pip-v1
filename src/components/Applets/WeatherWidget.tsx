@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -184,6 +185,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
           ☰ WEATHER MONITORING
         </span>
         <div className="flex items-center gap-4">
+          <LocationStatusIndicator className="mr-2" />
           <div className="text-xs font-mono text-muted-foreground">
             LAST UPDATE: {formatTime(lastUpdated)}
           </div>

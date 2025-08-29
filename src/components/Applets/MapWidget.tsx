@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -124,6 +125,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
           ◈ TACTICAL MAP SYSTEM
         </span>
         <div className="flex items-center gap-4">
+          <LocationStatusIndicator className="mr-2" />
           <Select value={activeLayer} onValueChange={(value: MapLayer) => setActiveLayer(value)}>
             <SelectTrigger className="w-40 h-10 bg-background/50 border-border text-sm font-mono">
               <SelectValue />

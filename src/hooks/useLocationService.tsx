@@ -115,8 +115,8 @@ export const useLocationService = () => {
 
       lastLocationRef.current = locationData;
 
-      // Only show toast for significant location changes
-      if (hasLocationChanged && locationName) {
+      // Only show toast for significant location changes, less frequently
+      if (hasLocationChanged && locationName && Math.random() < 0.3) {
         toast.success(`Location updated: ${locationName}`);
       }
 
@@ -132,8 +132,8 @@ export const useLocationService = () => {
     } catch (error) {
       console.error('Location polling error:', error);
       
-      // Show error toast only occasionally to avoid spam
-      if (Math.random() < 0.1) { // Show error 10% of the time
+      // Show error toast only very rarely to avoid spam
+      if (Math.random() < 0.05) { // Show error 5% of the time
         toast.error('Failed to update location');
       }
     }
@@ -158,10 +158,10 @@ export const useLocationService = () => {
         pollLocation();
       }, 15000);
 
-      toast.success('Location tracking started');
+      // Only show success toast once when manually enabled
+      console.log('Location tracking started');
     } catch (error) {
       console.error('Failed to start location service:', error);
-      toast.error('Failed to start location tracking');
     }
   }, [settings, pollLocation]);
 
@@ -178,7 +178,8 @@ export const useLocationService = () => {
       watchIdRef.current = null;
     }
 
-    toast.info('Location tracking stopped');
+    // Remove toast notification - just log
+    console.log('Location tracking stopped');
   }, []);
 
   // Effect to start/stop location service based on settings
