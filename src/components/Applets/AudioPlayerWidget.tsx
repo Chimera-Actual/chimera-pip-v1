@@ -3,18 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Volume2, 
-  Plus, 
-  Trash2, 
-  SkipBack, 
-  SkipForward,
-  Shuffle,
-  Repeat
-} from 'lucide-react';
+import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -25,7 +14,7 @@ interface AudioTrack {
   duration?: number;
 }
 
-interface AudioPlayerSettings {
+interface PlayerSettings {
   volume: number;
   autoplay: boolean;
   loop: boolean;
@@ -42,16 +31,15 @@ export const AudioPlayerWidget: React.FC = () => {
   const [playlist, setPlaylist] = useState<AudioTrack[]>([]);
   const [newUrl, setNewUrl] = useState('');
   const [newTitle, setNewTitle] = useState('');
-  const [shuffle, setShuffle] = useState(false);
-  const [repeat, setRepeat] = useState(false);
-
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [settings, setSettings] = useState<AudioPlayerSettings>({
+  const [settings, setSettings] = useState<PlayerSettings>({
     volume: 75,
     autoplay: false,
     loop: false,
     playlist: []
   });
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load user settings
   useEffect(() => {
@@ -67,109 +55,92 @@ export const AudioPlayerWidget: React.FC = () => {
           .single();
 
         if (data?.settings && typeof data.settings === 'object') {
-          const loadedSettings = data.settings as Partial<AudioPlayerSettings>;
+          const loadedSettings = data.settings as Partial<PlayerSettings>;
           setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
           setPlaylist(loadedSettings.playlist || []);
-          setVolume([loadedSettings.volume || 75]);
+          if (loadedSettings.volume !== undefined) {
+            setVolume([loadedSettings.volume]);
+          }
         }
       } catch (error) {
-        console.error('Error loading audio player settings:', error);
+        console.error('Error loading player settings:', error);
       }
     };
 
     loadSettings();
   }, [user]);
 
-  // Initialize audio element
-  useEffect(() => {
-    const audio = new Audio();
-    audio.volume = volume[0] / 100;
-    
-    audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration);
-    });
-
-    audio.addEventListener('timeupdate', () => {
-      setCurrentTime(audio.currentTime);
-    });
-
-    audio.addEventListener('ended', () => {
-      if (repeat) {
-        audio.currentTime = 0;
-        audio.play();
-      } else {
-        playNext();
-      }
-    });
-
-    audioRef.current = audio;
-
-    return () => {
-      audio.pause();
-      audio.src = '';
-    };
-  }, []);
-
-  // Update volume when slider changes
+  // Update audio volume when slider changes
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume[0] / 100;
     }
   }, [volume]);
 
-  const addToPlaylist = () => {
-    if (!newUrl.trim()) return;
-
-    const track: AudioTrack = {
-      id: `track-${Date.now()}`,
-      title: newTitle.trim() || 'Untitled Track',
-      url: newUrl.trim()
-    };
-
-    setPlaylist(prev => [...prev, track]);
-    setNewUrl('');
-    setNewTitle('');
-  };
-
-  const removeFromPlaylist = (trackId: string) => {
-    setPlaylist(prev => prev.filter(track => track.id !== trackId));
-    if (currentTrack?.id === trackId) {
-      stop();
-    }
-  };
-
-  const playTrack = (track: AudioTrack) => {
-    if (audioRef.current) {
-      audioRef.current.src = track.url;
-      audioRef.current.load();
-      setCurrentTrack(track);
-      
-      if (settings.autoplay) {
-        audioRef.current.play().then(() => {
-          setIsPlaying(true);
-        }).catch(error => {
-          console.error('Error playing audio:', error);
-        });
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const track: AudioTrack = {
+        id: `file-${Date.now()}`,
+        title: file.name,
+        url
+      };
+      setPlaylist(prev => [...prev, track]);
+      if (!currentTrack) {
+        setCurrentTrack(track);
       }
     }
   };
 
+  const addUrlToPlaylist = () => {
+    if (newUrl.trim()) {
+      const track: AudioTrack = {
+        id: `url-${Date.now()}`,
+        title: newTitle.trim() || 'Streaming Audio',
+        url: newUrl.trim()
+      };
+      setPlaylist(prev => [...prev, track]);
+      setNewUrl('');
+      setNewTitle('');
+      if (!currentTrack) {
+        setCurrentTrack(track);
+      }
+    }
+  };
+
+  const removeTrack = (trackId: string) => {
+    setPlaylist(prev => prev.filter(track => track.id !== trackId));
+    if (currentTrack?.id === trackId) {
+      const remainingTracks = playlist.filter(track => track.id !== trackId);
+      setCurrentTrack(remainingTracks[0] || null);
+      setIsPlaying(false);
+    }
+  };
+
+  const playTrack = (track: AudioTrack) => {
+    setCurrentTrack(track);
+    if (audioRef.current) {
+      audioRef.current.src = track.url;
+      audioRef.current.load();
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
   const togglePlayPause = () => {
-    if (!audioRef.current || !currentTrack) return;
+    if (!currentTrack || !audioRef.current) return;
 
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(error => {
-        console.error('Error playing audio:', error);
-      });
+      audioRef.current.play();
+      setIsPlaying(true);
     }
   };
 
-  const stop = () => {
+  const stopPlayback = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -178,34 +149,22 @@ export const AudioPlayerWidget: React.FC = () => {
     }
   };
 
-  const playNext = () => {
-    if (playlist.length === 0) return;
-
-    const currentIndex = playlist.findIndex(track => track.id === currentTrack?.id);
-    let nextIndex;
-
-    if (shuffle) {
-      nextIndex = Math.floor(Math.random() * playlist.length);
-    } else {
-      nextIndex = (currentIndex + 1) % playlist.length;
+  const nextTrack = () => {
+    if (!currentTrack) return;
+    const currentIndex = playlist.findIndex(track => track.id === currentTrack.id);
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    if (playlist[nextIndex]) {
+      playTrack(playlist[nextIndex]);
     }
-
-    playTrack(playlist[nextIndex]);
   };
 
-  const playPrevious = () => {
-    if (playlist.length === 0) return;
-
-    const currentIndex = playlist.findIndex(track => track.id === currentTrack?.id);
-    let prevIndex;
-
-    if (shuffle) {
-      prevIndex = Math.floor(Math.random() * playlist.length);
-    } else {
-      prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
+  const prevTrack = () => {
+    if (!currentTrack) return;
+    const currentIndex = playlist.findIndex(track => track.id === currentTrack.id);
+    const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
+    if (playlist[prevIndex]) {
+      playTrack(playlist[prevIndex]);
     }
-
-    playTrack(playlist[prevIndex]);
   };
 
   const formatTime = (seconds: number) => {
@@ -214,15 +173,18 @@ export const AudioPlayerWidget: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleSeek = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = value[0];
-      setCurrentTime(value[0]);
-    }
-  };
-
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-card">
+      {/* Audio Element */}
+      <audio
+        ref={audioRef}
+        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
+        onDurationChange={() => setDuration(audioRef.current?.duration || 0)}
+        onEnded={settings.loop ? () => audioRef.current?.play() : nextTrack}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+      />
+
       {/* Header */}
       <div className="flex-shrink-0 h-16 bg-background/50 border-b border-border px-4 flex items-center justify-between">
         <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
@@ -240,178 +202,176 @@ export const AudioPlayerWidget: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 space-y-4 overflow-hidden">
-        {/* Now Playing */}
-        <div className="bg-background/30 border border-border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <Label className="text-sm font-mono text-primary uppercase">NOW PLAYING</Label>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setShuffle(!shuffle)}
-                size="sm"
-                variant="ghost"
-                className={`h-8 w-8 p-0 ${shuffle ? 'text-primary' : 'text-muted-foreground'}`}
-              >
-                <Shuffle size={14} />
-              </Button>
-              <Button
-                onClick={() => setRepeat(!repeat)}
-                size="sm"
-                variant="ghost"
-                className={`h-8 w-8 p-0 ${repeat ? 'text-primary' : 'text-muted-foreground'}`}
-              >
-                <Repeat size={14} />
-              </Button>
-            </div>
+      {/* Current Track Display */}
+      <div className="flex-shrink-0 bg-background/30 border-b border-border p-4">
+        <div className="text-center space-y-2">
+          <div className="text-sm font-mono text-primary truncate">
+            {currentTrack ? currentTrack.title : 'NO TRACK SELECTED'}
           </div>
-
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-sm font-mono text-foreground">
-                {currentTrack?.title || 'No track selected'}
-              </div>
-              <div className="text-xs text-muted-foreground font-mono mt-1">
-                {currentTrack?.url || 'Select a track from playlist'}
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="space-y-2">
-              <Slider
-                value={[currentTime]}
-                onValueChange={handleSeek}
-                max={duration || 100}
-                step={1}
-                className="w-full"
-                disabled={!currentTrack}
-              />
-              <div className="flex justify-between text-xs font-mono text-muted-foreground">
-                <span>{formatTime(currentTime)}</span>
-                <span>{formatTime(duration)}</span>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center justify-center gap-4">
-              <Button
-                onClick={playPrevious}
-                size="sm"
-                variant="ghost"
-                className="h-10 w-10 p-0"
-                disabled={playlist.length === 0}
-              >
-                <SkipBack size={18} />
-              </Button>
-
-              <Button
-                onClick={togglePlayPause}
-                size="lg"
-                className="h-12 w-12 rounded-full"
-                disabled={!currentTrack}
-              >
-                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-              </Button>
-
-              <Button
-                onClick={stop}
-                size="sm"
-                variant="ghost"
-                className="h-10 w-10 p-0"
-                disabled={!currentTrack}
-              >
-                <Square size={18} />
-              </Button>
-
-              <Button
-                onClick={playNext}
-                size="sm"
-                variant="ghost"
-                className="h-10 w-10 p-0"
-                disabled={playlist.length === 0}
-              >
-                <SkipForward size={18} />
-              </Button>
-            </div>
+          <div className="text-xs text-muted-foreground font-mono">
+            {formatTime(currentTime)} / {formatTime(duration)}
           </div>
-        </div>
-
-        {/* Add Track */}
-        <div className="bg-background/30 border border-border rounded-lg p-4">
-          <Label className="text-sm font-mono text-primary uppercase mb-3 block">
-            ADD TRACK
-          </Label>
-          <div className="space-y-3">
-            <Input
-              placeholder="Track title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="font-mono bg-background/50"
+          {duration > 0 && (
+            <Slider
+              value={[currentTime]}
+              onValueChange={(value) => {
+                if (audioRef.current) {
+                  audioRef.current.currentTime = value[0];
+                  setCurrentTime(value[0]);
+                }
+              }}
+              max={duration}
+              step={1}
+              className="w-full"
             />
+          )}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex-shrink-0 bg-background/20 border-b border-border p-4">
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            onClick={prevTrack}
+            size="sm"
+            variant="ghost"
+            disabled={playlist.length === 0}
+            className="h-10 w-10 p-0"
+          >
+            <SkipBack size={20} />
+          </Button>
+          
+          <Button
+            onClick={togglePlayPause}
+            size="lg"
+            disabled={!currentTrack}
+            className="h-12 w-12 rounded-full"
+          >
+            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+          </Button>
+          
+          <Button
+            onClick={stopPlayback}
+            size="sm"
+            variant="ghost"
+            disabled={!currentTrack}
+            className="h-10 w-10 p-0"
+          >
+            <Square size={20} />
+          </Button>
+          
+          <Button
+            onClick={nextTrack}
+            size="sm"
+            variant="ghost"
+            disabled={playlist.length === 0}
+            className="h-10 w-10 p-0"
+          >
+            <SkipForward size={20} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Add Content */}
+      <div className="flex-shrink-0 bg-background/20 border-b border-border p-4 space-y-3">
+        <div className="space-y-2">
+          <Label className="text-xs font-mono text-primary uppercase">Add Stream URL</Label>
+          <div className="flex gap-2">
             <Input
-              placeholder="Audio URL or file path"
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
-              className="font-mono bg-background/50"
+              placeholder="https://stream.example.com/audio.mp3"
+              className="flex-1 text-xs font-mono bg-background/50"
+            />
+            <Input
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Title (optional)"
+              className="w-32 text-xs font-mono bg-background/50"
             />
             <Button
-              onClick={addToPlaylist}
+              onClick={addUrlToPlaylist}
+              size="sm"
               disabled={!newUrl.trim()}
-              className="w-full font-mono"
+              className="px-3"
             >
-              <Plus size={16} className="mr-2" />
-              ADD TO PLAYLIST
+              <Plus size={16} />
             </Button>
           </div>
         </div>
 
-        {/* Playlist */}
-        <div className="flex-1 bg-background/30 border border-border rounded-lg p-4 overflow-hidden">
-          <div className="flex items-center justify-between mb-4">
-            <Label className="text-sm font-mono text-primary uppercase">
-              PLAYLIST ({playlist.length})
-            </Label>
-          </div>
+        <div className="space-y-2">
+          <Label className="text-xs font-mono text-primary uppercase">Upload File</Label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="sm"
+            className="w-full text-xs font-mono"
+          >
+            Choose Audio File
+          </Button>
+        </div>
+      </div>
 
-          <div className="space-y-2 overflow-y-auto max-h-48">
-            {playlist.map((track) => (
-              <div
-                key={track.id}
-                className={`bg-card/50 border border-border rounded p-3 flex items-center justify-between cursor-pointer hover:bg-card/70 ${
-                  currentTrack?.id === track.id ? 'border-primary bg-primary/10' : ''
-                }`}
-                onClick={() => playTrack(track)}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-mono text-foreground truncate">
-                    {track.title}
-                  </div>
-                  <div className="text-xs text-muted-foreground font-mono truncate">
-                    {track.url}
+      {/* Playlist */}
+      <div className="flex-1 overflow-hidden">
+        <div className="p-4">
+          <Label className="text-sm font-mono text-primary uppercase">
+            PLAYLIST ({playlist.length})
+          </Label>
+        </div>
+        
+        <div className="px-4 pb-4 overflow-y-auto max-h-full">
+          {playlist.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm font-mono">
+              NO TRACKS IN PLAYLIST
+              <br />
+              <span className="text-xs">Add URLs or upload files to begin</span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {playlist.map((track) => (
+                <div
+                  key={track.id}
+                  className={`p-3 rounded border cursor-pointer transition-colors ${
+                    currentTrack?.id === track.id
+                      ? 'bg-primary/20 border-primary'
+                      : 'bg-background/30 border-border hover:bg-background/50'
+                  }`}
+                  onClick={() => playTrack(track)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-mono text-foreground truncate">
+                        {track.title}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono truncate">
+                        {track.url}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeTrack(track.id);
+                      }}
+                      size="sm"
+                      variant="ghost"
+                      className="ml-2 h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 size={12} />
+                    </Button>
                   </div>
                 </div>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFromPlaylist(track.id);
-                  }}
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/20"
-                >
-                  <Trash2 size={12} />
-                </Button>
-              </div>
-            ))}
-
-            {playlist.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground text-sm font-mono">
-                NO TRACKS IN PLAYLIST
-                <br />
-                <span className="text-xs">Add audio URLs or files above</span>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
