@@ -13,6 +13,7 @@ interface Track {
   title: string;
   url: string;
   duration?: number;
+  storagePath?: string;
 }
 
 interface AudioPlayerProps {
@@ -104,8 +105,33 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       if (data?.settings && typeof data.settings === 'object') {
         const settingsData = data.settings as any;
-        if (settingsData.playlist) {
-          setPlaylist(settingsData.playlist);
+        if (settingsData.playlist && Array.isArray(settingsData.playlist)) {
+          // Regenerate signed URLs for stored tracks
+          const refreshedPlaylist = await Promise.all(
+            settingsData.playlist.map(async (track: any) => {
+              if (track.storagePath) {
+                try {
+                  // Generate fresh signed URL
+                  const { data: urlData, error: urlError } = await supabase.storage
+                    .from('audio')
+                    .createSignedUrl(track.storagePath, 60 * 60 * 24 * 7); // 7 days
+
+                  if (!urlError && urlData) {
+                    return {
+                      ...track,
+                      url: urlData.signedUrl
+                    };
+                  }
+                } catch (error) {
+                  console.error('Error refreshing URL for track:', track.title, error);
+                }
+              }
+              // Return track as-is if URL refresh failed
+              return track;
+            })
+          );
+          
+          setPlaylist(refreshedPlaylist);
         }
       }
     } catch (error) {
@@ -227,10 +253,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       }
 
       // Add to playlist
-      const newTrack: Track = {
+      const newTrack: Track & { storagePath: string } = {
         id: Date.now().toString(),
         title: file.name.replace(/\.[^/.]+$/, ''),
-        url: urlData.signedUrl
+        url: urlData.signedUrl,
+        storagePath: fileName
       };
 
       const newPlaylist = [...playlist, newTrack];
