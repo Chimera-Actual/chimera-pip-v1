@@ -4,6 +4,7 @@ import { Settings } from 'lucide-react';
 import { UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { ClockSettings } from '@/components/Applets/Settings/ClockSettings';
 import { CustomAssistantSettings } from '@/components/Applets/Settings/CustomAssistantSettings';
+import { TextDisplaySettings } from '@/components/Applets/Settings/TextDisplaySettings';
 
 interface WidgetSettingsProps {
   isOpen: boolean;
@@ -35,6 +36,14 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
       case 'CustomAssistantWidget':
         return (
           <CustomAssistantSettings
+            settings={currentSettings}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onClose={onClose}
+          />
+        );
+      case 'TextDisplayWidget':
+        return (
+          <TextDisplaySettings
             settings={currentSettings}
             onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
             onClose={onClose}
