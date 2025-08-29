@@ -224,8 +224,9 @@ export const useWidgetManager = () => {
   };
 
   const getAvailableWidgetsForTab = (tabId: string): WidgetDefinition[] => {
-    const activeWidgetIds = getActiveWidgetsForTab(tabId).map(w => w.widget_id);
-    return availableWidgets.filter(w => !activeWidgetIds.includes(w.id));
+    // Allow any widget to be added to any tab - no restrictions
+    // Each widget instance is separate even if it's the same widget type
+    return availableWidgets;
   };
 
   const updateWidgetPosition = async (instanceId: string, newPosition: number) => {
