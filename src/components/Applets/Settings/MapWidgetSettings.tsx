@@ -16,11 +16,12 @@ interface Placemark {
 }
 
 interface MapWidgetSettingsProps {
-  currentSettings: {
+  settings: {
     defaultLayer?: MapLayer;
     placemarks?: Placemark[];
   };
-  onSettingsUpdate: (settings: any) => void;
+  onSettingsChange: (settings: any) => void;
+  onClose: () => void;
 }
 
 const mapLayerOptions = [
@@ -31,14 +32,15 @@ const mapLayerOptions = [
 ];
 
 export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
-  currentSettings,
-  onSettingsUpdate
+  settings,
+  onSettingsChange,
+  onClose
 }) => {
   const [defaultLayer, setDefaultLayer] = useState<MapLayer>(
-    currentSettings.defaultLayer || 'standard'
+    settings.defaultLayer || 'standard'
   );
   const [placemarks, setPlacemarks] = useState<Placemark[]>(
-    currentSettings.placemarks || []
+    settings.placemarks || []
   );
 
   const addPlacemark = () => {
@@ -49,36 +51,25 @@ export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
       longitude: -122.4194,
       description: ''
     };
-    const updatedPlacemarks = [...placemarks, newPlacemark];
-    setPlacemarks(updatedPlacemarks);
-    updateSettings({ placemarks: updatedPlacemarks });
+    setPlacemarks([...placemarks, newPlacemark]);
   };
 
   const removePlacemark = (id: string) => {
-    const updatedPlacemarks = placemarks.filter(p => p.id !== id);
-    setPlacemarks(updatedPlacemarks);
-    updateSettings({ placemarks: updatedPlacemarks });
+    setPlacemarks(placemarks.filter(p => p.id !== id));
   };
 
   const updatePlacemark = (id: string, field: keyof Placemark, value: string | number) => {
-    const updatedPlacemarks = placemarks.map(p => 
+    setPlacemarks(placemarks.map(p => 
       p.id === id ? { ...p, [field]: value } : p
-    );
-    setPlacemarks(updatedPlacemarks);
-    updateSettings({ placemarks: updatedPlacemarks });
+    ));
   };
 
-  const updateSettings = (newSettings: Partial<typeof currentSettings>) => {
-    onSettingsUpdate({
+  const handleSave = () => {
+    onSettingsChange({
       defaultLayer,
-      placemarks,
-      ...newSettings
+      placemarks
     });
-  };
-
-  const handleDefaultLayerChange = (layer: MapLayer) => {
-    setDefaultLayer(layer);
-    updateSettings({ defaultLayer: layer });
+    onClose();
   };
 
   return (
@@ -87,7 +78,7 @@ export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
         <Label className="text-sm font-mono text-primary uppercase tracking-wider">
           ◈ Default Map Layer
         </Label>
-        <Select value={defaultLayer} onValueChange={handleDefaultLayerChange}>
+        <Select value={defaultLayer} onValueChange={(value: string) => setDefaultLayer(value as MapLayer)}>
           <SelectTrigger className="w-full bg-background/50 border-border font-mono">
             <SelectValue />
           </SelectTrigger>
@@ -192,6 +183,22 @@ export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
             </div>
           )}
         </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t border-border">
+        <Button
+          onClick={onClose}
+          variant="ghost"
+          className="h-10 px-6 font-mono text-sm"
+        >
+          CANCEL
+        </Button>
+        <Button
+          onClick={handleSave}
+          className="h-10 px-6 font-mono text-sm bg-primary hover:bg-primary/80"
+        >
+          SAVE SETTINGS
+        </Button>
       </div>
     </div>
   );

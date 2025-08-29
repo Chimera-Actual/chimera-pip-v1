@@ -62,8 +62,9 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
       case 'MapWidget':
         return (
           <MapWidgetSettings
-            currentSettings={currentSettings}
-            onSettingsUpdate={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            settings={currentSettings}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
+            onClose={onClose}
           />
         );
       default:
