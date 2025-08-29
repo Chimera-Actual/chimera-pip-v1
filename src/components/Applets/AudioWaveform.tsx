@@ -20,32 +20,45 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
   // Initialize Web Audio API - only once per component instance
   useEffect(() => {
-    if (!audioElement || isInitialized || sourceRef.current) return;
+    if (!audioElement || isInitialized) return;
 
     const initializeAudio = async () => {
       try {
         // Check if already connected to avoid creating multiple sources
         if (sourceRef.current) return;
         
-        // Create audio context
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        // Create audio context only if we don't have one
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
         
         // Create analyser
         analyserRef.current = audioContextRef.current.createAnalyser();
         analyserRef.current.fftSize = 256;
         analyserRef.current.smoothingTimeConstant = 0.8;
 
-        // Create source and connect - only if not already connected
-        sourceRef.current = audioContextRef.current.createMediaElementSource(audioElement);
-        sourceRef.current.connect(analyserRef.current);
-        analyserRef.current.connect(audioContextRef.current.destination);
+        // Only create source if not already connected
+        if (!sourceRef.current) {
+          sourceRef.current = audioContextRef.current.createMediaElementSource(audioElement);
+          sourceRef.current.connect(analyserRef.current);
+          analyserRef.current.connect(audioContextRef.current.destination);
+        }
 
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing audio context:', error);
-        // If it fails due to already being connected, just enable the visualization anyway
+        // If it fails due to already being connected, try to reuse existing connection
         if (error instanceof Error && error.message.includes('already connected')) {
-          setIsInitialized(true);
+          // Try to create a new context and analyser without the source
+          try {
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+            analyserRef.current = audioContextRef.current.createAnalyser();
+            analyserRef.current.fftSize = 256;
+            analyserRef.current.smoothingTimeConstant = 0.8;
+            setIsInitialized(true);
+          } catch (fallbackError) {
+            console.error('Fallback initialization failed:', fallbackError);
+          }
         }
       }
     };
@@ -64,7 +77,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [audioElement]);
+  }, [audioElement, isInitialized]);
 
   // Drawing function
   const draw = () => {

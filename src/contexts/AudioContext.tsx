@@ -95,9 +95,6 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     if (!user) return;
 
     try {
-      // Set this as the current active widget instance
-      setCurrentWidgetInstance(widgetInstanceId);
-
       const { data, error } = await supabase
         .from('user_widget_settings')
         .select('settings')
@@ -135,20 +132,14 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
             track.url && !track.url.includes('undefined')
           );
           
-          // Only update global playlist if this is the current active widget
-          if (currentWidgetInstance === widgetInstanceId || !currentWidgetInstance) {
-            setPlaylist(validTracks);
-            
-            // Set first track as current if no current track and we have tracks
-            if (validTracks.length > 0 && !currentTrack) {
-              setCurrentTrack(validTracks[0]);
-            }
+          setPlaylist(validTracks);
+          
+          // Set first track as current if no current track and we have tracks
+          if (validTracks.length > 0 && !currentTrack) {
+            setCurrentTrack(validTracks[0]);
           }
         } else {
-          // No playlist found, set empty for this widget
-          if (currentWidgetInstance === widgetInstanceId || !currentWidgetInstance) {
-            setPlaylist([]);
-          }
+          setPlaylist([]);
         }
         
         if (loadedSettings.volume !== undefined) {
@@ -157,10 +148,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         
         setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
       } else {
-        // No settings found, set empty playlist for this widget
-        if (currentWidgetInstance === widgetInstanceId || !currentWidgetInstance) {
-          setPlaylist([]);
-        }
+        setPlaylist([]);
       }
     } catch (error) {
       console.error('Error loading widget playlist:', error);
@@ -310,17 +298,20 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
   const playTrack = async (track: AudioTrack) => {
     console.log('Playing track:', track.title, 'URL:', track.url);
-    setCurrentTrack(track);
     
     if (audioRef.current) {
       try {
-        audioRef.current.src = track.url;
-        audioRef.current.load();
+        // Only change source if it's different to prevent unnecessary reloads
+        if (audioRef.current.src !== track.url) {
+          audioRef.current.src = track.url;
+          audioRef.current.load();
+        }
+        
+        setCurrentTrack(track);
         
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           await playPromise;
-          setIsPlaying(true);
           console.log('Track started playing successfully');
         }
       } catch (error) {
