@@ -32,6 +32,9 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     updateWidgetName,
     updateWidgetPosition,
     moveWidgetToTab,
+    addTagToWidget,
+    removeTagFromWidget,
+    getAllUserTags,
     loading,
     userWidgetInstances
   } = useWidgetManager();
@@ -436,6 +439,9 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         availableWidgets={getAvailableWidgetsForTab(tabId)}
         onAddWidget={handleAddWidget}
         tabCategory={tabName}
+        onAddTag={addTagToWidget}
+        onRemoveTag={removeTagFromWidget}
+        allUserTags={getAllUserTags()}
       />
 
       {/* Widget Settings Dialog */}

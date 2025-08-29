@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Plus, Package } from 'lucide-react';
+import { Search, Plus, Package, Tags, Hash } from 'lucide-react';
 import { WidgetDefinition } from '@/hooks/useWidgetManager';
+import { WidgetTagManager } from './WidgetTagManager';
 
 interface WidgetLibraryProps {
   isOpen: boolean;
@@ -14,6 +15,9 @@ interface WidgetLibraryProps {
   availableWidgets: WidgetDefinition[];
   onAddWidget: (widgetId: string) => void;
   tabCategory: string;
+  onAddTag: (widgetId: string, tag: string) => Promise<any>;
+  onRemoveTag: (widgetId: string, tag: string) => Promise<any>;
+  allUserTags: string[];
 }
 
 export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
@@ -22,18 +26,23 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
   availableWidgets,
   onAddWidget,
   tabCategory,
+  onAddTag,
+  onRemoveTag,
+  allUserTags,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [tagManagerWidget, setTagManagerWidget] = useState<WidgetDefinition | null>(null);
 
-  const categories = ['all', ...Array.from(new Set(availableWidgets.map(w => w.category)))];
+  const availableTags = ['all', ...allUserTags];
 
   const filteredWidgets = availableWidgets.filter(widget => {
     const matchesSearch = widget.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          widget.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || widget.category === selectedCategory;
+    const matchesTag = selectedTag === 'all' || 
+                      (widget.user_tags && widget.user_tags.includes(selectedTag));
     
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesTag;
   });
 
   const handleAddWidget = (widgetId: string) => {
@@ -41,17 +50,12 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
     onClose();
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      navigation: 'bg-blue-500/20 text-blue-300 border-blue-500/50',
-      environment: 'bg-green-500/20 text-green-300 border-green-500/50',
-      utility: 'bg-purple-500/20 text-purple-300 border-purple-500/50',
-      system: 'bg-red-500/20 text-red-300 border-red-500/50',
-      communication: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50',
-      productivity: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50',
-      entertainment: 'bg-pink-500/20 text-pink-300 border-pink-500/50',
-    };
-    return colors[category] || 'bg-muted text-muted-foreground';
+  const openTagManager = (widget: WidgetDefinition) => {
+    setTagManagerWidget(widget);
+  };
+
+  const closeTagManager = () => {
+    setTagManagerWidget(null);
   };
 
   return (
@@ -78,15 +82,16 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
             </div>
             
             <div className="flex gap-2 flex-wrap">
-              {categories.map(category => (
+              {availableTags.map(tag => (
                 <Button
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
+                  key={tag}
+                  variant={selectedTag === tag ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => setSelectedTag(tag)}
                   className="font-mono text-xs uppercase"
                 >
-                  {category}
+                  <Hash className="w-3 h-3 mr-1" />
+                  {tag}
                 </Button>
               ))}
             </div>
@@ -98,7 +103,7 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
               <div className="text-center py-8">
                 <Package className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
                 <p className="text-muted-foreground font-mono">
-                  {searchQuery || selectedCategory !== 'all' 
+                  {searchQuery || selectedTag !== 'all' 
                     ? 'No widgets match your search criteria.'
                     : 'No widgets available for this tab.'
                   }
@@ -116,14 +121,33 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
                             <CardTitle className="text-sm font-mono text-primary">
                               {widget.name}
                             </CardTitle>
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs mt-1 ${getCategoryColor(widget.category)}`}
-                            >
-                              {widget.category}
-                            </Badge>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {widget.user_tags && widget.user_tags.length > 0 ? (
+                                widget.user_tags.map(tag => (
+                                  <Badge 
+                                    key={tag}
+                                    variant="secondary" 
+                                    className="text-xs font-mono"
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <Badge variant="outline" className="text-xs font-mono text-muted-foreground">
+                                  No tags
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openTagManager(widget)}
+                          className="text-muted-foreground hover:text-primary p-1"
+                        >
+                          <Tags className="w-4 h-4" />
+                        </Button>
                       </div>
                     </CardHeader>
                     
@@ -149,6 +173,14 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
             )}
           </div>
         </div>
+
+        <WidgetTagManager
+          isOpen={!!tagManagerWidget}
+          onClose={closeTagManager}
+          widget={tagManagerWidget}
+          onAddTag={onAddTag}
+          onRemoveTag={onRemoveTag}
+        />
       </DialogContent>
     </Dialog>
   );

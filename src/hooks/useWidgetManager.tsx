@@ -10,6 +10,14 @@ export interface WidgetDefinition {
   category: string;
   component_name: string;
   default_settings?: Record<string, any>;
+  user_tags?: string[];
+}
+
+export interface UserWidgetTag {
+  id: string;
+  user_id: string;
+  widget_definition_id: string;
+  tag: string;
 }
 
 export interface UserWidgetInstance {
@@ -36,6 +44,7 @@ export const useWidgetManager = () => {
   const [availableWidgets, setAvailableWidgets] = useState<WidgetDefinition[]>([]);
   const [userWidgetInstances, setUserWidgetInstances] = useState<UserWidgetInstance[]>([]);
   const [userWidgetSettings, setUserWidgetSettings] = useState<UserWidgetSettings[]>([]);
+  const [userWidgetTags, setUserWidgetTags] = useState<UserWidgetTag[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -96,6 +105,25 @@ export const useWidgetManager = () => {
         ...s,
         settings: (s.settings as Record<string, any>) || {}
       })));
+
+      // Load user widget tags
+      const { data: tags, error: tagsError } = await supabase
+        .from('user_widget_tags')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (tagsError) throw tagsError;
+      setUserWidgetTags(tags || []);
+
+      // Merge tags with available widgets
+      if (widgets && tags) {
+        const widgetsWithTags = widgets.map(widget => ({
+          ...widget,
+          default_settings: (widget.default_settings as Record<string, any>) || {},
+          user_tags: tags.filter(tag => tag.widget_definition_id === widget.id).map(tag => tag.tag)
+        }));
+        setAvailableWidgets(widgetsWithTags);
+      }
 
     } catch (error) {
       console.error('Error loading widget data:', error);
@@ -353,10 +381,74 @@ export const useWidgetManager = () => {
     }
   };
 
+  const addTagToWidget = async (widgetId: string, tag: string) => {
+    if (!user || !tag.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_widget_tags')
+        .insert({
+          user_id: user.id,
+          widget_definition_id: widgetId,
+          tag: tag.trim(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setUserWidgetTags(prev => [...prev, data]);
+        setAvailableWidgets(prev => prev.map(widget => 
+          widget.id === widgetId 
+            ? { ...widget, user_tags: [...(widget.user_tags || []), tag.trim()] }
+            : widget
+        ));
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error adding tag to widget:', error);
+      throw error;
+    }
+  };
+
+  const removeTagFromWidget = async (widgetId: string, tag: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_widget_tags')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('widget_definition_id', widgetId)
+        .eq('tag', tag);
+
+      if (error) throw error;
+
+      setUserWidgetTags(prev => prev.filter(t => 
+        !(t.user_id === user.id && t.widget_definition_id === widgetId && t.tag === tag)
+      ));
+      setAvailableWidgets(prev => prev.map(widget => 
+        widget.id === widgetId 
+          ? { ...widget, user_tags: (widget.user_tags || []).filter(t => t !== tag) }
+          : widget
+      ));
+    } catch (error) {
+      console.error('Error removing tag from widget:', error);
+      throw error;
+    }
+  };
+
+  const getAllUserTags = (): string[] => {
+    return Array.from(new Set(userWidgetTags.map(tag => tag.tag))).sort();
+  };
+
   return {
     availableWidgets,
     userWidgetInstances,
     userWidgetSettings,
+    userWidgetTags,
     loading,
     addWidgetToTab,
     removeWidgetFromTab,
@@ -367,6 +459,9 @@ export const useWidgetManager = () => {
     updateWidgetPosition,
     updateWidgetName,
     moveWidgetToTab,
+    addTagToWidget,
+    removeTagFromWidget,
+    getAllUserTags,
     refreshData: loadWidgetData,
   };
 };

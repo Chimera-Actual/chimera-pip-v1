@@ -313,6 +313,41 @@ export type Database = {
           },
         ]
       }
+      user_widget_tags: {
+        Row: {
+          created_at: string
+          id: string
+          tag: string
+          updated_at: string
+          user_id: string
+          widget_definition_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tag: string
+          updated_at?: string
+          user_id: string
+          widget_definition_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tag?: string
+          updated_at?: string
+          user_id?: string
+          widget_definition_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_widget_tags_widget_definition_id_fkey"
+            columns: ["widget_definition_id"]
+            isOneToOne: false
+            referencedRelation: "widget_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_definitions: {
         Row: {
           category: string
