@@ -25,17 +25,21 @@ interface WeatherData {
 }
 
 // Mock weather data - will be replaced with API data later
-const getMockWeatherData = (location?: { latitude: number; longitude: number; name?: string }): WeatherData => ({
-  current: {
-    location: location?.name || "San Francisco, CA",
-    temperature: 18,
-    condition: "Partly Cloudy",
-    humidity: 65,
-    windSpeed: 12,
-    pressure: 1013,
-    icon: "⛅"
-  },
-  forecast: [
+const getMockWeatherData = (location?: { latitude: number; longitude: number; name?: string }, tempUnit: string = 'celsius'): WeatherData => {
+  const tempCelsius = 18;
+  const tempFahrenheit = Math.round((tempCelsius * 9/5) + 32);
+  
+  return {
+    current: {
+      location: location?.name || "San Francisco, CA",
+      temperature: tempUnit === 'fahrenheit' ? tempFahrenheit : tempCelsius,
+      condition: "Partly Cloudy",
+      humidity: 65,
+      windSpeed: 12,
+      pressure: 1013,
+      icon: "⛅"
+    },
+    forecast: [
     {
       date: "Today",
       high: 20,
@@ -63,8 +67,9 @@ const getMockWeatherData = (location?: { latitude: number; longitude: number; na
       humidity: 80,
       windSpeed: 15
     }
-  ]
-});
+    ]
+  };
+};
 
 interface WeatherWidgetProps {
   settings?: Record<string, any>;
@@ -75,15 +80,23 @@ interface WeatherWidgetProps {
 
 export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const { getUserLocation } = useUserSettings();
-  const [weather, setWeather] = useState<WeatherData>(getMockWeatherData());
+  const temperatureUnit = settings?.temperatureUnit || 'celsius';
+  const showLocation = settings?.showLocation !== false;
+  const showForecast = settings?.showForecast !== false;
+  const showDetails = settings?.showDetails !== false;
+  
+  const [weather, setWeather] = useState<WeatherData>(getMockWeatherData(undefined, temperatureUnit));
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Update weather data when user location changes
+  // Update weather data when user location or settings change
   useEffect(() => {
-    const persistentLocation = getUserLocation();
-    setWeather(getMockWeatherData(persistentLocation));
-  }, [getUserLocation]);
+    const updateWeatherData = async () => {
+      const persistentLocation = await getUserLocation();
+      setWeather(getMockWeatherData(persistentLocation, temperatureUnit));
+    };
+    updateWeatherData();
+  }, [temperatureUnit]);
 
   const refreshWeather = () => {
     setLoading(true);
@@ -136,9 +149,11 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
                 <h2 className="text-xl font-mono text-primary uppercase tracking-wider crt-glow">
                   CURRENT CONDITIONS
                 </h2>
-                <div className="text-xs font-mono text-muted-foreground">
-                  {weather.current.location}
-                </div>
+                {showLocation && (
+                  <div className="text-xs font-mono text-muted-foreground">
+                    {weather.current.location}
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -147,7 +162,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
                   <div className="text-6xl">{weather.current.icon}</div>
                   <div>
                     <div className="text-4xl font-mono text-primary crt-glow">
-                      {weather.current.temperature}°C
+                      {weather.current.temperature}°{temperatureUnit === 'fahrenheit' ? 'F' : 'C'}
                     </div>
                     <div className="text-lg font-mono text-secondary-foreground">
                       {weather.current.condition}
@@ -156,81 +171,93 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
                 </div>
                 
                 {/* Weather Details */}
-                <div className="grid grid-cols-2 gap-4 text-sm font-mono">
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">HUMIDITY:</span>
-                      <span className="text-primary">{weather.current.humidity}%</span>
+                {showDetails && (
+                  <div className="grid grid-cols-2 gap-4 text-sm font-mono">
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">HUMIDITY:</span>
+                        <span className="text-primary">{weather.current.humidity}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">WIND:</span>
+                        <span className="text-primary">{weather.current.windSpeed} km/h</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">WIND:</span>
-                      <span className="text-primary">{weather.current.windSpeed} km/h</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">PRESSURE:</span>
+                        <span className="text-primary">{weather.current.pressure} hPa</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">STATUS:</span>
+                        <span className="text-accent animate-pulse">ACTIVE</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">PRESSURE:</span>
-                      <span className="text-primary">{weather.current.pressure} hPa</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">STATUS:</span>
-                      <span className="text-accent animate-pulse">ACTIVE</span>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
           {/* 3-Day Forecast */}
-          <Card className="bg-card/50 border-border">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-mono text-primary uppercase tracking-wider crt-glow mb-4">
-                3-DAY FORECAST
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {weather.forecast.map((day, index) => (
-                  <div 
-                    key={index}
-                    className="bg-background/30 border border-border rounded p-4 space-y-3"
-                  >
-                    <div className="text-center">
-                      <div className="text-sm font-mono text-primary uppercase tracking-wider">
-                        {day.date}
-                      </div>
-                      <div className="text-3xl my-2">{day.icon}</div>
-                      <div className="text-sm font-mono text-secondary-foreground">
-                        {day.condition}
-                      </div>
-                    </div>
+          {showForecast && (
+            <Card className="bg-card/50 border-border">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-mono text-primary uppercase tracking-wider crt-glow mb-4">
+                  3-DAY FORECAST
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {weather.forecast.map((day, index) => {
+                    const dayTemp = temperatureUnit === 'fahrenheit' 
+                      ? { high: Math.round((day.high * 9/5) + 32), low: Math.round((day.low * 9/5) + 32) }
+                      : { high: day.high, low: day.low };
                     
-                    <div className="flex justify-between items-center">
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground font-mono">HIGH</div>
-                        <div className="text-lg font-mono text-primary">{day.high}°</div>
+                    return (
+                      <div 
+                        key={index}
+                        className="bg-background/30 border border-border rounded p-4 space-y-3"
+                      >
+                        <div className="text-center">
+                          <div className="text-sm font-mono text-primary uppercase tracking-wider">
+                            {day.date}
+                          </div>
+                          <div className="text-3xl my-2">{day.icon}</div>
+                          <div className="text-sm font-mono text-secondary-foreground">
+                            {day.condition}
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <div className="text-center">
+                            <div className="text-xs text-muted-foreground font-mono">HIGH</div>
+                            <div className="text-lg font-mono text-primary">{dayTemp.high}°</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-xs text-muted-foreground font-mono">LOW</div>
+                            <div className="text-lg font-mono text-secondary-foreground">{dayTemp.low}°</div>
+                          </div>
+                        </div>
+                        
+                        {showDetails && (
+                          <div className="space-y-2 text-xs font-mono">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">HUMIDITY:</span>
+                              <span className="text-primary">{day.humidity}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">WIND:</span>
+                              <span className="text-primary">{day.windSpeed} km/h</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground font-mono">LOW</div>
-                        <div className="text-lg font-mono text-secondary-foreground">{day.low}°</div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2 text-xs font-mono">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">HUMIDITY:</span>
-                        <span className="text-primary">{day.humidity}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">WIND:</span>
-                        <span className="text-primary">{day.windSpeed} km/h</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* System Status */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">

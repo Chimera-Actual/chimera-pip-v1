@@ -67,6 +67,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState([75]);
   const [playlist, setPlaylist] = useState<AudioTrack[]>([]);
+  const [currentWidgetInstance, setCurrentWidgetInstance] = useState<string | null>(null);
   const [settings, setSettings] = useState<PlayerSettings>({
     volume: 75,
     autoplay: false,
@@ -94,6 +95,9 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     if (!user) return;
 
     try {
+      // Set this as the current active widget instance
+      setCurrentWidgetInstance(widgetInstanceId);
+
       const { data, error } = await supabase
         .from('user_widget_settings')
         .select('settings')
@@ -131,11 +135,19 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
             track.url && !track.url.includes('undefined')
           );
           
-          setPlaylist(validTracks);
-          
-          // Set first track as current if no current track
-          if (validTracks.length > 0 && !currentTrack) {
-            setCurrentTrack(validTracks[0]);
+          // Only update global playlist if this is the current active widget
+          if (currentWidgetInstance === widgetInstanceId || !currentWidgetInstance) {
+            setPlaylist(validTracks);
+            
+            // Set first track as current if no current track and we have tracks
+            if (validTracks.length > 0 && !currentTrack) {
+              setCurrentTrack(validTracks[0]);
+            }
+          }
+        } else {
+          // No playlist found, set empty for this widget
+          if (currentWidgetInstance === widgetInstanceId || !currentWidgetInstance) {
+            setPlaylist([]);
           }
         }
         
@@ -144,6 +156,11 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         }
         
         setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
+      } else {
+        // No settings found, set empty playlist for this widget
+        if (currentWidgetInstance === widgetInstanceId || !currentWidgetInstance) {
+          setPlaylist([]);
+        }
       }
     } catch (error) {
       console.error('Error loading widget playlist:', error);

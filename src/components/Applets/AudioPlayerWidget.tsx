@@ -136,9 +136,10 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInst
     })
   );
 
-  // Load playlist when widget mounts
+  // Load playlist when widget mounts and set as active instance
   React.useEffect(() => {
     if (widgetInstanceId) {
+      // Set this widget as the current active instance
       loadWidgetPlaylist(widgetInstanceId);
     }
   }, [widgetInstanceId, loadWidgetPlaylist]);

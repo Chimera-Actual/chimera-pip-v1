@@ -7,8 +7,8 @@ import { CustomAssistantSettings } from '@/components/Applets/Settings/CustomAss
 import { TextDisplaySettings } from '@/components/Applets/Settings/TextDisplaySettings';
 import { ImageDisplaySettings } from '@/components/Applets/Settings/ImageDisplaySettings';
 import { MapWidgetSettings } from '@/components/Applets/Settings/MapWidgetSettings';
-
 import { AudioPlayerSettings } from '@/components/Applets/Settings/AudioPlayerSettings';
+import { WeatherSettings } from '@/components/Applets/Settings/WeatherSettings';
 
 interface WidgetSettingsProps {
   isOpen: boolean;
@@ -78,6 +78,16 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
             onClose={onClose}
           />
         );
+
+      case 'WeatherWidget':
+        return (
+          <WeatherSettings
+            settings={currentSettings}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
+            onClose={onClose}
+          />
+        );
+      
       default:
         return (
           <div className="p-6 text-center">
