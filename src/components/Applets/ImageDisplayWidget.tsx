@@ -77,6 +77,11 @@ export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({
           src={container.imageUrl}
           alt={container.title}
           className="w-full h-auto max-h-64 object-cover rounded transition-transform group-hover:scale-105"
+          onLoad={() => console.log('Widget image loaded successfully:', container.imageUrl)}
+          onError={(e) => {
+            console.error('Widget image failed to load:', container.imageUrl);
+            console.error('Error details:', e);
+          }}
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded flex items-center justify-center">
           <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />

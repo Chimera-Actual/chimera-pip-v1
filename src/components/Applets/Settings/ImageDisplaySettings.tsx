@@ -521,6 +521,11 @@ export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({
                           src={container.imageUrl}
                           alt={container.title}
                           className="w-full h-20 object-cover rounded border"
+                          onLoad={() => console.log('Image loaded successfully:', container.imageUrl)}
+                          onError={(e) => {
+                            console.error('Image failed to load:', container.imageUrl);
+                            console.error('Error details:', e);
+                          }}
                         />
                       </div>
                     )}
