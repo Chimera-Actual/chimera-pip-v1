@@ -298,6 +298,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_user_widget_settings_instance"
+            columns: ["widget_instance_id"]
+            isOneToOne: false
+            referencedRelation: "user_widget_instances"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_widget_instance"
             columns: ["widget_instance_id"]
             isOneToOne: false
