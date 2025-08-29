@@ -168,7 +168,7 @@ export const useWidgetManager = () => {
     }
   };
 
-  const updateWidgetSettings = async (widgetId: string, settings: Record<string, any>) => {
+  const updateWidgetSettings = async (instanceId: string, settings: Record<string, any>) => {
     if (!user) return;
 
     try {
@@ -176,7 +176,7 @@ export const useWidgetManager = () => {
         .from('user_widget_settings')
         .upsert({
           user_id: user.id,
-          widget_id: widgetId,
+          widget_id: instanceId,
           settings: settings,
         }, {
           onConflict: 'user_id,widget_id'
@@ -192,7 +192,7 @@ export const useWidgetManager = () => {
           settings: (data.settings as Record<string, any>) || {}
         };
         setUserWidgetSettings(prev => {
-          const filtered = prev.filter(s => s.widget_id !== widgetId);
+          const filtered = prev.filter(s => s.widget_id !== instanceId);
           return [...filtered, transformedData];
         });
       }
@@ -204,9 +204,10 @@ export const useWidgetManager = () => {
     }
   };
 
-  const getWidgetSettings = (widgetId: string): Record<string, any> => {
-    const widgetSettings = userWidgetSettings.find(s => s.widget_id === widgetId);
-    const widgetDefinition = availableWidgets.find(w => w.id === widgetId);
+  const getWidgetSettings = (instanceId: string): Record<string, any> => {
+    const instance = userWidgetInstances.find(i => i.id === instanceId);
+    const widgetSettings = userWidgetSettings.find(s => s.widget_id === instanceId);
+    const widgetDefinition = availableWidgets.find(w => w.id === instance?.widget_id);
     
     return {
       ...widgetDefinition?.default_settings,
