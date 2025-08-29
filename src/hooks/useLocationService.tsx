@@ -99,25 +99,31 @@ export const useLocationService = () => {
         Math.abs(lastLocationRef.current.latitude - locationData.latitude) > 0.001 ||
         Math.abs(lastLocationRef.current.longitude - locationData.longitude) > 0.001;
 
-      let locationName = settings.location_name;
-      
-      // Only reverse geocode if location changed significantly
-      if (hasLocationChanged) {
-        locationName = await reverseGeocode(locationData.latitude, locationData.longitude);
-      }
+      if (!hasLocationChanged) return;
 
-      // Update settings with new location data
+      // Always update coordinates immediately, don't wait for geocoding
       await updateSettings({
         location_latitude: locationData.latitude,
         location_longitude: locationData.longitude,
-        location_name: locationName || settings.location_name,
+        location_name: settings.location_name, // Keep existing name for now
       });
 
       lastLocationRef.current = locationData;
 
-      // Only show toast for significant location changes, less frequently
-      if (hasLocationChanged && locationName && Math.random() < 0.3) {
-        toast.success(`Location updated: ${locationName}`);
+      // Try reverse geocoding in background (non-blocking)
+      try {
+        const locationName = await reverseGeocode(locationData.latitude, locationData.longitude);
+        if (locationName) {
+          // Update with the location name if successful
+          await updateSettings({
+            location_latitude: locationData.latitude,
+            location_longitude: locationData.longitude,
+            location_name: locationName,
+          });
+        }
+      } catch (geocodeError) {
+        // Silently ignore geocoding errors - coordinates are already updated
+        console.log('Reverse geocoding failed, continuing with coordinates only');
       }
 
     } catch (error) {
