@@ -290,7 +290,7 @@ export const UserInfoWidget: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-card border border-border">
+    <div className="h-full flex flex-col bg-card border border-border overflow-hidden">
       {/* Header */}
       <div className="border-b border-border bg-card p-4">
         <div className="flex items-center gap-2">
@@ -376,7 +376,9 @@ export const UserInfoWidget: React.FC = () => {
         </div>
       </div>
 
-      {/* Usage Statistics */}
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Usage Statistics */}
       <div className="border-b border-border bg-card p-4">
         <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
           <Clock className="w-4 h-4" />
@@ -608,6 +610,7 @@ export const UserInfoWidget: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
