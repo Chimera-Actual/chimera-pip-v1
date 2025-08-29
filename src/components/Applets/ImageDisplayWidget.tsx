@@ -192,9 +192,9 @@ export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="w-full h-full flex flex-col">
       {/* Content Display */}
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 min-h-0">
         {getLayoutGrid()}
       </div>
 
