@@ -91,27 +91,39 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
           const loadedSettings = data.settings as Partial<PlayerSettings>;
           setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
           
-          // Refresh URLs for stored tracks
+          // Refresh URLs for stored tracks with better error handling
           if (loadedSettings.playlist) {
             const refreshedPlaylist = await Promise.all(
               loadedSettings.playlist.map(async (track) => {
                 if (track.storagePath) {
                   try {
+                    // Create fresh signed URL (30 days)
                     const { data: urlData } = await supabase.storage
                       .from('audio')
-                      .createSignedUrl(track.storagePath, 60 * 60 * 24 * 7);
+                      .createSignedUrl(track.storagePath, 60 * 60 * 24 * 30);
                     
                     if (urlData?.signedUrl) {
                       return { ...track, url: urlData.signedUrl };
                     }
                   } catch (e) {
-                    console.error('Failed to refresh URL for track:', track.title);
+                    console.error('Failed to refresh URL for track:', track.title, e);
                   }
                 }
                 return track;
               })
             );
-            setPlaylist(refreshedPlaylist);
+            
+            // Filter out tracks with invalid URLs
+            const validTracks = refreshedPlaylist.filter(track => 
+              track.url && !track.url.includes('undefined')
+            );
+            
+            setPlaylist(validTracks);
+            
+            // If current track is invalid, clear it
+            if (validTracks.length > 0 && !validTracks.some(t => t.id === currentTrack?.id)) {
+              setCurrentTrack(validTracks[0]);
+            }
           }
           
           if (loadedSettings.volume !== undefined) {
@@ -160,24 +172,44 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     try {
       console.log('Uploading file:', file.name);
       
+      // Create a consistent filename based on user and file content
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileHash = await generateFileHash(file);
+      const fileName = `${user.id}/${fileHash}.${fileExt}`;
 
-      const { data, error } = await supabase.storage
+      // Check if file already exists
+      const { data: existingFiles } = await supabase.storage
         .from('audio')
-        .upload(fileName, file);
+        .list(user.id, {
+          search: fileHash
+        });
 
-      if (error) {
-        console.error('Error uploading file:', error);
-        return;
+      let storagePath = fileName;
+      let needsUpload = true;
+
+      if (existingFiles && existingFiles.length > 0) {
+        // File already exists, use the existing one
+        storagePath = `${user.id}/${existingFiles[0].name}`;
+        needsUpload = false;
+        console.log('File already exists, reusing:', storagePath);
       }
 
-      console.log('File uploaded successfully:', data.path);
+      if (needsUpload) {
+        const { data, error } = await supabase.storage
+          .from('audio')
+          .upload(fileName, file);
 
-      // Create a longer-lasting signed URL (7 days)
+        if (error) {
+          console.error('Error uploading file:', error);
+          return;
+        }
+        console.log('File uploaded successfully:', data.path);
+      }
+
+      // Create a longer-lasting signed URL (30 days)
       const { data: urlData, error: urlError } = await supabase.storage
         .from('audio')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 7);
+        .createSignedUrl(storagePath, 60 * 60 * 24 * 30);
 
       if (urlError || !urlData) {
         console.error('Error creating signed URL:', urlError);
@@ -185,24 +217,45 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       }
 
       const track: AudioTrack = {
-        id: `file-${Date.now()}`,
+        id: `file-${fileHash}`,
         title: file.name,
         url: urlData.signedUrl,
-        storagePath: fileName
+        storagePath: storagePath
       };
       
-      const newPlaylist = [...playlist, track];
+      // Check if track already exists in playlist
+      const existingTrackIndex = playlist.findIndex(t => t.id === track.id);
+      let newPlaylist: AudioTrack[];
+      
+      if (existingTrackIndex >= 0) {
+        // Update existing track with new URL
+        newPlaylist = [...playlist];
+        newPlaylist[existingTrackIndex] = track;
+        console.log('Updated existing track:', track.title);
+      } else {
+        // Add new track to playlist
+        newPlaylist = [...playlist, track];
+        console.log('Added new track to playlist:', track.title);
+      }
+      
       setPlaylist(newPlaylist);
       await savePlaylistToSettings(newPlaylist);
       
       if (!currentTrack) {
         setCurrentTrack(track);
       }
-      
-      console.log('Track added to playlist:', track.title);
     } catch (error) {
       console.error('Error handling file upload:', error);
     }
+  };
+
+  // Generate a simple hash for file deduplication
+  const generateFileHash = async (file: File): Promise<string> => {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex.substring(0, 16); // Use first 16 characters for shorter filenames
   };
 
   const addTrack = async (track: AudioTrack) => {
@@ -297,6 +350,38 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     setVolumeState(newVolume);
   };
 
+  // Function to refresh expired track URLs
+  const refreshTrackUrl = async (track: AudioTrack) => {
+    if (!track.storagePath) return;
+
+    try {
+      const { data: urlData } = await supabase.storage
+        .from('audio')
+        .createSignedUrl(track.storagePath, 60 * 60 * 24 * 30);
+      
+      if (urlData?.signedUrl) {
+        const updatedTrack = { ...track, url: urlData.signedUrl };
+        setCurrentTrack(updatedTrack);
+        
+        // Update in playlist
+        const updatedPlaylist = playlist.map(t => 
+          t.id === track.id ? updatedTrack : t
+        );
+        setPlaylist(updatedPlaylist);
+        await savePlaylistToSettings(updatedPlaylist);
+        
+        // Retry playing with new URL
+        if (audioRef.current) {
+          audioRef.current.src = updatedTrack.url;
+          audioRef.current.load();
+          audioRef.current.play();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh track URL:', error);
+    }
+  };
+
   const value: AudioContextType = {
     isPlaying,
     currentTrack,
@@ -346,11 +431,16 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         onError={(e) => {
           console.error('Audio error:', e);
           console.error('Current src:', audioRef.current?.src);
+          // Try to refresh the URL if it's expired
+          if (currentTrack?.storagePath) {
+            refreshTrackUrl(currentTrack);
+          }
         }}
         onLoadStart={() => console.log('Audio load started')}
         onCanPlay={() => console.log('Audio can play')}
         crossOrigin="anonymous"
         style={{ display: 'none' }}
+        preload="metadata"
       />
       {children}
     </AudioContext.Provider>
