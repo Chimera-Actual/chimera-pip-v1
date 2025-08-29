@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { AppletContainer } from './AppletContainer';
-import { TabCategory } from './PipBoyLayout';
+import { UserTab } from '@/hooks/useTabManager';
 
 interface TabContentProps {
-  tab: TabCategory;
+  tab: UserTab;
 }
 
 export const TabContent: React.FC<TabContentProps> = ({ tab }) => {
@@ -14,7 +14,7 @@ export const TabContent: React.FC<TabContentProps> = ({ tab }) => {
       <AppletContainer 
         activeApplet={activeApplet}
         tabName={tab.name}
-        tabCategory={tab.id}
+        tabId={tab.id}
         onAppletChange={setActiveApplet}
       />
     </div>

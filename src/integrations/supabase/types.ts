@@ -205,8 +205,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           position: number | null
-          tab_category: string
-          tab_id: string | null
+          tab_id: string
           updated_at: string
           user_id: string
           widget_id: string
@@ -216,8 +215,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           position?: number | null
-          tab_category: string
-          tab_id?: string | null
+          tab_id: string
           updated_at?: string
           user_id: string
           widget_id: string
@@ -227,8 +225,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           position?: number | null
-          tab_category?: string
-          tab_id?: string | null
+          tab_id?: string
           updated_at?: string
           user_id?: string
           widget_id?: string

@@ -11,14 +11,14 @@ import { ChatInterface } from '../Applets/ChatInterface';
 interface AppletContainerProps {
   activeApplet: string;
   tabName: string;
-  tabCategory: string;
+  tabId: string;
   onAppletChange: (appletId: string) => void;
 }
 
 export const AppletContainer: React.FC<AppletContainerProps> = ({
   activeApplet,
   tabName,
-  tabCategory,
+  tabId,
   onAppletChange,
 }) => {
   const {
@@ -35,10 +35,10 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   const [widgets, setWidgets] = useState<UserWidgetInstance[]>([]);
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
 
-  // Load widgets when tab category changes
+  // Load widgets when tab ID changes
   useEffect(() => {
     if (!loading) {
-      const activeWidgets = getActiveWidgetsForTab(tabCategory);
+      const activeWidgets = getActiveWidgetsForTab(tabId);
       setWidgets(activeWidgets);
       
       // Set first widget as active if none selected or current doesn't exist
@@ -46,7 +46,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         onAppletChange(activeWidgets[0].widget_id);
       }
     }
-  }, [tabCategory, loading, getActiveWidgetsForTab, activeApplet, onAppletChange]);
+  }, [tabId, loading, getActiveWidgetsForTab, activeApplet, onAppletChange]);
 
   const handleRemoveWidget = async (instanceId: string, widgetId: string) => {
     try {
@@ -75,7 +75,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
 
   const handleAddWidget = async (widgetId: string) => {
     try {
-      await addWidgetToTab(widgetId, tabCategory);
+      await addWidgetToTab(widgetId, tabId);
       toast({
         title: "Widget Added",
         description: "Widget has been added to this tab",
@@ -224,9 +224,9 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       <WidgetLibrary
         isOpen={showWidgetLibrary}
         onClose={() => setShowWidgetLibrary(false)}
-        availableWidgets={getAvailableWidgetsForTab(tabCategory)}
+        availableWidgets={getAvailableWidgetsForTab(tabId)}
         onAddWidget={handleAddWidget}
-        tabCategory={tabCategory}
+        tabCategory={tabName}
       />
     </div>
   );
