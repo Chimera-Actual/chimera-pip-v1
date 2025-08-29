@@ -180,6 +180,8 @@ export const useWidgetManager = () => {
           user_id: user.id,
           widget_id: widgetId,
           settings: settings,
+        }, {
+          onConflict: 'user_id,widget_id'
         })
         .select()
         .single();

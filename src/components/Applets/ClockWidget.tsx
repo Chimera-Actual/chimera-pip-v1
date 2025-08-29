@@ -49,9 +49,13 @@ interface ClockWidgetProps {
 
 export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUpdate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [is24Hour, setIs24Hour] = useState(false);
   const [userTimezone, setUserTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [worldClocks, setWorldClocks] = useState<WorldClock[]>([{
+  const [isAddingClock, setIsAddingClock] = useState(false);
+  const [newTimezone, setNewTimezone] = useState('');
+
+  // Use settings from props, with defaults
+  const is24Hour = settings?.displayFormat === '24h' || false;
+  const worldClocks: WorldClock[] = settings?.timeZones || [{
     id: '1',
     label: 'UTC',
     timezone: 'UTC'
@@ -63,15 +67,15 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUp
     id: '3',
     label: 'Tokyo',
     timezone: 'Asia/Tokyo'
-  }]);
-  const [isAddingClock, setIsAddingClock] = useState(false);
-  const [newTimezone, setNewTimezone] = useState('');
+  }];
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
   useEffect(() => {
     // Try to get user's location for timezone
     if (navigator.geolocation) {
@@ -101,7 +105,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUp
     }).format(time);
   };
   const addWorldClock = () => {
-    if (newTimezone && worldClocks.length < 6) {
+    if (newTimezone && worldClocks.length < 6 && onSettingsUpdate) {
       const timezone = COMMON_TIMEZONES.find(tz => tz.value === newTimezone);
       if (timezone) {
         const newClock: WorldClock = {
@@ -109,15 +113,23 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUp
           label: timezone.label.split(' ')[0],
           timezone: timezone.value
         };
-        setWorldClocks([...worldClocks, newClock]);
+        const updatedTimeZones = [...worldClocks, newClock];
+        onSettingsUpdate({
+          ...settings,
+          timeZones: updatedTimeZones
+        });
         setNewTimezone('');
         setIsAddingClock(false);
       }
     }
   };
   const removeWorldClock = (id: string) => {
-    if (worldClocks.length > 1) {
-      setWorldClocks(worldClocks.filter(clock => clock.id !== id));
+    if (worldClocks.length > 1 && onSettingsUpdate) {
+      const updatedTimeZones = worldClocks.filter(clock => clock.id !== id);
+      onSettingsUpdate({
+        ...settings,
+        timeZones: updatedTimeZones
+      });
     }
   };
 
