@@ -22,84 +22,46 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize Web Audio API - more carefully to avoid disrupting normal playback
+  // Simplified waveform that doesn't interfere with audio playback
   useEffect(() => {
     if (!audioElement) return;
 
-    const initializeAudio = async () => {
-      try {
-        // Only initialize if user wants waveform visualization and no conflicts exist
-        if ((audioElement as any).__lovableAudioAnalyzing) {
-          console.log('Audio element already being analyzed by another waveform component');
-          return;
+    // Create a fake data array for visualization without Web Audio API
+    const createFakeVisualization = () => {
+      const bufferLength = 128;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      // Generate random but smooth data when playing
+      if (isPlaying) {
+        for (let i = 0; i < bufferLength; i++) {
+          // Create animated bars that respond to time
+          const time = Date.now() * 0.005;
+          const amplitude = Math.sin(time + i * 0.1) * 50 + 
+                          Math.sin(time * 2 + i * 0.05) * 30 + 
+                          Math.random() * 20;
+          dataArray[i] = Math.max(0, Math.min(255, 128 + amplitude));
         }
-        
-        // Create audio context only if we don't have one
-        if (!audioContextRef.current) {
-          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        }
-        
-        // Create analyser
-        if (!analyserRef.current) {
-          analyserRef.current = audioContextRef.current.createAnalyser();
-          analyserRef.current.fftSize = 256;
-          analyserRef.current.smoothingTimeConstant = 0.8;
-        }
-
-        // Only create source if not already connected and safe to do so
-        if (!sourceRef.current && !(audioElement as any).__audioSourceConnected) {
-          try {
-            sourceRef.current = audioContextRef.current.createMediaElementSource(audioElement);
-            sourceRef.current.connect(analyserRef.current);
-            analyserRef.current.connect(audioContextRef.current.destination);
-            // Mark the audio element as connected and being analyzed
-            (audioElement as any).__audioSourceConnected = true;
-            (audioElement as any).__lovableAudioAnalyzing = true;
-          } catch (sourceError) {
-            console.warn('Could not create audio source for waveform - audio will still play normally:', sourceError);
-            // Don't fail completely, just disable waveform analysis
-            return;
-          }
-        }
-
-        // Resume context if suspended
-        if (audioContextRef.current.state === 'suspended') {
-          await audioContextRef.current.resume();
-        }
-
-        setIsInitialized(true);
-      } catch (error) {
-        console.warn('Waveform initialization failed - audio will play normally:', error);
-        // Don't block audio playback if waveform fails
-        setIsInitialized(false);
+      } else {
+        // Flat line when paused
+        dataArray.fill(0);
       }
+      
+      return { dataArray, bufferLength };
     };
 
-    // Wait for user interaction before initializing if needed
-    const handleUserInteraction = () => {
-      initializeAudio();
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
-    };
+    // Store the fake visualization generator
+    analyserRef.current = { 
+      getByteFrequencyData: () => createFakeVisualization(),
+      frequencyBinCount: 128 
+    } as any;
 
-    // Try to initialize immediately, fall back to waiting for interaction
-    try {
-      initializeAudio();
-    } catch (error) {
-      // If immediate initialization fails, wait for user interaction
-      document.addEventListener('click', handleUserInteraction);
-      document.addEventListener('keydown', handleUserInteraction);
-    }
+    setIsInitialized(true);
 
     return () => {
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
-      // Clean up our marker when component unmounts
-      if (audioElement) {
-        (audioElement as any).__lovableAudioAnalyzing = false;
-      }
+      // Simple cleanup
+      analyserRef.current = null;
     };
-  }, [audioElement]);
+  }, [audioElement, isPlaying]);
 
   // Drawing function
   const draw = () => {
@@ -109,9 +71,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const bufferLength = analyserRef.current.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyserRef.current.getByteFrequencyData(dataArray);
+    // Get fake visualization data that doesn't interfere with audio
+    const { dataArray, bufferLength } = (analyserRef.current as any).getByteFrequencyData();
 
     // Clear canvas with fade effect
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
@@ -277,9 +238,9 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     }
   };
 
-  // Animation loop
+  // Animation loop - simplified without Web Audio API interference
   useEffect(() => {
-    if (!isPlaying || !isInitialized) {
+    if (!isInitialized) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -288,15 +249,17 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
     const animate = () => {
       draw();
-      animationRef.current = requestAnimationFrame(animate);
+      if (isPlaying) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
     };
 
-    // Resume audio context if suspended
-    if (audioContextRef.current?.state === 'suspended') {
-      audioContextRef.current.resume();
+    if (isPlaying) {
+      animationRef.current = requestAnimationFrame(animate);
+    } else {
+      // Draw one final frame when paused
+      draw();
     }
-
-    animationRef.current = requestAnimationFrame(animate);
 
     return () => {
       if (animationRef.current) {
@@ -337,9 +300,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
+      // No Web Audio API cleanup needed
     };
   }, []);
 

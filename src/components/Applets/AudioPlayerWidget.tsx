@@ -223,13 +223,13 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
 
       {/* Audio Waveform Visualization - At Top */}
       {settings?.showWaveform !== false && (
-        <div className={`flex-shrink-0 bg-background/20 border-b border-border ${
-          currentWaveformSize === 'small' ? 'h-16' :
-          currentWaveformSize === 'large' ? 'h-48' :
+        <div className={`flex-shrink-0 bg-background/20 border-b border-border relative ${
+          currentWaveformSize === 'small' ? 'h-20' :
+          currentWaveformSize === 'large' ? 'h-60' :
           'h-32'
         }`}>
-          {/* Waveform Size Controls */}
-          <div className="flex justify-end p-2 gap-1">
+          {/* Waveform Size Controls - Positioned absolutely to avoid layout interference */}
+          <div className="absolute top-2 right-2 z-10 flex gap-1">
             <Button
               onClick={() => handleWaveformSizeChange('small')}
               size="sm"
@@ -255,11 +255,12 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
               L
             </Button>
           </div>
-          <div className="h-full p-4 pt-0">
+          {/* Waveform container with proper sizing */}
+          <div className="absolute inset-0 p-4">
             <AudioWaveform 
               audioElement={audioRef.current}
               isPlaying={isPlaying}
-              className="h-full"
+              className="w-full h-full"
               style={settings?.waveformStyle || 'bars'}
               color={settings?.waveformColor || 'primary'}
             />
