@@ -3,9 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Edit, Trash2, GripVertical, Save, X } from 'lucide-react';
 import { UserTab } from '@/hooks/useTabManager';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +41,14 @@ export const TabManager: React.FC<TabManagerProps> = ({
   const [creating, setCreating] = useState(false);
   const [draggedTab, setDraggedTab] = useState<UserTab | null>(null);
   const { toast } = useToast();
+
+  const fontSizeOptions = [
+    { value: 'text-xs', label: 'Extra Small' },
+    { value: 'text-sm', label: 'Small' },
+    { value: 'text-base', label: 'Medium' },
+    { value: 'text-lg', label: 'Large' },
+    { value: 'text-xl', label: 'Extra Large' },
+  ];
 
   const handleCreateTab = async () => {
     if (!newTabName.trim()) {
@@ -168,19 +176,11 @@ export const TabManager: React.FC<TabManagerProps> = ({
     setDraggedTab(null);
   };
 
-  const fontSizeOptions = [
-    { value: 'text-xs', label: 'Extra Small' },
-    { value: 'text-sm', label: 'Small' },
-    { value: 'text-base', label: 'Base' },
-    { value: 'text-lg', label: 'Large' },
-    { value: 'text-xl', label: 'Extra Large' }
-  ];
-
   const commonIcons = ['◉', '◈', '◎', '◐', '◔', '☰', '⚙', '✉', '♫', '⌘', '🚀', '⭐', '🔧', '📊'];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] bg-card border-border">
+      <DialogContent className="max-w-3xl max-h-[80vh] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow">
             TAB MANAGEMENT
@@ -282,6 +282,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
                         <div className="space-y-3">
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                             <div className="md:col-span-2">
+                              <Label className="text-xs font-mono text-muted-foreground">TAB NAME</Label>
                               <Input
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
@@ -289,24 +290,30 @@ export const TabManager: React.FC<TabManagerProps> = ({
                                 maxLength={20}
                               />
                             </div>
-                            <Input
-                              value={editIcon}
-                              onChange={(e) => setEditIcon(e.target.value)}
-                              className="font-mono bg-background/50 border-border text-center"
-                              maxLength={2}
-                            />
-                            <Select value={editFontSize} onValueChange={setEditFontSize}>
-                              <SelectTrigger className="font-mono bg-background/50 border-border">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {fontSizeOptions.map(option => (
-                                  <SelectItem key={option.value} value={option.value} className="font-mono">
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div>
+                              <Label className="text-xs font-mono text-muted-foreground">ICON</Label>
+                              <Input
+                                value={editIcon}
+                                onChange={(e) => setEditIcon(e.target.value)}
+                                className="font-mono bg-background/50 border-border text-center"
+                                maxLength={2}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-mono text-muted-foreground">FONT SIZE</Label>
+                              <Select value={editFontSize} onValueChange={setEditFontSize}>
+                                <SelectTrigger className="font-mono bg-background/50 border-border">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {fontSizeOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value} className="font-mono">
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                           <div className="flex gap-2">
                             <Button onClick={handleSaveEdit} size="sm" className="font-mono">
@@ -325,11 +332,11 @@ export const TabManager: React.FC<TabManagerProps> = ({
                             <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
                             <span className="text-lg">{tab.icon}</span>
                             <div>
-                              <div className="text-sm font-mono text-foreground font-medium">
+                              <div className={`font-mono text-foreground font-medium ${tab.font_size || 'text-sm'}`}>
                                 {tab.name}
                               </div>
                               <div className="text-xs text-muted-foreground font-mono">
-                                Position: {index + 1} | Font: {fontSizeOptions.find(opt => opt.value === (tab.font_size || 'text-sm'))?.label}
+                                Position: {index + 1} • Font: {fontSizeOptions.find(opt => opt.value === (tab.font_size || 'text-sm'))?.label}
                               </div>
                             </div>
                           </div>
@@ -365,6 +372,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
           <div className="text-xs text-muted-foreground font-mono space-y-1 bg-background/20 border border-border rounded p-3">
             <div>• Drag tabs to reorder them</div>
             <div>• Tab names must be unique</div>
+            <div>• Font size affects tab title display</div>
             <div>• At least one tab must remain</div>
             <div>• Deleting a tab removes all its widgets</div>
           </div>

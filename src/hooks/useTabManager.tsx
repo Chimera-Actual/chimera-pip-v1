@@ -9,7 +9,7 @@ export interface UserTab {
   icon: string;
   position: number;
   is_active: boolean;
-  font_size?: string;
+  font_size: string;
 }
 
 const DEFAULT_TABS = [
