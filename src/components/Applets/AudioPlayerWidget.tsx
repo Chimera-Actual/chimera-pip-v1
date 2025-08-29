@@ -78,30 +78,84 @@ export const AudioPlayerWidget: React.FC = () => {
     }
   }, [volume]);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      const track: AudioTrack = {
-        id: `file-${Date.now()}`,
-        title: file.name,
-        url
-      };
-      setPlaylist(prev => [...prev, track]);
-      if (!currentTrack) {
-        setCurrentTrack(track);
-      }
+  // Save playlist to settings
+  const savePlaylistToSettings = async (newPlaylist: AudioTrack[]) => {
+    if (!user) return;
+
+    try {
+      const updatedSettings = { ...settings, playlist: newPlaylist };
+      
+      await supabase
+        .from('user_widget_settings')
+        .upsert({
+          user_id: user.id,
+          widget_id: 'audio-system',
+          settings: updatedSettings as any // Type assertion for JSON compatibility
+        });
+      
+      setSettings(updatedSettings);
+    } catch (error) {
+      console.error('Error saving playlist:', error);
     }
   };
 
-  const addUrlToPlaylist = () => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      // Create unique filename with user ID folder structure
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('audio')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Error uploading file:', error);
+        return;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('audio')
+        .getPublicUrl(fileName);
+
+      const track: AudioTrack = {
+        id: `file-${Date.now()}`,
+        title: file.name,
+        url: publicUrl
+      };
+      
+      const newPlaylist = [...playlist, track];
+      setPlaylist(newPlaylist);
+      
+      // Save updated playlist to settings
+      await savePlaylistToSettings(newPlaylist);
+      
+      if (!currentTrack) {
+        setCurrentTrack(track);
+      }
+    } catch (error) {
+      console.error('Error handling file upload:', error);
+    }
+  };
+
+  const addUrlToPlaylist = async () => {
     if (newUrl.trim()) {
       const track: AudioTrack = {
         id: `url-${Date.now()}`,
         title: newTitle.trim() || 'Streaming Audio',
         url: newUrl.trim()
       };
-      setPlaylist(prev => [...prev, track]);
+      const newPlaylist = [...playlist, track];
+      setPlaylist(newPlaylist);
+      
+      // Save updated playlist to settings
+      await savePlaylistToSettings(newPlaylist);
+      
       setNewUrl('');
       setNewTitle('');
       if (!currentTrack) {
@@ -110,11 +164,15 @@ export const AudioPlayerWidget: React.FC = () => {
     }
   };
 
-  const removeTrack = (trackId: string) => {
-    setPlaylist(prev => prev.filter(track => track.id !== trackId));
+  const removeTrack = async (trackId: string) => {
+    const newPlaylist = playlist.filter(track => track.id !== trackId);
+    setPlaylist(newPlaylist);
+    
+    // Save updated playlist to settings
+    await savePlaylistToSettings(newPlaylist);
+    
     if (currentTrack?.id === trackId) {
-      const remainingTracks = playlist.filter(track => track.id !== trackId);
-      setCurrentTrack(remainingTracks[0] || null);
+      setCurrentTrack(newPlaylist[0] || null);
       setIsPlaying(false);
     }
   };
@@ -130,6 +188,12 @@ export const AudioPlayerWidget: React.FC = () => {
   };
 
   const togglePlayPause = () => {
+    // If no current track but playlist has tracks, start with first track
+    if (!currentTrack && playlist.length > 0) {
+      playTrack(playlist[0]);
+      return;
+    }
+
     if (!currentTrack || !audioRef.current) return;
 
     if (isPlaying) {
@@ -254,7 +318,7 @@ export const AudioPlayerWidget: React.FC = () => {
           <Button
             onClick={togglePlayPause}
             size="lg"
-            disabled={!currentTrack}
+            disabled={playlist.length === 0}
             className="h-12 w-12 rounded-full"
           >
             {isPlaying ? <Pause size={24} /> : <Play size={24} />}
