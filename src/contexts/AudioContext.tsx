@@ -74,6 +74,8 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     loop: false,
     playlist: []
   });
+  
+  const volumeSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -81,19 +83,21 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   useEffect(() => {
     // Global audio settings can be loaded here if needed
     // Individual widget playlists are loaded via loadWidgetPlaylist()
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (volumeSaveTimeoutRef.current) {
+        clearTimeout(volumeSaveTimeoutRef.current);
+      }
+    };
   }, [user]);
 
   // Update audio volume when slider changes
   useEffect(() => {
     if (audioRef.current && volume.length > 0) {
-      const volumeValue = volume[0] / 100;
+      const volumeValue = Math.max(0, Math.min(1, volume[0] / 100));
       audioRef.current.volume = volumeValue;
-      
-      // Update settings to persist volume
-      setSettings(prevSettings => ({ 
-        ...prevSettings, 
-        volume: volume[0] 
-      }));
+      console.log('Setting audio volume to:', volumeValue, 'from slider value:', volume[0]);
     }
   }, [volume]);
 
@@ -380,18 +384,22 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   };
 
   const setVolume = (newVolume: number[]) => {
+    console.log('Volume slider changed to:', newVolume);
     setVolumeState(newVolume);
-    // Also update the settings state for persistence
-    setSettings(prevSettings => ({ 
-      ...prevSettings, 
-      volume: newVolume[0] 
-    }));
     
-    // Save volume to database if we have a current widget instance
+    // Immediately apply to audio element if available
+    if (audioRef.current && newVolume.length > 0) {
+      const volumeValue = Math.max(0, Math.min(1, newVolume[0] / 100));
+      audioRef.current.volume = volumeValue;
+      console.log('Immediately set audio volume to:', volumeValue);
+    }
+    
+    // Save volume to database with debouncing to prevent spam
     if (currentWidgetInstance && user) {
-      const updatedSettings = { ...settings, volume: newVolume[0] };
-      (async () => {
+      clearTimeout(volumeSaveTimeoutRef.current);
+      volumeSaveTimeoutRef.current = setTimeout(async () => {
         try {
+          const updatedSettings = { ...settings, volume: newVolume[0], playlist };
           await supabase
             .from('user_widget_settings')
             .upsert({
@@ -399,11 +407,11 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
               widget_instance_id: currentWidgetInstance,
               settings: updatedSettings as any
             });
-          console.log('Volume saved');
+          console.log('Volume saved to database:', newVolume[0]);
         } catch (err) {
           console.error('Error saving volume:', err);
         }
-      })();
+      }, 500); // Save after 500ms of no changes
     }
   };
 
