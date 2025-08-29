@@ -3,20 +3,15 @@ import { User, Edit3, Save, X, Upload, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface UserProfile {
-  display_name: string;
-  avatar_url?: string;
-  created_at: string;
-}
-
 export const UserInfoWidget: React.FC = () => {
   const { user } = useAuth();
+  const { profile, updateProfile } = useUserProfile();
   const { toast } = useToast();
   const [loginTime] = useState(new Date());
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [totalUsageTime, setTotalUsageTime] = useState(0);
@@ -54,32 +49,13 @@ export const UserInfoWidget: React.FC = () => {
     return () => clearInterval(timer);
   }, [loginTime]);
 
-  // Load user profile
+  // Load user profile and usage stats
   useEffect(() => {
-    if (user) {
-      loadProfile();
+    if (user && profile) {
+      setEditedName(profile.display_name || '');
       loadUsageStats();
     }
-  }, [user]);
-
-  const loadProfile = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data) {
-        setProfile(data);
-        setEditedName(data.display_name || '');
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    }
-  };
+  }, [user, profile]);
 
   const loadUsageStats = async () => {
     if (!user) return;
@@ -108,14 +84,7 @@ export const UserInfoWidget: React.FC = () => {
     if (!user || !editedName.trim()) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ display_name: editedName.trim() })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setProfile(prev => prev ? { ...prev, display_name: editedName.trim() } : null);
+      await updateProfile({ display_name: editedName.trim() });
       setIsEditing(false);
       
       toast({
@@ -158,7 +127,7 @@ export const UserInfoWidget: React.FC = () => {
 
         if (updateError) throw updateError;
 
-        setProfile(prev => prev ? { ...prev, avatar_url: urlData.signedUrl } : null);
+        await updateProfile({ avatar_url: urlData.signedUrl });
         
         toast({
           title: "Avatar Updated",

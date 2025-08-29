@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AudioProvider } from "@/contexts/AudioContext";
+import { UserProfileProvider } from "@/hooks/useUserProfile";
 import { ProtectedRoute } from "@/components/Layout/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -15,7 +16,8 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <AudioProvider>
+      <UserProfileProvider>
+        <AudioProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -32,7 +34,8 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
-      </AudioProvider>
+        </AudioProvider>
+      </UserProfileProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

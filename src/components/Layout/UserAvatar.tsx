@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,6 +14,7 @@ import {
 
 export const UserAvatar: React.FC = () => {
   const { user, signOut } = useAuth();
+  const { profile } = useUserProfile();
   const [isHovered, setIsHovered] = useState(false);
 
   // Create 8-bit style pixelated avatar
@@ -46,27 +48,42 @@ export const UserAvatar: React.FC = () => {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div className={`grid grid-cols-8 gap-0 w-full h-full transition-all duration-200 ${isHovered ? 'scale-110' : ''}`}>
-            {avatarPixels.flat().map((pixel, index) => (
-              <div
-                key={index}
-                className="aspect-square border-0"
-                style={{
-                  backgroundColor: getPixelColor(pixel),
-                  imageRendering: 'pixelated',
-                }}
+          {profile?.avatar_url ? (
+            <div className={`relative w-full h-full transition-all duration-200 ${isHovered ? 'scale-110' : ''}`}>
+              <img 
+                src={profile.avatar_url} 
+                alt="Avatar" 
+                className="w-full h-full object-cover rounded-sm border border-primary/50"
+                style={{ imageRendering: 'pixelated' }}
               />
-            ))}
-          </div>
-          
-          {/* Glowing effect */}
-          <div className="absolute inset-0 rounded-sm bg-primary/20 opacity-0 hover:opacity-100 transition-opacity duration-200 crt-glow" />
+              {/* Glowing effect */}
+              <div className="absolute inset-0 rounded-sm bg-primary/20 opacity-0 hover:opacity-100 transition-opacity duration-200 crt-glow" />
+            </div>
+          ) : (
+            <>
+              <div className={`grid grid-cols-8 gap-0 w-full h-full transition-all duration-200 ${isHovered ? 'scale-110' : ''}`}>
+                {avatarPixels.flat().map((pixel, index) => (
+                  <div
+                    key={index}
+                    className="aspect-square border-0"
+                    style={{
+                      backgroundColor: getPixelColor(pixel),
+                      imageRendering: 'pixelated',
+                    }}
+                  />
+                ))}
+              </div>
+              
+              {/* Glowing effect */}
+              <div className="absolute inset-0 rounded-sm bg-primary/20 opacity-0 hover:opacity-100 transition-opacity duration-200 crt-glow" />
+            </>
+          )}
         </Button>
       </DropdownMenuTrigger>
       
       <DropdownMenuContent align="end" className="w-56 bg-card border-border">
         <DropdownMenuLabel className="text-primary font-mono">
-          Vault Dweller
+          {profile?.display_name || 'Vault Dweller'}
         </DropdownMenuLabel>
         <DropdownMenuLabel className="text-xs text-muted-foreground font-mono font-normal">
           {user?.email}
