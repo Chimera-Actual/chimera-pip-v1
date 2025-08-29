@@ -226,9 +226,9 @@ export const SystemSettingsWidget: React.FC = () => {
                 <Label className="text-sm font-mono text-foreground">
                   Enable Persistent Location
                 </Label>
-                <p className="text-xs text-muted-foreground font-mono">
-                  Allow widgets to use your saved location for weather, maps, and other services
-                </p>
+                 <p className="text-xs text-muted-foreground font-mono">
+                   Automatically update location every 15 seconds for weather, maps, and other services
+                 </p>
               </div>
               <Switch
                 checked={settings.location_enabled}
@@ -312,9 +312,12 @@ export const SystemSettingsWidget: React.FC = () => {
             {/* Location Info */}
             <div className="bg-background/20 border border-border rounded p-3 text-xs font-mono space-y-1">
               <div className="text-muted-foreground">PRIVACY NOTICE:</div>
-              <div className="text-foreground">
-                • Location data is stored securely in your profile
-              </div>
+               <div className="text-foreground">
+                 • Location updates automatically every 15 seconds when enabled
+               </div>
+               <div className="text-foreground">
+                 • Location data is stored securely in your profile
+               </div>
               <div className="text-foreground">
                 • Only you can access your location settings
               </div>

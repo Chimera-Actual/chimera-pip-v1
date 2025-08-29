@@ -6,6 +6,7 @@ import { UserAvatar } from './UserAvatar';
 import { TabManager } from './TabManager';
 import { useTabManager, UserTab } from '@/hooks/useTabManager';
 import { useWidgetManager } from '@/hooks/useWidgetManager';
+import { useLocationService } from '@/hooks/useLocationService';
 import { useToast } from '@/hooks/use-toast';
 import { Settings } from 'lucide-react';
 
@@ -42,6 +43,9 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
   } = useTabManager();
   
   const { moveWidgetToTab } = useWidgetManager();
+  
+  // Initialize location service (runs automatically based on user settings)
+  useLocationService();
   
   const [activeTab, setActiveTab] = useState<string>('');
   const [showTabManager, setShowTabManager] = useState(false);

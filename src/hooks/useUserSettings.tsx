@@ -8,7 +8,7 @@ interface LocationData {
   name?: string;
 }
 
-interface UserSettings {
+export interface UserSettings {
   location_enabled: boolean;
   location_latitude?: number;
   location_longitude?: number;
@@ -77,6 +77,38 @@ export const useUserSettings = () => {
     };
   };
 
+  const updateSettings = async (updatedSettings: Partial<UserSettings>) => {
+    if (!user || !settings) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          ...settings,
+          ...updatedSettings,
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setSettings({
+          location_enabled: data.location_enabled || false,
+          location_latitude: data.location_latitude || undefined,
+          location_longitude: data.location_longitude || undefined,
+          location_name: data.location_name || undefined,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      throw error;
+    }
+  };
+
   const refreshSettings = () => {
     if (user) {
       loadSettings();
@@ -87,6 +119,7 @@ export const useUserSettings = () => {
     settings,
     loading,
     getUserLocation,
+    updateSettings,
     refreshSettings,
   };
 };
