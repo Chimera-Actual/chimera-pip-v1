@@ -114,7 +114,7 @@ export const useWidgetManager = () => {
 
       const { data, error } = await supabase
         .from('user_widget_instances')
-        .upsert({
+        .insert({
           user_id: user.id,
           widget_id: widgetId,
           tab_id: tabId,
@@ -137,10 +137,7 @@ export const useWidgetManager = () => {
             default_settings: (data.widget_definition.default_settings as Record<string, any>) || {}
           } : undefined
         };
-        setUserWidgetInstances(prev => {
-          const filtered = prev.filter(w => !(w.widget_id === widgetId && w.tab_id === tabId));
-          return [...filtered, transformedData];
-        });
+        setUserWidgetInstances(prev => [...prev, transformedData]);
       }
       
       return data;
