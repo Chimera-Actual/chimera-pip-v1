@@ -101,7 +101,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         .select('settings')
         .eq('user_id', user!.id)
         .eq('widget_instance_id', widgetInstanceId)
-        .single();
+        .maybeSingle();
 
       if (data?.settings && typeof data.settings === 'object') {
         const settingsData = data.settings as any;
