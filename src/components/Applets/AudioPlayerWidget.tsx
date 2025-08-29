@@ -139,10 +139,10 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInst
   // Load playlist when widget mounts and set as active instance
   React.useEffect(() => {
     if (widgetInstanceId) {
-      // Set this widget as the current active instance
+      // Only load if we haven't loaded for this widget yet
       loadWidgetPlaylist(widgetInstanceId);
     }
-  }, [widgetInstanceId, loadWidgetPlaylist]);
+  }, [widgetInstanceId]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -182,7 +182,10 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ widgetInst
           <Volume2 size={16} className="text-muted-foreground" />
           <Slider
             value={volume}
-            onValueChange={setVolume}
+            onValueChange={(newValue) => {
+              console.log('Volume slider moved to:', newValue);
+              setVolume(newValue);
+            }}
             max={100}
             step={1}
             className="w-20"

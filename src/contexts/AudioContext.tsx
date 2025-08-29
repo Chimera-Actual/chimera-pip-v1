@@ -157,11 +157,10 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         }
         
         if (loadedSettings.volume !== undefined) {
-          setVolumeState([loadedSettings.volume]);
-          setSettings(prevSettings => ({ 
-            ...prevSettings, 
-            volume: loadedSettings.volume 
-          }));
+          // Only update volume if it's different to prevent resetting user changes
+          if (volume[0] !== loadedSettings.volume) {
+            setVolumeState([loadedSettings.volume]);
+          }
         }
         
         setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
