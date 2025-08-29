@@ -43,9 +43,19 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   const [selectedWidgetForSettings, setSelectedWidgetForSettings] = useState<UserWidgetInstance | null>(null);
   const [selectedWidgetForRename, setSelectedWidgetForRename] = useState<UserWidgetInstance | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   // Get widgets for current tab directly from the hook
   const widgets = getActiveWidgetsForTab(tabId);
+  
+  // Auto-hide sidebar when there's only one widget, show when there are multiple
+  useEffect(() => {
+    if (widgets.length <= 1) {
+      setShowSidebar(false);
+    } else if (widgets.length > 1) {
+      setShowSidebar(true);
+    }
+  }, [widgets.length]);
 
   // Set first widget as active if none selected or current doesn't exist
   useEffect(() => {
@@ -243,8 +253,16 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
           <div className="text-center space-y-4">
             <Plus className="w-12 h-12 mx-auto text-muted-foreground" />
             <div className="text-muted-foreground font-mono">
-              No widgets available. Click the + button to add widgets.
+              No widgets available. Click the button below to add widgets.
             </div>
+            <Button
+              onClick={() => setShowWidgetLibrary(true)}
+              variant="outline"
+              className="font-mono text-sm border-dashed hover:border-primary/50 hover:bg-primary/10"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              ADD WIDGET
+            </Button>
           </div>
         </div>
       );
@@ -290,12 +308,26 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
 
   return (
     <div 
-      className="flex h-full overflow-hidden"
+      className="flex h-full overflow-hidden relative"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {/* Toggle Button for Single Widget Mode */}
+      {widgets.length === 1 && (
+        <Button
+          onClick={() => setShowSidebar(!showSidebar)}
+          variant="ghost"
+          size="sm"
+          className="absolute top-4 left-4 z-50 bg-background/80 hover:bg-background border border-border"
+          title={showSidebar ? "Hide sidebar" : "Show sidebar"}
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
+      )}
+
       {/* Sidebar */}
-      <div className="w-72 bg-card border-r border-border flex flex-col overflow-hidden">
+      {showSidebar && (
+        <div className="w-72 bg-card border-r border-border flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-border bg-background/50">
           <h2 className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
@@ -388,10 +420,11 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
             </Button>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full'} ${widgets.length === 1 ? 'pt-16' : ''}`}>
         {renderActiveWidget()}
       </div>
 
