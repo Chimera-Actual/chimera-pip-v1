@@ -14,7 +14,8 @@ import { VoiceAssistantWidget } from '@/components/Applets/VoiceAssistantWidget'
 import { CustomAssistantWidget } from '@/components/Applets/CustomAssistantWidget';
 import { TextDisplayWidget } from '@/components/Applets/TextDisplayWidget';
 import { ImageDisplayWidget } from '@/components/Applets/ImageDisplayWidget';
-import { AudioWidget } from '@/components/Applets/AudioWidget';
+import { AudioPlayerWidget } from '@/components/Applets/AudioPlayerWidget';
+
 
 export const WIDGET_COMPONENTS = {
   MapWidget,
@@ -32,7 +33,7 @@ export const WIDGET_COMPONENTS = {
   CustomAssistantWidget,
   TextDisplayWidget,
   ImageDisplayWidget,
-  AudioWidget,
+  AudioPlayerWidget,
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
