@@ -6,6 +6,7 @@ import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Upload, Trash2 } f
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { OscilloscopeWaveform } from './OscilloscopeWaveform';
 
 interface Track {
   id: string;
@@ -31,8 +32,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const { user } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
 
   // State
   const [playlist, setPlaylist] = useState<Track[]>([]);
@@ -93,86 +92,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     };
   }, []);
 
-  // Waveform animation
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size
-    const resizeCanvas = () => {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * devicePixelRatio;
-      canvas.height = rect.height * devicePixelRatio;
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-      canvas.style.width = rect.width + 'px';
-      canvas.style.height = rect.height + 'px';
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Animation loop
-    const animate = () => {
-      const width = canvas.width / devicePixelRatio;
-      const height = canvas.height / devicePixelRatio;
-      
-      // Clear canvas
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-      ctx.fillRect(0, 0, width, height);
-
-      if (isPlaying) {
-        // Generate animated bars
-        const barCount = 32;
-        const barWidth = width / barCount;
-        const time = Date.now() * 0.003;
-
-        ctx.fillStyle = 'hsl(var(--primary))';
-        
-        for (let i = 0; i < barCount; i++) {
-          const frequency = 0.5 + i * 0.1;
-          const amplitude = Math.sin(time * frequency) * 0.5 + 0.5;
-          const barHeight = amplitude * height * 0.8;
-          
-          ctx.fillRect(
-            i * barWidth + 1,
-            height - barHeight,
-            barWidth - 2,
-            barHeight
-          );
-        }
-      } else {
-        // Static bars when paused
-        const barCount = 32;
-        const barWidth = width / barCount;
-        
-        ctx.fillStyle = 'hsla(var(--primary), 0.3)';
-        
-        for (let i = 0; i < barCount; i++) {
-          const barHeight = 10;
-          ctx.fillRect(
-            i * barWidth + 1,
-            height - barHeight,
-            barWidth - 2,
-            barHeight
-          );
-        }
-      }
-
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [isPlaying]);
 
   const loadPlaylist = async () => {
     try {
@@ -380,11 +299,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       {/* Waveform */}
       {settings?.showWaveform !== false && (
-        <div className="flex-shrink-0 bg-background/20 border-b border-border h-24">
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full"
-            style={{ display: 'block' }}
+        <div className="flex-shrink-0 h-24">
+          <OscilloscopeWaveform 
+            isPlaying={isPlaying} 
+            className="h-full"
           />
         </div>
       )}
