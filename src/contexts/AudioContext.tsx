@@ -85,14 +85,24 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
   // Update audio volume when slider changes
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume[0] / 100;
+    if (audioRef.current && volume.length > 0) {
+      const volumeValue = volume[0] / 100;
+      audioRef.current.volume = volumeValue;
+      
+      // Update settings to persist volume
+      setSettings(prevSettings => ({ 
+        ...prevSettings, 
+        volume: volume[0] 
+      }));
     }
   }, [volume]);
 
   // Load playlist for specific widget instance
   const loadWidgetPlaylist = async (widgetInstanceId: string) => {
     if (!user) return;
+    
+    // Set this as the current active widget instance
+    setCurrentWidgetInstance(widgetInstanceId);
 
     try {
       const { data, error } = await supabase
@@ -144,6 +154,10 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         
         if (loadedSettings.volume !== undefined) {
           setVolumeState([loadedSettings.volume]);
+          setSettings(prevSettings => ({ 
+            ...prevSettings, 
+            volume: loadedSettings.volume 
+          }));
         }
         
         setSettings(prevSettings => ({ ...prevSettings, ...loadedSettings }));
@@ -367,6 +381,30 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
   const setVolume = (newVolume: number[]) => {
     setVolumeState(newVolume);
+    // Also update the settings state for persistence
+    setSettings(prevSettings => ({ 
+      ...prevSettings, 
+      volume: newVolume[0] 
+    }));
+    
+    // Save volume to database if we have a current widget instance
+    if (currentWidgetInstance && user) {
+      const updatedSettings = { ...settings, volume: newVolume[0] };
+      (async () => {
+        try {
+          await supabase
+            .from('user_widget_settings')
+            .upsert({
+              user_id: user.id,
+              widget_instance_id: currentWidgetInstance,
+              settings: updatedSettings as any
+            });
+          console.log('Volume saved');
+        } catch (err) {
+          console.error('Error saving volume:', err);
+        }
+      })();
+    }
   };
 
   // Function to refresh expired track URLs
