@@ -6,6 +6,7 @@ import { ClockSettings } from '@/components/Applets/Settings/ClockSettings';
 import { CustomAssistantSettings } from '@/components/Applets/Settings/CustomAssistantSettings';
 import { TextDisplaySettings } from '@/components/Applets/Settings/TextDisplaySettings';
 import { ImageDisplaySettings } from '@/components/Applets/Settings/ImageDisplaySettings';
+import { MapWidgetSettings } from '@/components/Applets/Settings/MapWidgetSettings';
 
 interface WidgetSettingsProps {
   isOpen: boolean;
@@ -56,6 +57,13 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
             settings={currentSettings}
             onSettingsChange={(settings) => onSettingsUpdate(widget.widget_id, settings)}
             onClose={onClose}
+          />
+        );
+      case 'MapWidget':
+        return (
+          <MapWidgetSettings
+            currentSettings={currentSettings}
+            onSettingsUpdate={(settings) => onSettingsUpdate(widget.widget_id, settings)}
           />
         );
       default:
