@@ -17,10 +17,6 @@ export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({
 }) => {
   const [fullscreenImage, setFullscreenImage] = useState<{url: string, title: string} | null>(null);
   
-  // Debug logging
-  console.log('ImageDisplayWidget received settings:', settings);
-  console.log('ImageDisplayWidget widgetName:', widgetName);
-  
   // Get current settings with defaults
   const containerCount = settings?.containerCount || 1;
   const layoutPattern = settings?.layoutPattern || '1';
@@ -34,9 +30,6 @@ export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({
     isMonochrome: false,
     monochromeColor: '#000000'
   }];
-
-  console.log('ImageDisplayWidget containerCount:', containerCount);
-  console.log('ImageDisplayWidget containers:', containers);
 
   const getBorderClasses = (container: any) => {
     const styleMap: Record<string, string> = {

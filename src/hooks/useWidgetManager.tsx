@@ -114,7 +114,7 @@ export const useWidgetManager = () => {
 
       const { data, error } = await supabase
         .from('user_widget_instances')
-        .insert({
+        .upsert({
           user_id: user.id,
           widget_id: widgetId,
           tab_id: tabId,
@@ -137,7 +137,10 @@ export const useWidgetManager = () => {
             default_settings: (data.widget_definition.default_settings as Record<string, any>) || {}
           } : undefined
         };
-        setUserWidgetInstances(prev => [...prev, transformedData]);
+        setUserWidgetInstances(prev => {
+          const filtered = prev.filter(w => !(w.widget_id === widgetId && w.tab_id === tabId));
+          return [...filtered, transformedData];
+        });
       }
       
       return data;
@@ -168,17 +171,15 @@ export const useWidgetManager = () => {
     }
   };
 
-  const updateWidgetSettings = async (instanceId: string, settings: Record<string, any>) => {
+  const updateWidgetSettings = async (widgetId: string, settings: Record<string, any>) => {
     if (!user) return;
-
-    console.log('updateWidgetSettings called with instanceId:', instanceId, 'settings:', settings);
 
     try {
       const { data, error } = await supabase
         .from('user_widget_settings')
         .upsert({
           user_id: user.id,
-          widget_id: instanceId,
+          widget_id: widgetId,
           settings: settings,
         }, {
           onConflict: 'user_id,widget_id'
@@ -193,9 +194,8 @@ export const useWidgetManager = () => {
           ...data,
           settings: (data.settings as Record<string, any>) || {}
         };
-        console.log('Settings saved successfully:', transformedData);
         setUserWidgetSettings(prev => {
-          const filtered = prev.filter(s => s.widget_id !== instanceId);
+          const filtered = prev.filter(s => s.widget_id !== widgetId);
           return [...filtered, transformedData];
         });
       }
@@ -207,23 +207,14 @@ export const useWidgetManager = () => {
     }
   };
 
-  const getWidgetSettings = (instanceId: string): Record<string, any> => {
-    console.log('getWidgetSettings called with instanceId:', instanceId);
-    const instance = userWidgetInstances.find(i => i.id === instanceId);
-    const widgetSettings = userWidgetSettings.find(s => s.widget_id === instanceId);
-    const widgetDefinition = availableWidgets.find(w => w.id === instance?.widget_id);
+  const getWidgetSettings = (widgetId: string): Record<string, any> => {
+    const widgetSettings = userWidgetSettings.find(s => s.widget_id === widgetId);
+    const widgetDefinition = availableWidgets.find(w => w.id === widgetId);
     
-    const result = {
+    return {
       ...widgetDefinition?.default_settings,
       ...widgetSettings?.settings,
     };
-    
-    console.log('getWidgetSettings result:', result);
-    console.log('Instance:', instance);
-    console.log('Widget settings from DB:', widgetSettings);
-    console.log('Widget definition defaults:', widgetDefinition?.default_settings);
-    
-    return result;
   };
 
   const getActiveWidgetsForTab = (tabId: string): UserWidgetInstance[] => {
