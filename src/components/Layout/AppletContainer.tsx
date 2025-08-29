@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppletType } from './PipBoyLayout';
-import { Settings, X, Plus, Edit } from 'lucide-react';
+import { Settings, X, Plus, Edit, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
@@ -316,10 +316,10 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         onClick={() => setShowSidebar(!showSidebar)}
         variant="ghost"
         size="sm"
-        className="absolute top-4 left-4 z-50 bg-background/80 hover:bg-background border border-border"
+        className={`${showSidebar ? 'absolute top-4 right-4 z-50' : 'absolute top-4 left-4 z-50'} bg-background/80 hover:bg-background border border-border`}
         title={showSidebar ? "Hide sidebar" : "Show sidebar"}
       >
-        <Settings className="h-4 w-4" />
+        <Menu className="h-4 w-4" />
       </Button>
 
       {/* Sidebar */}
