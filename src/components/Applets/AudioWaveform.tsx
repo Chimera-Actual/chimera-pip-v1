@@ -71,7 +71,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     const dataArray = new Uint8Array(bufferLength);
     analyserRef.current.getByteFrequencyData(dataArray);
 
-    // Clear canvas
+    // Clear canvas with fade effect
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -80,11 +80,16 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     let barHeight;
     let x = 0;
 
-    // Create gradient
+    // Use simple RGB colors that work with canvas
+    const primaryColor = '#00ff00'; // Green color for visibility
+    const primaryAlpha = 'rgba(0, 255, 0, 0.8)';
+    const primaryLight = 'rgba(0, 255, 0, 0.3)';
+    
+    // Create gradient with RGB colors
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, 'hsl(var(--primary))');
-    gradient.addColorStop(0.5, 'hsl(var(--primary) / 0.8)');
-    gradient.addColorStop(1, 'hsl(var(--primary) / 0.3)');
+    gradient.addColorStop(0, primaryColor);
+    gradient.addColorStop(0.5, primaryAlpha);
+    gradient.addColorStop(1, primaryLight);
 
     for (let i = 0; i < bufferLength; i++) {
       barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
@@ -93,8 +98,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
 
       // Add glow effect
-      ctx.shadowColor = 'hsl(var(--primary))';
-      ctx.shadowBlur = 10;
+      ctx.shadowColor = primaryColor;
+      ctx.shadowBlur = 8;
       ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
       ctx.shadowBlur = 0;
 
@@ -102,7 +107,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     }
 
     // Draw frequency lines
-    ctx.strokeStyle = 'hsl(var(--primary) / 0.2)';
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
     ctx.lineWidth = 1;
     ctx.setLineDash([2, 2]);
     
