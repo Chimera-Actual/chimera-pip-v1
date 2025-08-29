@@ -26,7 +26,12 @@ interface CustomAssistantConfig {
   icon: string;
 }
 
-export const CustomAssistantWidget: React.FC = () => {
+interface CustomAssistantWidgetProps {
+  settings?: Record<string, any>;
+  onSettingsUpdate?: (newSettings: Record<string, any>) => void;
+}
+
+export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ settings, onSettingsUpdate }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);

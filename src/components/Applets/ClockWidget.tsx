@@ -42,7 +42,12 @@ const COMMON_TIMEZONES = [{
   value: 'Pacific/Auckland',
   label: 'Auckland (NZDT/NZST)'
 }];
-export const ClockWidget: React.FC = () => {
+interface ClockWidgetProps {
+  settings?: Record<string, any>;
+  onSettingsUpdate?: (newSettings: Record<string, any>) => void;
+}
+
+export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, onSettingsUpdate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [is24Hour, setIs24Hour] = useState(false);
   const [userTimezone, setUserTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
