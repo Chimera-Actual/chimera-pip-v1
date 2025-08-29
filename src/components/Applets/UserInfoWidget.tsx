@@ -191,24 +191,26 @@ export const UserInfoWidget: React.FC = () => {
 
   const handleClearCache = async () => {
     try {
-      // Clear localStorage
-      const keysToKeep = ['supabase.auth.token'];
+      // Clear localStorage but preserve all Supabase auth-related keys
       const allKeys = Object.keys(localStorage);
       allKeys.forEach(key => {
-        if (!keysToKeep.includes(key)) {
+        // Keep any key that starts with 'supabase.auth.' or contains 'sb-'
+        if (!key.startsWith('supabase.auth.') && !key.includes('sb-')) {
           localStorage.removeItem(key);
         }
       });
 
-      // Clear sessionStorage
-      sessionStorage.clear();
-
-      // Clear any cached data from Supabase (except auth)
-      // This would typically involve clearing any cached queries or local state
+      // Clear sessionStorage but preserve auth keys if any exist there
+      const sessionKeys = Object.keys(sessionStorage);
+      sessionKeys.forEach(key => {
+        if (!key.startsWith('supabase.auth.') && !key.includes('sb-')) {
+          sessionStorage.removeItem(key);
+        }
+      });
 
       toast({
         title: "Cache Cleared",
-        description: "All cached data has been cleared successfully.",
+        description: "All cached data has been cleared successfully. You remain logged in.",
       });
 
       // Optionally reload the page to ensure clean state
