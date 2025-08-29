@@ -16,6 +16,7 @@ interface Message {
   type: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  isImage?: boolean;
 }
 
 interface CustomAssistantConfig {
@@ -192,25 +193,39 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
       });
 
       let assistantContent = 'No response received from webhook.';
+      let isImage = false;
       
       if (response.ok) {
         const data = await response.json();
         console.log('Webhook response:', data);
         
         // Handle different response formats
+        let responseText = '';
         if (Array.isArray(data)) {
           // Handle array format like [{"output": "..."}]
           if (data.length > 0 && data[0].output) {
-            assistantContent = data[0].output;
+            responseText = data[0].output;
           } else if (data.length > 0 && typeof data[0] === 'string') {
-            assistantContent = data[0];
+            responseText = data[0];
           }
         } else if (typeof data === 'object' && data !== null) {
           // Handle object format like {"response": "...", "message": "...", etc.}
-          assistantContent = data.output || data.response || data.message || data.content || data.text || assistantContent;
+          responseText = data.output || data.response || data.message || data.content || data.text || '';
         } else if (typeof data === 'string') {
           // Handle plain string responses
-          assistantContent = data;
+          responseText = data;
+        }
+
+        // Check if response contains base64 image data
+        const base64ImageRegex = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
+        const isBase64Image = responseText && responseText.length > 100 && base64ImageRegex.test(responseText);
+        
+        if (isBase64Image) {
+          // It's a base64 image, format it properly
+          assistantContent = `data:image/png;base64,${responseText}`;
+          isImage = true;
+        } else if (responseText) {
+          assistantContent = responseText;
         }
       } else {
         assistantContent = `Webhook error: ${response.status} ${response.statusText}`;
@@ -221,6 +236,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
         type: 'assistant',
         content: assistantContent,
         timestamp: new Date(),
+        isImage: isImage,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -338,9 +354,23 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
                         : 'bg-card/50 border-border'
                     }`}>
                       <CardContent className="p-3">
-                        <div className="text-sm font-mono whitespace-pre-wrap">
-                          {message.content}
-                        </div>
+                        {message.isImage ? (
+                          <div className="space-y-2">
+                            <img 
+                              src={message.content} 
+                              alt="Generated image"
+                              className="max-w-full h-auto rounded border"
+                              style={{ maxHeight: '400px' }}
+                            />
+                            <div className="text-xs text-muted-foreground font-mono">
+                              Generated Image
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-sm font-mono whitespace-pre-wrap">
+                            {message.content}
+                          </div>
+                        )}
                         <div className="text-xs text-muted-foreground font-mono mt-2">
                           {message.timestamp.toLocaleTimeString()}
                         </div>
