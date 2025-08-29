@@ -2,19 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
-import { supabase } from '@/integrations/supabase/client';
+import { useUserSettings } from '@/hooks/useUserSettings';
 import { useAuth } from '@/hooks/useAuth';
 
 interface LocationData {
   latitude: number;
   longitude: number;
-}
-
-interface UserSettings {
-  location_enabled: boolean;
-  location_latitude?: number;
-  location_longitude?: number;
-  location_name?: string;
 }
 
 type MapLayer = 'standard' | 'satellite' | 'terrain' | 'transport';
@@ -47,48 +40,53 @@ interface MapWidgetProps {
 
 export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const { user } = useAuth();
+  const { settings: userSettings } = useUserSettings();
   const [location, setLocation] = useState<LocationData>({ latitude: 37.7749, longitude: -122.4194 });
   const [userLocation, setUserLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeLayer, setActiveLayer] = useState<MapLayer>('standard');
-  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [autoFollow, setAutoFollow] = useState(true);
 
-  // Load user settings and set location on mount
+  // Update map location when user settings change (real-time location updates)
   useEffect(() => {
-    const loadUserSettings = async () => {
-      if (!user) return;
+    if (userSettings?.location_enabled && 
+        userSettings.location_latitude && 
+        userSettings.location_longitude) {
+      
+      const newLocation = {
+        latitude: userSettings.location_latitude,
+        longitude: userSettings.location_longitude
+      };
+      
+      // Only update if location actually changed significantly (> ~10 meters)
+      const hasLocationChanged = !userLocation ||
+        Math.abs(userLocation.latitude - newLocation.latitude) > 0.0001 ||
+        Math.abs(userLocation.longitude - newLocation.longitude) > 0.0001;
 
-      try {
-        const { data, error } = await supabase
-          .from('user_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          throw error;
+      if (hasLocationChanged) {
+        setUserLocation(newLocation);
+        
+        // Auto-follow: update map center if auto-follow is enabled
+        if (autoFollow) {
+          setLocation(newLocation);
         }
-
-        if (data) {
-          setUserSettings(data);
-          
-          // If location is enabled and coordinates are available, use them
-          if (data.location_enabled && data.location_latitude && data.location_longitude) {
-            const savedLocation = {
-              latitude: data.location_latitude,
-              longitude: data.location_longitude
-            };
-            setLocation(savedLocation);
-            setUserLocation(savedLocation);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading user settings:', error);
       }
-    };
+    }
+  }, [userSettings?.location_latitude, userSettings?.location_longitude, userSettings?.location_enabled, userLocation, autoFollow]);
 
-    loadUserSettings();
-  }, [user]);
+  // Initialize location on mount
+  useEffect(() => {
+    if (userSettings?.location_enabled && 
+        userSettings.location_latitude && 
+        userSettings.location_longitude) {
+      const savedLocation = {
+        latitude: userSettings.location_latitude,
+        longitude: userSettings.location_longitude
+      };
+      setLocation(savedLocation);
+      setUserLocation(savedLocation);
+    }
+  }, [userSettings?.location_enabled]);
 
   const getCurrentLocation = () => {
     setLoading(true);
@@ -106,6 +104,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
         };
         setUserLocation(newLocation);
         setLocation(newLocation);
+        setAutoFollow(true); // Re-enable auto-follow when manually getting location
         setLoading(false);
       },
       () => {
@@ -113,6 +112,16 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  const toggleAutoFollow = () => {
+    const newAutoFollow = !autoFollow;
+    setAutoFollow(newAutoFollow);
+    
+    // If enabling auto-follow and we have a user location, center on it
+    if (newAutoFollow && userLocation) {
+      setLocation(userLocation);
+    }
   };
 
   const mapUrl = mapLayers[activeLayer].url(location.latitude, location.longitude);
@@ -126,6 +135,14 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
         </span>
         <div className="flex items-center gap-4">
           <LocationStatusIndicator className="mr-2" />
+          <Button
+            onClick={toggleAutoFollow}
+            variant={autoFollow ? "default" : "outline"}
+            size="sm"
+            className="h-10 px-3 text-xs font-mono"
+          >
+            {autoFollow ? '🎯 FOLLOW' : '📍 MANUAL'}
+          </Button>
           <Select value={activeLayer} onValueChange={(value: MapLayer) => setActiveLayer(value)}>
             <SelectTrigger className="w-40 h-10 bg-background/50 border-border text-sm font-mono">
               <SelectValue />
@@ -172,15 +189,24 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
               <div className="text-xs font-mono text-primary space-y-1">
                 <div>LAT: {location.latitude.toFixed(6)}</div>
                 <div>LON: {location.longitude.toFixed(6)}</div>
+                {userSettings?.location_name && (
+                  <div className="text-xs text-muted-foreground">
+                    {userSettings.location_name}
+                  </div>
+                )}
               </div>
             </div>
           </div>
           
           {userLocation && (
             <div className="absolute bottom-3 right-3">
-              <div className="bg-primary/20 border border-primary rounded px-3 py-2 backdrop-blur-sm">
-                <div className="text-xs font-mono text-primary font-bold animate-pulse">
-                  USER POSITION LOCKED
+              <div className={`border rounded px-3 py-2 backdrop-blur-sm ${
+                autoFollow 
+                  ? 'bg-primary/20 border-primary text-primary animate-pulse' 
+                  : 'bg-background/95 border-border text-muted-foreground'
+              }`}>
+                <div className="text-xs font-mono font-bold">
+                  {autoFollow ? 'AUTO-TRACKING ACTIVE' : 'USER POSITION LOCKED'}
                 </div>
               </div>
             </div>
@@ -191,7 +217,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
             <div className="relative">
               <div className="w-8 h-0.5 bg-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
               <div className="h-8 w-0.5 bg-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
-              <div className="w-6 h-6 border-2 border-primary rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+              <div className={`w-6 h-6 border-2 border-primary rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${autoFollow ? 'animate-pulse' : ''}`}></div>
             </div>
           </div>
 
