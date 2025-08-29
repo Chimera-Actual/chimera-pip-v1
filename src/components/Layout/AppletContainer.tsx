@@ -130,7 +130,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     }
 
     const widgetSettings = getWidgetSettings(activeApplet);
-    return <WidgetComponent />;
+    return <WidgetComponent settings={widgetSettings} />;
   };
 
   if (loading) {

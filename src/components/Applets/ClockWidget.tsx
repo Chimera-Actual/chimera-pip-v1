@@ -23,17 +23,22 @@ const COMMON_TIMEZONES = [
   { value: 'Pacific/Auckland', label: 'Auckland (NZDT/NZST)' },
 ];
 
-export const ClockWidget: React.FC = () => {
+interface ClockWidgetProps {
+  settings?: Record<string, any>;
+}
+
+export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings = {} }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [is24Hour, setIs24Hour] = useState(false);
   const [userTimezone, setUserTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [worldClocks, setWorldClocks] = useState<WorldClock[]>([
-    { id: '1', label: 'UTC', timezone: 'UTC' },
-    { id: '2', label: 'London', timezone: 'Europe/London' },
-    { id: '3', label: 'Tokyo', timezone: 'Asia/Tokyo' },
-  ]);
-  const [isAddingClock, setIsAddingClock] = useState(false);
-  const [newTimezone, setNewTimezone] = useState('');
+  
+  // Use settings or defaults
+  const is24Hour = settings.displayFormat === '24h';
+  const showSeconds = settings.showSeconds ?? true;
+  const worldClocks = settings.timeZones || [
+    { name: 'UTC', timezone: 'UTC' },
+    { name: 'London', timezone: 'Europe/London' },
+    { name: 'Tokyo', timezone: 'Asia/Tokyo' },
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -55,13 +60,18 @@ export const ClockWidget: React.FC = () => {
   }, []);
 
   const formatTime = (time: Date, timezone: string, format24Hour: boolean) => {
-    return new Intl.DateTimeFormat('en-US', {
+    const options: Intl.DateTimeFormatOptions = {
       timeZone: timezone,
       hour: 'numeric',
       minute: '2-digit',
-      second: '2-digit',
       hour12: !format24Hour,
-    }).format(time);
+    };
+    
+    if (showSeconds) {
+      options.second = '2-digit';
+    }
+    
+    return new Intl.DateTimeFormat('en-US', options).format(time);
   };
 
   const formatDate = (time: Date, timezone: string) => {
@@ -74,27 +84,6 @@ export const ClockWidget: React.FC = () => {
     }).format(time);
   };
 
-  const addWorldClock = () => {
-    if (newTimezone && worldClocks.length < 6) {
-      const timezone = COMMON_TIMEZONES.find(tz => tz.value === newTimezone);
-      if (timezone) {
-        const newClock: WorldClock = {
-          id: Date.now().toString(),
-          label: timezone.label.split(' ')[0],
-          timezone: timezone.value,
-        };
-        setWorldClocks([...worldClocks, newClock]);
-        setNewTimezone('');
-        setIsAddingClock(false);
-      }
-    }
-  };
-
-  const removeWorldClock = (id: string) => {
-    if (worldClocks.length > 1) {
-      setWorldClocks(worldClocks.filter(clock => clock.id !== id));
-    }
-  };
 
   // Remove analog clock calculations as we're going digital-only
   const formatTimeWithoutSeconds = (time: Date, timezone: string, format24Hour: boolean) => {
@@ -118,14 +107,9 @@ export const ClockWidget: React.FC = () => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant={is24Hour ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIs24Hour(!is24Hour)}
-              className="font-mono text-xs"
-            >
+            <div className="font-mono text-xs text-muted-foreground px-2 py-1 bg-background/30 rounded border">
               {is24Hour ? '24H' : '12H'}
-            </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -153,9 +137,9 @@ export const ClockWidget: React.FC = () => {
       {/* World Clocks Strip */}
       <div className="flex-shrink-0 border-b border-border bg-background/50 p-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {worldClocks.map((clock) => (
-            <div key={clock.id} className="bg-background/20 border-2 border-primary/30 rounded p-2 text-center backdrop-blur-sm">
-              <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">{clock.label}</div>
+          {worldClocks.map((clock, index) => (
+            <div key={`${clock.timezone}-${index}`} className="bg-background/20 border-2 border-primary/30 rounded p-2 text-center backdrop-blur-sm">
+              <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">{clock.name}</div>
               <div className="font-['VT323'] text-primary text-lg crt-glow">
                 {formatTime(currentTime, clock.timezone, is24Hour)}
               </div>
