@@ -51,7 +51,7 @@ export const useUserSettings = () => {
           location_latitude: data.location_latitude || undefined,
           location_longitude: data.location_longitude || undefined,
           location_name: data.location_name || undefined,
-          location_polling_frequency: data.location_polling_frequency || 5,
+          location_polling_frequency: (data as any).location_polling_frequency || 5,
           color_scheme: (data.color_scheme as 'green' | 'amber' | 'blue' | 'red' | 'cyan' | 'purple') || 'green',
         });
       } else {
@@ -107,7 +107,7 @@ export const useUserSettings = () => {
           location_latitude: data.location_latitude || undefined,
           location_longitude: data.location_longitude || undefined,
           location_name: data.location_name || undefined,
-          location_polling_frequency: data.location_polling_frequency || 5,
+          location_polling_frequency: (data as any).location_polling_frequency || 5,
           color_scheme: (data.color_scheme as 'green' | 'amber' | 'blue' | 'red' | 'cyan' | 'purple') || 'green',
         });
       }
