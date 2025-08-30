@@ -32,6 +32,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const [location, setLocation] = useState<LocationData | null>(null);
   const [status, setStatus] = useState<LocationStatus>('inactive');
   const [autoFollow, setAutoFollow] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Subscribe to location service updates
   useEffect(() => {
@@ -39,6 +40,9 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       setLocation(newLocation);
       setStatus(newStatus);
     });
+
+    // Mark as initialized after setting up subscription
+    setIsInitialized(true);
 
     return unsubscribe;
   }, []);
@@ -101,6 +105,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     searchLocations,
   };
 
+  // Always provide context, even during initialization
   return (
     <LocationContext.Provider value={value}>
       {children}
