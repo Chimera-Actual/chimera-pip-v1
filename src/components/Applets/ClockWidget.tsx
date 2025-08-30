@@ -3,11 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, Globe, Settings, Plus, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
 interface WorldClock {
   id: string;
   label: string;
   timezone: string;
 }
+
 const COMMON_TIMEZONES = [{
   value: 'America/New_York',
   label: 'New York (EST/EDT)'
@@ -42,6 +44,7 @@ const COMMON_TIMEZONES = [{
   value: 'Pacific/Auckland',
   label: 'Auckland (NZDT/NZST)'
 }];
+
 interface ClockWidgetProps {
   settings?: Record<string, any>;
   widgetName?: string;
@@ -49,7 +52,7 @@ interface ClockWidgetProps {
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
-export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
+const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userTimezone, setUserTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [isAddingClock, setIsAddingClock] = useState(false);
@@ -98,6 +101,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
       });
     }
   }, []);
+
   const formatTime = (time: Date, timezone: string, format24Hour: boolean) => {
     return new Intl.DateTimeFormat('en-US', {
       timeZone: timezone,
@@ -107,6 +111,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
       hour12: !format24Hour
     }).format(time);
   };
+
   const formatDate = (time: Date, timezone: string) => {
     return new Intl.DateTimeFormat('en-US', {
       timeZone: timezone,
@@ -116,6 +121,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
       day: 'numeric'
     }).format(time);
   };
+
   const addWorldClock = () => {
     if (newTimezone && worldClocks.length < 6 && onSettingsUpdate) {
       const timezone = COMMON_TIMEZONES.find(tz => tz.value === newTimezone);
@@ -135,6 +141,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
       }
     }
   };
+
   const removeWorldClock = (id: string) => {
     if (worldClocks.length > 1 && onSettingsUpdate) {
       const updatedTimeZones = worldClocks.filter(clock => clock.id !== id);
@@ -220,7 +227,9 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
         };
     }
   };
-  return <div className="h-full flex flex-col bg-card border border-border overflow-hidden">
+
+  return (
+    <div className="h-full flex flex-col bg-card border border-border overflow-hidden">
       {/* Header Controls */}
       <div className="flex-shrink-0 border-b border-border bg-card p-4">
         <div className="flex items-center justify-between">
@@ -229,7 +238,6 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
               ◐ {widgetName || 'CHRONOMETER'}
             </span>
           </div>
-          
         </div>
       </div>
 
@@ -254,14 +262,14 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
               {userTimezone.replace('_', ' ')}
             </div>
           </div>
-
         </div>
       </div>
 
       {/* World Clocks Strip */}
       <div className="flex-shrink-0 border-b border-border bg-background/50 p-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {worldClocks.map(clock => <div key={clock.id} className="bg-background/20 border-2 border-primary/30 rounded p-3 text-center backdrop-blur-sm">
+          {worldClocks.map(clock => (
+            <div key={clock.id} className="bg-background/20 border-2 border-primary/30 rounded p-3 text-center backdrop-blur-sm">
               <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1">{clock.label}</div>
               <div className="font-['VT323'] text-primary text-lg crt-glow">
                 {formatTime(currentTime, clock.timezone, is24Hour)}
@@ -269,8 +277,12 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, 
               <div className="text-xs text-muted-foreground font-mono mt-1 opacity-75">
                 {formatDate(currentTime, clock.timezone)}
               </div>
-            </div>)}
+            </div>
+          ))}
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
+export default ClockWidget;
