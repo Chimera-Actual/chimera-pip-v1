@@ -170,10 +170,11 @@ export const useLocationService = () => {
       // Get initial location
       await pollLocation();
 
-      // Set up polling interval (5 minutes for less aggressive polling)
+      // Set up polling interval using user preference (default 5 minutes)
+      const pollFrequency = (settings.location_polling_frequency || 5) * 60 * 1000;
       intervalRef.current = setInterval(() => {
         pollLocation();
-      }, 300000);
+      }, pollFrequency);
 
       // Only show success toast once when manually enabled
       console.log('Location tracking started');
