@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
-import { useUserSettings } from '@/hooks/useUserSettings';
+import { useLocation } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface WeatherData {
@@ -119,7 +119,7 @@ interface WeatherWidgetProps {
 }
 
 export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
-  const { getUserLocation } = useUserSettings();
+  const { location } = useLocation();
   const temperatureUnit = settings?.temperatureUnit || 'celsius';
   const showLocation = settings?.showLocation !== false;
   const showForecast = settings?.showForecast !== false;
@@ -130,15 +130,20 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
 
-  // Update weather data when user location or settings change
+  // Update weather data when location or settings change
   useEffect(() => {
     const updateWeatherData = async () => {
       setLoading(true);
       setError(null);
       
       try {
-        const persistentLocation = await getUserLocation();
-        const weatherData = await fetchWeatherData(persistentLocation, temperatureUnit);
+        const locationData = location ? {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          name: location.name
+        } : undefined;
+        
+        const weatherData = await fetchWeatherData(locationData, temperatureUnit);
         setWeather(weatherData);
         setLastUpdated(new Date());
       } catch (err) {
@@ -150,15 +155,20 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
     };
     
     updateWeatherData();
-  }, [temperatureUnit]);
+  }, [location, temperatureUnit]);
 
   const refreshWeather = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const persistentLocation = await getUserLocation();
-      const weatherData = await fetchWeatherData(persistentLocation, temperatureUnit);
+      const locationData = location ? {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        name: location.name
+      } : undefined;
+      
+      const weatherData = await fetchWeatherData(locationData, temperatureUnit);
       setWeather(weatherData);
       setLastUpdated(new Date());
     } catch (err) {

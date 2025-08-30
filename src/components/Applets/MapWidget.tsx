@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
 import { useLocation } from '@/contexts/LocationContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 interface SearchResult {
@@ -45,7 +44,7 @@ interface MapWidgetProps {
 }
 
 export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
-  const { location: contextLocation, autoFollow, setAutoFollow, getCurrentLocation, status } = useLocation();
+  const { location: contextLocation, autoFollow, setAutoFollow, getCurrentLocation, status, searchLocations } = useLocation();
   const { toast } = useToast();
   
   // Display location can be different from the tracked location when user searches or manually selects
@@ -58,8 +57,8 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Forward geocoding function for search
-  const searchLocations = useCallback(async (query: string) => {
+  // Search function using the location service
+  const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
       setShowSearchResults(false);
@@ -68,16 +67,9 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
 
     setSearchLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('geocoding', {
-        body: { type: 'forward', query, limit: 8 }
-      });
-
-      if (error) throw error;
-      
-      if (data.success) {
-        setSearchResults(data.results || []);
-        setShowSearchResults(true);
-      }
+      const results = await searchLocations(query, 8);
+      setSearchResults(results);
+      setShowSearchResults(true);
     } catch (error) {
       console.error('Search failed:', error);
       toast({
@@ -88,7 +80,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     } finally {
       setSearchLoading(false);
     }
-  }, [toast]);
+  }, [searchLocations, toast]);
 
   // Debounced search
   useEffect(() => {
@@ -97,7 +89,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      searchLocations(searchQuery);
+      performSearch(searchQuery);
     }, 500);
 
     return () => {
@@ -105,7 +97,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, searchLocations]);
+  }, [searchQuery, performSearch]);
 
   // Update display location when context location changes and auto-follow is enabled
   useEffect(() => {

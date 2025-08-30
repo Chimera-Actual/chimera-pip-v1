@@ -1,4 +1,5 @@
 import { useLocation } from '@/contexts/LocationContext';
+import { locationService } from '@/lib/locationService';
 
 export type LocationStatus = 'active' | 'inactive' | 'error' | 'loading';
 

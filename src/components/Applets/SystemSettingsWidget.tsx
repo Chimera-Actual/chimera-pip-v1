@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme, THEME_CONFIGS, type ColorScheme } from '@/hooks/useTheme';
+import { useLocation } from '@/contexts/LocationContext';
+import { locationService } from '@/lib/locationService';
 
 interface UserSettings {
   location_enabled: boolean;
@@ -26,6 +28,7 @@ interface UserSettings {
 }
 
 export const SystemSettingsWidget: React.FC = () => {
+  const { location, getCurrentLocation } = useLocation();
   const [settings, setSettings] = useState<UserSettings>({
     location_enabled: false,
     theme_mode: 'auto',
@@ -131,49 +134,32 @@ export const SystemSettingsWidget: React.FC = () => {
     }
   };
 
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast({
-        title: "Error",
-        description: "Geolocation is not supported by this browser",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const handleGetCurrentLocation = async () => {
     setGettingLocation(true);
     
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setSettings(prev => ({
-          ...prev,
-          location_latitude: position.coords.latitude,
-          location_longitude: position.coords.longitude,
-          location_name: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`
-        }));
-        setGettingLocation(false);
-        
-        toast({
-          title: "Success",
-          description: "Location updated successfully",
-        });
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        setGettingLocation(false);
-        
-        toast({
-          title: "Error",
-          description: "Failed to get location. Please check your browser permissions.",
-          variant: "destructive"
-        });
-      },
-      { 
-        enableHighAccuracy: true, 
-        timeout: 10000,
-        maximumAge: 60000 
-      }
-    );
+    try {
+      const currentLocation = await getCurrentLocation();
+      setSettings(prev => ({
+        ...prev,
+        location_latitude: currentLocation.latitude,
+        location_longitude: currentLocation.longitude,
+        location_name: `${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`
+      }));
+      
+      toast({
+        title: "Success",
+        description: "Location updated successfully",
+      });
+    } catch (error) {
+      console.error('Failed to get current location:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get location. Please check your browser permissions.",
+        variant: "destructive"
+      });
+    } finally {
+      setGettingLocation(false);
+    }
   };
 
   const clearLocation = () => {
@@ -275,7 +261,7 @@ export const SystemSettingsWidget: React.FC = () => {
                       
                       <div className="flex gap-2">
                         <Button 
-                          onClick={getCurrentLocation}
+                          onClick={handleGetCurrentLocation}
                           disabled={gettingLocation}
                           variant="outline"
                           size="sm"
@@ -301,7 +287,7 @@ export const SystemSettingsWidget: React.FC = () => {
                         No location configured. Click below to set your current location.
                       </div>
                       <Button 
-                        onClick={getCurrentLocation}
+                        onClick={handleGetCurrentLocation}
                         disabled={gettingLocation}
                         variant="outline"
                         className="w-fit font-mono text-sm"

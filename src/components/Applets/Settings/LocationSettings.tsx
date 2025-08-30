@@ -9,6 +9,7 @@ import { MapPin, Clock, Shield, RefreshCw } from 'lucide-react';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { useLocation } from '@/contexts/LocationContext';
 import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
+import { locationService } from '@/lib/locationService';
 import { toast } from 'sonner';
 
 export const LocationSettings: React.FC = () => {
