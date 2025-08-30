@@ -16,7 +16,7 @@ interface AppletContainerProps {
   onAppletChange: (appletId: string) => void;
 }
 
-export const AppletContainer: React.FC<AppletContainerProps> = ({
+export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   activeApplet,
   tabName,
   tabId,
@@ -253,20 +253,20 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     }
   };
 
-  const renderActiveWidget = () => {
+  const renderActiveWidget = React.useMemo(() => {
     const activeWidget = widgets.find(w => w.id === activeApplet);
     if (!activeWidget?.widget_definition) {
       return (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <Plus className="w-12 h-12 mx-auto text-muted-foreground" />
-            <div className="text-muted-foreground font-mono">
+            <div className="text-responsive-base text-muted-foreground font-mono">
               No widgets available. Click the button below to add widgets.
             </div>
             <Button
               onClick={() => setShowWidgetLibrary(true)}
               variant="outline"
-              className="font-mono text-sm border-dashed hover:border-primary/50 hover:bg-primary/10"
+              className="font-mono text-responsive-sm border-dashed hover:border-primary/50 hover:bg-primary/10"
             >
               <Plus className="w-4 h-4 mr-2" />
               ADD WIDGET
@@ -284,7 +284,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <div className="text-6xl opacity-50">⚠</div>
-            <div className="text-muted-foreground font-mono">
+            <div className="text-responsive-base text-muted-foreground font-mono">
               Widget component not found: {ComponentName}
             </div>
           </div>
@@ -295,7 +295,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
     const widgetSettings = getWidgetSettings(activeWidget.id);
     const widgetName = activeWidget.custom_name || activeWidget.widget_definition.name;
     return (
-      <div className="w-full h-full">
+      <div className="widget-container w-full h-full">
         <WidgetComponent 
           settings={widgetSettings} 
           widgetName={widgetName}
@@ -304,7 +304,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
         />
       </div>
     );
-  };
+  }, [widgets, activeApplet, getWidgetSettings, updateWidgetSettings]);
 
   if (loading) {
     return (
@@ -372,10 +372,10 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
                   <div className="flex items-center space-x-3 min-w-0 flex-1">
                     <span className="text-lg">{widget.widget_definition?.icon}</span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-mono font-medium text-foreground truncate">
+                      <div className="text-responsive-sm font-mono font-medium text-foreground truncate">
                         {widget.custom_name || widget.widget_definition?.name}
                       </div>
-                      <div className="text-xs text-muted-foreground font-mono truncate">
+                      <div className="text-responsive-xs text-muted-foreground font-mono truncate">
                         {widget.widget_definition?.description}
                       </div>
                     </div>
@@ -435,7 +435,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
 
       {/* Main Content */}
       <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full pt-16'}`}>
-        {renderActiveWidget()}
+        {renderActiveWidget}
       </div>
 
       {/* Widget Library Dialog */}
@@ -469,4 +469,4 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
       />
     </div>
   );
-};
+});

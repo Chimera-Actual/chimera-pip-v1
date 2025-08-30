@@ -1,33 +1,46 @@
-// Widget component registry
-import { MapWidget } from '@/components/Applets/MapWidget';
-import { WeatherWidget } from '@/components/Applets/WeatherWidget';
-import { ClockWidget } from '@/components/Applets/ClockWidget';
-import { UserInfoWidget } from '@/components/Applets/UserInfoWidget';
-import { EmailWidget } from '@/components/Applets/EmailWidget';
-import { CalendarWidget } from '@/components/Applets/CalendarWidget';
+// Widget component registry with lazy loading
+import React, { Suspense } from 'react';
+import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
 
-import { BrowserWidget } from '@/components/Applets/BrowserWidget';
-import { SystemSettingsWidget } from '@/components/Applets/SystemSettingsWidget';
-import { CustomAssistantWidget } from '@/components/Applets/CustomAssistantWidget';
-import { TextDisplayWidget } from '@/components/Applets/TextDisplayWidget';
-import { ImageDisplayWidget } from '@/components/Applets/ImageDisplayWidget';
-import { AudioPlayer } from '@/components/Applets/AudioPlayer';
+// Lazy load widget components for better performance
+const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget').then(m => ({ default: m.MapWidget })));
+const WeatherWidget = React.lazy(() => import('@/components/Applets/WeatherWidget').then(m => ({ default: m.WeatherWidget })));
+const ClockWidget = React.lazy(() => import('@/components/Applets/ClockWidget').then(m => ({ default: m.ClockWidget })));
+const UserInfoWidget = React.lazy(() => import('@/components/Applets/UserInfoWidget').then(m => ({ default: m.UserInfoWidget })));
+const EmailWidget = React.lazy(() => import('@/components/Applets/EmailWidget').then(m => ({ default: m.EmailWidget })));
+const CalendarWidget = React.lazy(() => import('@/components/Applets/CalendarWidget').then(m => ({ default: m.CalendarWidget })));
+const BrowserWidget = React.lazy(() => import('@/components/Applets/BrowserWidget').then(m => ({ default: m.BrowserWidget })));
+const SystemSettingsWidget = React.lazy(() => import('@/components/Applets/SystemSettingsWidget').then(m => ({ default: m.SystemSettingsWidget })));
+const CustomAssistantWidget = React.lazy(() => import('@/components/Applets/CustomAssistantWidget').then(m => ({ default: m.CustomAssistantWidget })));
+const TextDisplayWidget = React.lazy(() => import('@/components/Applets/TextDisplayWidget').then(m => ({ default: m.TextDisplayWidget })));
+const ImageDisplayWidget = React.lazy(() => import('@/components/Applets/ImageDisplayWidget').then(m => ({ default: m.ImageDisplayWidget })));
+const AudioPlayer = React.lazy(() => import('@/components/Applets/AudioPlayer').then(m => ({ default: m.AudioPlayer })));
 
+// Create wrapped components with suspense and optimized skeletons
+const createLazyWidget = (
+  Component: React.LazyExoticComponent<React.ComponentType<any>>, 
+  skeletonType: 'card' | 'minimal' | 'chart' | 'list' | 'media' = 'card'
+) => {
+  return React.memo((props: any) => (
+    <Suspense fallback={<WidgetSkeleton type={skeletonType} />}>
+      <Component {...props} />
+    </Suspense>
+  ));
+};
 
 export const WIDGET_COMPONENTS = {
-  MapWidget,
-  WeatherWidget,
-  ClockWidget,
-  UserInfoWidget,
-  EmailWidget,
-  CalendarWidget,
-  
-  BrowserWidget,
-  SystemSettingsWidget,
-  CustomAssistantWidget,
-  TextDisplayWidget,
-  ImageDisplayWidget,
-  AudioPlayerWidget: AudioPlayer,
+  MapWidget: createLazyWidget(MapWidget, 'card'),
+  WeatherWidget: createLazyWidget(WeatherWidget, 'chart'),
+  ClockWidget: createLazyWidget(ClockWidget, 'minimal'),
+  UserInfoWidget: createLazyWidget(UserInfoWidget, 'card'),
+  EmailWidget: createLazyWidget(EmailWidget, 'list'),
+  CalendarWidget: createLazyWidget(CalendarWidget, 'list'),
+  BrowserWidget: createLazyWidget(BrowserWidget, 'card'),
+  SystemSettingsWidget: createLazyWidget(SystemSettingsWidget, 'list'),
+  CustomAssistantWidget: createLazyWidget(CustomAssistantWidget, 'card'),
+  TextDisplayWidget: createLazyWidget(TextDisplayWidget, 'card'),
+  ImageDisplayWidget: createLazyWidget(ImageDisplayWidget, 'media'),
+  AudioPlayerWidget: createLazyWidget(AudioPlayer, 'media'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
