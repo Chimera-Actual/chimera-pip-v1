@@ -95,14 +95,8 @@ export const useTabManager = () => {
     try {
       const normalizedName = name.toUpperCase();
       
-      // Check for duplicate names
-      const existingTab = userTabs.find(tab => 
-        tab.name.toUpperCase() === normalizedName && tab.is_active
-      );
-      
-      if (existingTab) {
-        throw new Error(`A tab named "${normalizedName}" already exists`);
-      }
+      // Allow duplicate names - each tab is unique by its ID
+      // Remove the duplicate name check entirely
       
       const maxPosition = Math.max(...userTabs.map(t => t.position), -1);
       
