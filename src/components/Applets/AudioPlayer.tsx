@@ -417,122 +417,21 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
 
   return (
-    <div className="w-full h-full flex flex-col bg-card border border-border rounded-lg overflow-hidden">
+    <div className="w-full h-full flex flex-row bg-card border border-border rounded-lg overflow-hidden">
       {/* Hidden audio element */}
       <audio ref={audioRef} preload="metadata" />
       
-      {/* Header */}
-      <div className="flex-shrink-0 bg-background/50 border-b border-border p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-mono text-primary">🎵 AUDIO PLAYER</span>
-            {isLoading && (
-              <div className="text-xs text-muted-foreground font-mono animate-pulse">
-                LOADING...
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Volume2 size={16} className="text-muted-foreground" />
-            <Slider
-              value={[volume]}
-              onValueChange={handleVolumeChange}
-              max={100}
-              step={1}
-              className="w-20"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Waveform */}
-      {settings?.showWaveform !== false && (
-        <div className="flex-shrink-0 h-72">
-          <OscilloscopeWaveform 
-            isPlaying={isPlaying} 
-            className="h-full"
-          />
-        </div>
-      )}
-
-      {/* Track Info */}
-      <div className="flex-shrink-0 bg-background/30 border-b border-border p-4">
-        <div className="text-center space-y-2">
-          <div className="text-sm font-mono text-primary truncate">
-            {currentTrack ? currentTrack.title : 'NO TRACK SELECTED'}
-          </div>
-          <div className="text-xs text-muted-foreground font-mono">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </div>
-          {duration > 0 && (
-            <Slider
-              value={[currentTime]}
-              onValueChange={(value) => {
-                if (audioRef.current) {
-                  audioRef.current.currentTime = value[0];
-                }
-              }}
-              max={duration}
-              step={0.1}
-              className="w-full"
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="flex-shrink-0 bg-background/20 border-b border-border p-4">
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            onClick={prevTrack}
-            size="sm"
-            variant="ghost"
-            disabled={playlist.length === 0 || isLoading}
-            className="h-10 w-10 p-0"
-          >
-            <SkipBack size={20} />
-          </Button>
-          
-          <Button
-            onClick={togglePlayPause}
-            size="lg"
-            disabled={!currentTrack || isLoading}
-            className="h-12 w-12 rounded-full"
-          >
-            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-          </Button>
-          
-          <Button
-            onClick={stopPlayback}
-            size="sm"
-            variant="ghost"
-            disabled={!currentTrack || isLoading}
-            className="h-10 w-10 p-0"
-          >
-            <Square size={20} />
-          </Button>
-          
-          <Button
-            onClick={nextTrack}
-            size="sm"
-            variant="ghost"
-            disabled={playlist.length === 0 || isLoading}
-            className="h-10 w-10 p-0"
-          >
-            <SkipForward size={20} />
-          </Button>
-        </div>
-      </div>
-
-      {/* Playlist */}
-      <div className="flex-1 overflow-hidden">
-        <div className="p-4">
+      {/* Left Side - Playlist Management */}
+      <div className="w-2/5 flex flex-col border-r border-border overflow-hidden">
+        {/* Playlist Header */}
+        <div className="flex-shrink-0 bg-background/50 border-b border-border p-4">
           <Label className="text-sm font-mono text-primary uppercase">
             PLAYLIST ({playlist.length})
           </Label>
         </div>
         
-        <div className="px-4 pb-4 overflow-y-auto max-h-full">
+        {/* Playlist Content */}
+        <div className="flex-1 overflow-y-auto p-4">
           {playlist.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm font-mono">
               NO TRACKS IN PLAYLIST
@@ -574,30 +473,136 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             </div>
           )}
         </div>
+
+        {/* Upload Section */}
+        <div className="flex-shrink-0 bg-background/20 border-t border-border p-4">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFileUpload}
+            className="hidden"
+            disabled={isLoading}
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="sm"
+            className="w-full text-xs font-mono"
+            disabled={isLoading || !user || !widgetInstanceId}
+          >
+            <Upload size={16} className="mr-2" />
+            {isLoading ? 'Uploading...' : 'Upload Audio Files'}
+          </Button>
+          <div className="text-xs text-muted-foreground text-center mt-2">
+            Supported: MP3, WAV, OGG, M4A, FLAC
+          </div>
+        </div>
       </div>
 
-      {/* Upload */}
-      <div className="flex-shrink-0 bg-background/20 border-t border-border p-4">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          onChange={handleFileUpload}
-          className="hidden"
-          disabled={isLoading}
-        />
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          variant="outline"
-          size="sm"
-          className="w-full text-xs font-mono"
-          disabled={isLoading || !user || !widgetInstanceId}
-        >
-          <Upload size={16} className="mr-2" />
-          {isLoading ? 'Uploading...' : 'Upload Audio Files'}
-        </Button>
-        <div className="text-xs text-muted-foreground text-center mt-2">
-          Supported: MP3, WAV, OGG, M4A, FLAC
+      {/* Right Side - Player Controls */}
+      <div className="w-3/5 flex flex-col overflow-hidden">
+        {/* Header with Volume Control */}
+        <div className="flex-shrink-0 bg-background/50 border-b border-border p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-mono text-primary">🎵 AUDIO PLAYER</span>
+              {isLoading && (
+                <div className="text-xs text-muted-foreground font-mono animate-pulse">
+                  LOADING...
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Volume2 size={16} className="text-muted-foreground" />
+              <Slider
+                value={[volume]}
+                onValueChange={handleVolumeChange}
+                max={100}
+                step={1}
+                className="w-20"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Waveform */}
+        {settings?.showWaveform !== false && (
+          <div className="flex-shrink-0 h-48">
+            <OscilloscopeWaveform 
+              isPlaying={isPlaying} 
+              className="h-full"
+            />
+          </div>
+        )}
+
+        {/* Track Info */}
+        <div className="flex-shrink-0 bg-background/30 border-b border-border p-4">
+          <div className="text-center space-y-2">
+            <div className="text-sm font-mono text-primary truncate">
+              {currentTrack ? currentTrack.title : 'NO TRACK SELECTED'}
+            </div>
+            <div className="text-xs text-muted-foreground font-mono">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </div>
+            {duration > 0 && (
+              <Slider
+                value={[currentTime]}
+                onValueChange={(value) => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = value[0];
+                  }
+                }}
+                max={duration}
+                step={0.1}
+                className="w-full"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex-1 flex items-center justify-center bg-background/20 p-4">
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              onClick={prevTrack}
+              size="sm"
+              variant="ghost"
+              disabled={playlist.length === 0 || isLoading}
+              className="h-10 w-10 p-0"
+            >
+              <SkipBack size={20} />
+            </Button>
+            
+            <Button
+              onClick={togglePlayPause}
+              size="lg"
+              disabled={!currentTrack || isLoading}
+              className="h-12 w-12 rounded-full"
+            >
+              {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+            </Button>
+            
+            <Button
+              onClick={stopPlayback}
+              size="sm"
+              variant="ghost"
+              disabled={!currentTrack || isLoading}
+              className="h-10 w-10 p-0"
+            >
+              <Square size={20} />
+            </Button>
+            
+            <Button
+              onClick={nextTrack}
+              size="sm"
+              variant="ghost"
+              disabled={playlist.length === 0 || isLoading}
+              className="h-10 w-10 p-0"
+            >
+              <SkipForward size={20} />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
