@@ -132,18 +132,29 @@ export const useLocationService = () => {
   }, [settings, updateSettings, reverseGeocode]);
 
   const pollLocation = useCallback(async () => {
+    if (!settings) return;
+    
     try {
       const locationData = await getCurrentLocation();
       await updateLocationData(locationData);
     } catch (error) {
-      console.error('Location polling error:', error);
+      console.warn('Location polling failed, using stored coordinates:', error);
       
-      // Show error toast only very rarely to avoid spam
-      if (Math.random() < 0.05) { // Show error 5% of the time
-        toast.error('Failed to update location');
+      // If we have stored location data, that's sufficient - don't treat as error
+      if (settings.location_latitude && settings.location_longitude) {
+        // Just log and continue - we have valid stored location data
+        return;
+      }
+      
+      // Only show error if we have no location data at all
+      console.error('No location data available:', error);
+      
+      // Show error toast very rarely to avoid spam
+      if (Math.random() < 0.01) { // Show error 1% of the time
+        toast.error('Location services unavailable');
       }
     }
-  }, [getCurrentLocation, updateLocationData]);
+  }, [getCurrentLocation, updateLocationData, settings]);
 
   const startLocationService = useCallback(async () => {
     if (!settings) return;
@@ -159,10 +170,10 @@ export const useLocationService = () => {
       // Get initial location
       await pollLocation();
 
-      // Set up polling interval (15 seconds)
+      // Set up polling interval (5 minutes for less aggressive polling)
       intervalRef.current = setInterval(() => {
         pollLocation();
-      }, 15000);
+      }, 300000);
 
       // Only show success toast once when manually enabled
       console.log('Location tracking started');
