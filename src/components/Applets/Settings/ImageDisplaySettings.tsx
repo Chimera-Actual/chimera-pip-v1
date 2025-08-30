@@ -341,7 +341,7 @@ export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({
   const availableLayouts = LAYOUT_CONFIGURATIONS[containerCount as keyof typeof LAYOUT_CONFIGURATIONS] || [];
 
   return (
-    <div className="space-y-6 p-6 max-h-[80vh] overflow-y-auto">
+    <div className="space-y-6 p-6">
       {/* Container Configuration */}
       <div className="space-y-4">
         <Label className="text-sm font-mono text-primary flex items-center gap-2">
