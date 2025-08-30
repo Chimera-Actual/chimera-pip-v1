@@ -94,8 +94,15 @@ export class LocationService {
         return;
       }
 
+      // Add more detailed error handling and logging
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          console.log('Location obtained successfully:', {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+          
           const locationData: LocationData = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -106,23 +113,37 @@ export class LocationService {
         },
         (error) => {
           let errorMessage = 'Failed to get location';
+          let userFriendlyMessage = '';
+          
           switch (error.code) {
             case error.PERMISSION_DENIED:
               errorMessage = 'Location access denied by user';
+              userFriendlyMessage = 'Please allow location access in your browser settings and try again.';
               break;
             case error.POSITION_UNAVAILABLE:
               errorMessage = 'Location information unavailable';
+              userFriendlyMessage = 'Location services may be disabled or unavailable. Try enabling location services on your device.';
               break;
             case error.TIMEOUT:
               errorMessage = 'Location request timed out';
+              userFriendlyMessage = 'Location request took too long. Please try again.';
               break;
           }
-          reject(new Error(errorMessage));
+          
+          console.warn('Location error:', { 
+            code: error.code, 
+            message: errorMessage,
+            userMessage: userFriendlyMessage 
+          });
+          
+          const errorWithUserMessage = new Error(errorMessage);
+          (errorWithUserMessage as any).userMessage = userFriendlyMessage;
+          reject(errorWithUserMessage);
         },
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 5000,
+          enableHighAccuracy: false, // Changed to false for better compatibility
+          timeout: 15000, // Increased timeout
+          maximumAge: 60000, // Allow cached location for 1 minute
         }
       );
     });
@@ -288,49 +309,75 @@ export class LocationService {
 
   // Polling logic
   private async pollLocation(updateSettings?: (settings: Partial<LocationSettings>) => Promise<void>) {
-    if (!this.settings?.location_enabled) return;
+    if (!this.settings?.location_enabled) {
+      console.log('Location polling skipped - location disabled');
+      return;
+    }
     
+    console.log('Starting location poll...');
     this.notifyListeners(this.lastLocationRef, 'loading');
     
     try {
       const locationData = await this.getCurrentLocation();
+      console.log('Location poll successful');
       await this.updateLocationData(locationData, updateSettings);
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Location polling failed:', error);
       
-      // If we have stored location data, that's sufficient
+      // If we have stored location data, use it and don't show errors
       if (this.settings.location_latitude && this.settings.location_longitude) {
-        this.notifyListeners(this.lastLocationRef, 'active');
+        console.log('Using stored location data as fallback');
+        const storedLocation: LocationData = {
+          latitude: this.settings.location_latitude,
+          longitude: this.settings.location_longitude,
+          timestamp: Date.now(),
+          name: this.settings.location_name
+        };
+        this.lastLocationRef = storedLocation;
+        this.notifyListeners(storedLocation, 'active');
         return;
       }
       
       this.notifyListeners(this.lastLocationRef, 'error');
       
-      // Show error toast very rarely to avoid spam
-      if (Math.random() < 0.01) {
-        toast.error('Location services unavailable');
+      // Show user-friendly error message if available
+      const userMessage = error.userMessage || 'Location services are unavailable';
+      
+      // Show error toast occasionally, but not on every poll
+      if (Math.random() < 0.1) { // Show error 10% of the time to avoid spam
+        toast.error(userMessage);
       }
     }
   }
 
   // Service lifecycle
   async startLocationService(updateSettings?: (settings: Partial<LocationSettings>) => Promise<void>) {
-    if (!this.settings?.location_enabled) return;
+    if (!this.settings?.location_enabled) {
+      console.log('Location service start skipped - location disabled');
+      return;
+    }
     
     console.log('Starting location service...');
 
-    // Clear any existing interval
+    // Clear any existing interval to prevent cycling
     this.stopLocationService();
 
     try {
       // Get initial location
       await this.pollLocation(updateSettings);
 
-      // Set up polling interval using user preference (default 5 minutes)
-      const pollFrequency = (this.settings.location_polling_frequency || 5) * 60 * 1000;
-      this.intervalRef = setInterval(() => {
-        this.pollLocation(updateSettings);
-      }, pollFrequency);
+      // Only set up polling if we successfully got location or have stored location
+      if (this.lastLocationRef || (this.settings.location_latitude && this.settings.location_longitude)) {
+        // Set up polling interval using user preference (default 5 minutes)
+        const pollFrequency = (this.settings.location_polling_frequency || 5) * 60 * 1000;
+        console.log(`Setting up location polling every ${pollFrequency / 1000} seconds`);
+        
+        this.intervalRef = setInterval(() => {
+          this.pollLocation(updateSettings);
+        }, pollFrequency);
+      } else {
+        console.log('No location available and no stored location - polling disabled');
+      }
 
       console.log('Location tracking started');
     } catch (error) {
