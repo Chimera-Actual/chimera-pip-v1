@@ -367,3 +367,4 @@ All colors MUST be HSL - Monochrome Green Theme
   .will-change-transform { will-change: transform; }
   .will-change-opacity { will-change: opacity; }
   .will-change-auto { will-change: auto; }
+}
