@@ -15,6 +15,7 @@ const CustomAssistantWidget = React.lazy(() => import('@/components/Applets/Cust
 const TextDisplayWidget = React.lazy(() => import('@/components/Applets/TextDisplayWidget').then(m => ({ default: m.TextDisplayWidget })));
 const ImageDisplayWidget = React.lazy(() => import('@/components/Applets/ImageDisplayWidget').then(m => ({ default: m.ImageDisplayWidget })));
 const AudioPlayer = React.lazy(() => import('@/components/Applets/AudioPlayer').then(m => ({ default: m.AudioPlayer })));
+const VoiceAgentWidget = React.lazy(() => import('@/components/Applets/VoiceAgentWidget').then(m => ({ default: m.VoiceAgentWidget })));
 
 // Create wrapped components with suspense and optimized skeletons
 const createLazyWidget = (
@@ -41,6 +42,7 @@ export const WIDGET_COMPONENTS = {
   TextDisplayWidget: createLazyWidget(TextDisplayWidget, 'card'),
   ImageDisplayWidget: createLazyWidget(ImageDisplayWidget, 'media'),
   AudioPlayerWidget: createLazyWidget(AudioPlayer, 'media'),
+  VoiceAgentWidget: createLazyWidget(VoiceAgentWidget, 'card'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
