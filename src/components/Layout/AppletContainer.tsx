@@ -48,8 +48,14 @@ export const AppletContainer: React.FC<AppletContainerProps> = ({
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
 
-  // Get widgets for current tab directly from the hook
-  const widgets = getActiveWidgetsForTab(tabId);
+  // Get widgets for current tab with proper state dependency
+  const [widgets, setWidgets] = useState<UserWidgetInstance[]>([]);
+  
+  // Update widgets when userWidgetInstances changes
+  useEffect(() => {
+    const currentTabWidgets = getActiveWidgetsForTab(tabId);
+    setWidgets(currentTabWidgets);
+  }, [userWidgetInstances, tabId, getActiveWidgetsForTab]);
   
   // Initialize sidebar visibility state
   useEffect(() => {
