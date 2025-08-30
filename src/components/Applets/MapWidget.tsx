@@ -1,13 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 interface LocationData {
   latitude: number;
   longitude: number;
+}
+
+interface SearchResult {
+  lat: number;
+  lon: number;
+  display_name: string;
+  formatted_name: string;
+  type: string;
+  importance: number;
+}
+
+interface PlaceOfInterest {
+  id: string;
+  name: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  category?: string;
 }
 
 type MapLayer = 'standard' | 'satellite' | 'terrain' | 'transport';
@@ -40,12 +61,90 @@ interface MapWidgetProps {
 
 export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const { user } = useAuth();
-  const { settings: userSettings } = useUserSettings();
+  const { settings: userSettings, updateSettings } = useUserSettings();
+  const { toast } = useToast();
   const [location, setLocation] = useState<LocationData>({ latitude: 37.7749, longitude: -122.4194 });
   const [userLocation, setUserLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeLayer, setActiveLayer] = useState<MapLayer>('standard');
   const [autoFollow, setAutoFollow] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Reverse geocoding function using the edge function
+  const reverseGeocode = useCallback(async (lat: number, lon: number) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('geocoding', {
+        body: { type: 'reverse', lat, lon }
+      });
+
+      if (error) throw error;
+      
+      if (data.success && data.location_name) {
+        // Update user settings with the geocoded location name
+        if (userSettings && updateSettings) {
+          await updateSettings({ 
+            location_name: data.location_name 
+          });
+        }
+      }
+    } catch (error) {
+      console.log('Reverse geocoding failed (non-critical):', error);
+      // Silently fail for reverse geocoding as it's non-critical
+    }
+  }, [userSettings, updateSettings]);
+
+  // Forward geocoding function for search
+  const searchLocations = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('geocoding', {
+        body: { type: 'forward', query, limit: 8 }
+      });
+
+      if (error) throw error;
+      
+      if (data.success) {
+        setSearchResults(data.results || []);
+        setShowSearchResults(true);
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      toast({
+        title: "Search Failed",
+        description: "Could not search for locations. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [toast]);
+
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      searchLocations(searchQuery);
+    }, 500);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, searchLocations]);
 
   // Update map location when user settings change (real-time location updates)
   useEffect(() => {
@@ -70,9 +169,12 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
         if (autoFollow) {
           setLocation(newLocation);
         }
+
+        // Reverse geocode the new location to get the name
+        reverseGeocode(newLocation.latitude, newLocation.longitude);
       }
     }
-  }, [userSettings?.location_latitude, userSettings?.location_longitude, userSettings?.location_enabled, autoFollow]);
+  }, [userSettings?.location_latitude, userSettings?.location_longitude, userSettings?.location_enabled, autoFollow, reverseGeocode]);
 
   // Initialize location on mount
   useEffect(() => {
@@ -124,46 +226,93 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     }
   };
 
+  const handleSearchResultSelect = (result: SearchResult) => {
+    const newLocation = { latitude: result.lat, longitude: result.lon };
+    setLocation(newLocation);
+    setAutoFollow(false); // Disable auto-follow when manually selecting location
+    setShowSearchResults(false);
+    setSearchQuery('');
+    
+    toast({
+      title: "Location Selected",
+      description: result.formatted_name,
+    });
+  };
+
   const mapUrl = mapLayers[activeLayer].url(location.latitude, location.longitude);
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Header Controls */}
-      <div className="flex-shrink-0 h-16 bg-card border-b border-border px-4 flex items-center justify-between">
-        <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
-          ◈ TACTICAL MAP SYSTEM
-        </span>
-        <div className="flex items-center gap-4">
-          <LocationStatusIndicator className="mr-2" />
-          <Button
-            onClick={toggleAutoFollow}
-            variant={autoFollow ? "default" : "outline"}
-            size="sm"
-            className="h-10 px-3 text-xs font-mono"
-          >
-            {autoFollow ? '🎯 FOLLOW' : '📍 MANUAL'}
-          </Button>
-          <Select value={activeLayer} onValueChange={(value: MapLayer) => setActiveLayer(value)}>
-            <SelectTrigger className="w-40 h-10 bg-background/50 border-border text-sm font-mono">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background border-border">
-              {Object.entries(mapLayers).map(([key, layer]) => (
-                <SelectItem key={key} value={key} className="font-mono text-sm">
-                  {layer.name}
-                </SelectItem>
+      <div className="flex-shrink-0 h-20 bg-card border-b border-border px-4 flex flex-col gap-2 py-2">
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
+            ◈ TACTICAL MAP SYSTEM
+          </span>
+          <div className="flex items-center gap-3">
+            <LocationStatusIndicator className="mr-2" />
+            <Button
+              onClick={toggleAutoFollow}
+              variant={autoFollow ? "default" : "outline"}
+              size="sm"
+              className="h-8 px-3 text-xs font-mono"
+            >
+              {autoFollow ? '🎯 FOLLOW' : '📍 MANUAL'}
+            </Button>
+            <Select value={activeLayer} onValueChange={(value: MapLayer) => setActiveLayer(value)}>
+              <SelectTrigger className="w-32 h-8 bg-background/50 border-border text-xs font-mono">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background border-border">
+                {Object.entries(mapLayers).map(([key, layer]) => (
+                  <SelectItem key={key} value={key} className="font-mono text-xs">
+                    {layer.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button 
+              onClick={getCurrentLocation} 
+              disabled={loading}
+              variant="ghost"
+              size="sm"
+              className="h-8 px-3 text-xs font-mono bg-background/50 hover:bg-primary/20"
+            >
+              {loading ? 'GPS...' : '📍 LOCATE'}
+            </Button>
+          </div>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="relative">
+          <Input
+            type="text"
+            placeholder="Search locations... (city, address, coordinates)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-8 text-xs font-mono bg-background/50 border-border placeholder:text-muted-foreground"
+          />
+          {searchLoading && (
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <div className="w-3 h-3 border border-primary/50 border-t-primary rounded-full animate-spin"></div>
+            </div>
+          )}
+          
+          {/* Search Results Dropdown */}
+          {showSearchResults && searchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+              {searchResults.map((result, index) => (
+                <button
+                  key={`${result.lat}-${result.lon}-${index}`}
+                  onClick={() => handleSearchResultSelect(result)}
+                  className="w-full text-left px-3 py-2 text-xs font-mono hover:bg-primary/10 border-b border-border/50 last:border-b-0"
+                >
+                  <div className="font-semibold text-primary">{result.formatted_name}</div>
+                  <div className="text-muted-foreground truncate">{result.display_name}</div>
+                </button>
               ))}
-            </SelectContent>
-          </Select>
-          <Button 
-            onClick={getCurrentLocation} 
-            disabled={loading}
-            variant="ghost"
-            size="sm"
-            className="h-10 px-4 text-sm font-mono bg-background/50 hover:bg-primary/20"
-          >
-            {loading ? 'GPS...' : '📍 LOCATE'}
-          </Button>
+            </div>
+          )}
         </div>
       </div>
       
