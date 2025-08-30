@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Settings } from 'lucide-react';
 import { UserWidgetInstance } from '@/hooks/useWidgetManager';
+import { WidgetNameSection } from './WidgetNameSection';
 import { ClockSettings } from '@/components/Applets/Settings/ClockSettings';
 import { CustomAssistantSettings } from '@/components/Applets/Settings/CustomAssistantSettings';
 import { TextDisplaySettings } from '@/components/Applets/Settings/TextDisplaySettings';
@@ -27,7 +28,22 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
   onWidgetNameUpdate,
   currentSettings,
 }) => {
+  const [pendingNameChange, setPendingNameChange] = useState<string | null>(null);
+
   if (!widget?.widget_definition) return null;
+
+  const handleNameChange = (newName: string) => {
+    setPendingNameChange(newName);
+  };
+
+  const handleClose = () => {
+    // Apply pending name change before closing
+    if (pendingNameChange !== null && onWidgetNameUpdate) {
+      onWidgetNameUpdate(widget.id, pendingNameChange);
+    }
+    setPendingNameChange(null);
+    onClose();
+  };
 
   const renderSettingsComponent = () => {
     switch (widget.widget_definition.component_name) {
@@ -100,7 +116,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
         return (
           <div className="p-6 text-center">
             <div className="text-muted-foreground font-mono text-sm">
-              No settings available for this widget.
+              No additional settings available for this widget.
             </div>
           </div>
         );
@@ -108,16 +124,17 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
             <Settings className="w-5 h-5" />
-            {widget.widget_definition.name} Settings
+            Widget Settings
           </DialogTitle>
         </DialogHeader>
         
         <div className="overflow-y-auto max-h-[60vh] pr-2">
+          <WidgetNameSection widget={widget} onNameChange={handleNameChange} />
           {renderSettingsComponent()}
         </div>
       </DialogContent>

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { AppletType } from './PipBoyLayout';
-import { Settings, X, Plus, Edit, Menu } from 'lucide-react';
+import { Settings, X, Plus, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
 import { WidgetLibrary } from './WidgetLibrary';
 import { WidgetSettings } from './WidgetSettings';
-import { WidgetRenameDialog } from './WidgetRenameDialog';
 import { useToast } from '@/hooks/use-toast';
 
 interface AppletContainerProps {
@@ -42,9 +41,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   const { toast } = useToast();
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [showWidgetSettings, setShowWidgetSettings] = useState(false);
-  const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [selectedWidgetForSettings, setSelectedWidgetForSettings] = useState<UserWidgetInstance | null>(null);
-  const [selectedWidgetForRename, setSelectedWidgetForRename] = useState<UserWidgetInstance | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
 
@@ -121,32 +118,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   const handleCloseWidgetSettings = () => {
     setShowWidgetSettings(false);
     setSelectedWidgetForSettings(null);
-  };
-
-  const handleOpenWidgetRename = (widget: UserWidgetInstance) => {
-    setSelectedWidgetForRename(widget);
-    setShowRenameDialog(true);
-  };
-
-  const handleCloseWidgetRename = () => {
-    setShowRenameDialog(false);
-    setSelectedWidgetForRename(null);
-  };
-
-  const handleWidgetRename = async (instanceId: string, newName: string) => {
-    try {
-      await updateWidgetName(instanceId, newName);
-      toast({
-        title: "Widget Renamed",
-        description: "Widget name has been updated successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to rename widget",
-        variant: "destructive"
-      });
-    }
   };
 
   const handleDragStart = (e: React.DragEvent, widget: UserWidgetInstance) => {
@@ -386,17 +357,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenWidgetRename(widget);
-                      }}
-                      className="opacity-70 hover:opacity-100 p-1 h-6 w-6"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
                         handleOpenWidgetSettings(widget);
                       }}
                       className="opacity-70 hover:opacity-100 p-1 h-6 w-6"
@@ -458,14 +418,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
         onSettingsUpdate={updateWidgetSettings}
         onWidgetNameUpdate={updateWidgetName}
         currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.id) : {}}
-      />
-
-      {/* Widget Rename Dialog */}
-      <WidgetRenameDialog
-        isOpen={showRenameDialog}
-        onClose={handleCloseWidgetRename}
-        widget={selectedWidgetForRename}
-        onRename={handleWidgetRename}
       />
     </div>
   );
