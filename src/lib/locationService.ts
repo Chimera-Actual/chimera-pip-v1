@@ -38,6 +38,10 @@ export class LocationService {
   private lastUpdateRef: number = Date.now();
   private settings: LocationSettings | null = null;
   private listeners: Set<(location: LocationData | null, status: LocationStatus) => void> = new Set();
+  private failureCount: number = 0;
+  private maxFailures: number = 3;
+  private isCircuitBreakerOpen: boolean = false;
+  private lastFailureTime: number = 0;
 
   private constructor() {}
 
@@ -307,10 +311,71 @@ export class LocationService {
     }
   }
 
+  // Circuit breaker logic
+  private shouldAttemptLocation(): boolean {
+    const now = Date.now();
+    
+    // If circuit breaker is open, check if enough time has passed to retry
+    if (this.isCircuitBreakerOpen) {
+      const timeSinceLastFailure = now - this.lastFailureTime;
+      if (timeSinceLastFailure > 300000) { // 5 minutes
+        console.log('Circuit breaker: Attempting to close circuit breaker');
+        this.isCircuitBreakerOpen = false;
+        this.failureCount = 0;
+      } else {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  private handleLocationFailure() {
+    this.failureCount++;
+    this.lastFailureTime = Date.now();
+    
+    if (this.failureCount >= this.maxFailures) {
+      console.log(`Circuit breaker: Opening circuit breaker after ${this.failureCount} failures`);
+      this.isCircuitBreakerOpen = true;
+      
+      // Stop polling when circuit breaker opens
+      if (this.intervalRef) {
+        clearInterval(this.intervalRef);
+        this.intervalRef = null;
+      }
+    }
+  }
+
+  private handleLocationSuccess() {
+    // Reset failure count on success
+    this.failureCount = 0;
+    this.isCircuitBreakerOpen = false;
+  }
+
   // Polling logic
   private async pollLocation(updateSettings?: (settings: Partial<LocationSettings>) => Promise<void>) {
     if (!this.settings?.location_enabled) {
       console.log('Location polling skipped - location disabled');
+      return;
+    }
+    
+    // Check circuit breaker
+    if (!this.shouldAttemptLocation()) {
+      console.log('Location polling skipped - circuit breaker open');
+      
+      // Use stored location if available
+      if (this.settings.location_latitude && this.settings.location_longitude) {
+        const storedLocation: LocationData = {
+          latitude: this.settings.location_latitude,
+          longitude: this.settings.location_longitude,
+          timestamp: Date.now(),
+          name: this.settings.location_name
+        };
+        this.lastLocationRef = storedLocation;
+        this.notifyListeners(storedLocation, 'active');
+      } else {
+        this.notifyListeners(this.lastLocationRef, 'inactive');
+      }
       return;
     }
     
@@ -320,9 +385,11 @@ export class LocationService {
     try {
       const locationData = await this.getCurrentLocation();
       console.log('Location poll successful');
+      this.handleLocationSuccess();
       await this.updateLocationData(locationData, updateSettings);
     } catch (error: any) {
       console.warn('Location polling failed:', error);
+      this.handleLocationFailure();
       
       // If we have stored location data, use it and don't show errors
       if (this.settings.location_latitude && this.settings.location_longitude) {
@@ -340,11 +407,9 @@ export class LocationService {
       
       this.notifyListeners(this.lastLocationRef, 'error');
       
-      // Show user-friendly error message if available
-      const userMessage = error.userMessage || 'Location services are unavailable';
-      
-      // Show error toast occasionally, but not on every poll
-      if (Math.random() < 0.1) { // Show error 10% of the time to avoid spam
+      // Show user-friendly error message only once when circuit breaker opens
+      if (this.failureCount === this.maxFailures) {
+        const userMessage = error.userMessage || 'Location services are unavailable. Using manual mode.';
         toast.error(userMessage);
       }
     }
@@ -366,8 +431,8 @@ export class LocationService {
       // Get initial location
       await this.pollLocation(updateSettings);
 
-      // Only set up polling if we successfully got location or have stored location
-      if (this.lastLocationRef || (this.settings.location_latitude && this.settings.location_longitude)) {
+      // Only set up polling if circuit breaker is not open and we have some location data
+      if (!this.isCircuitBreakerOpen && (this.lastLocationRef || (this.settings.location_latitude && this.settings.location_longitude))) {
         // Set up polling interval using user preference (default 5 minutes)
         const pollFrequency = (this.settings.location_polling_frequency || 5) * 60 * 1000;
         console.log(`Setting up location polling every ${pollFrequency / 1000} seconds`);
@@ -376,7 +441,7 @@ export class LocationService {
           this.pollLocation(updateSettings);
         }, pollFrequency);
       } else {
-        console.log('No location available and no stored location - polling disabled');
+        console.log('Location polling disabled - circuit breaker open or no location data');
       }
 
       console.log('Location tracking started');
