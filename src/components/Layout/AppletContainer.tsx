@@ -52,7 +52,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   useEffect(() => {
     const currentTabWidgets = getActiveWidgetsForTab(tabId);
     setWidgets(currentTabWidgets);
-  }, [userWidgetInstances, tabId, getActiveWidgetsForTab]);
+  }, [userWidgetInstances, tabId]);
   
   // Initialize sidebar visibility state
   useEffect(() => {
