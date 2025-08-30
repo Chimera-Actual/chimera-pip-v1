@@ -42,6 +42,8 @@ export class LocationService {
   private maxFailures: number = 3;
   private isCircuitBreakerOpen: boolean = false;
   private lastFailureTime: number = 0;
+  private isServiceRunning: boolean = false;
+  private serviceLock: boolean = false;
 
   private constructor() {}
 
@@ -62,10 +64,23 @@ export class LocationService {
     this.listeners.forEach(callback => callback(location, status));
   }
 
-  // Settings management
-  updateSettings(newSettings: LocationSettings) {
+  // Settings management with proper async handling
+  async updateSettings(newSettings: LocationSettings) {
+    if (this.serviceLock) {
+      console.log('Service update already in progress, skipping...');
+      return;
+    }
+
     const wasEnabled = this.settings?.location_enabled;
+    const oldFrequency = this.settings?.location_polling_frequency;
     this.settings = newSettings;
+
+    console.log('Updating location service settings:', { 
+      wasEnabled, 
+      nowEnabled: newSettings.location_enabled,
+      oldFrequency,
+      newFrequency: newSettings.location_polling_frequency
+    });
 
     // Initialize location from settings if available
     if (newSettings.location_latitude && newSettings.location_longitude) {
@@ -79,14 +94,20 @@ export class LocationService {
       this.notifyListeners(locationData, newSettings.location_enabled ? 'active' : 'inactive');
     }
 
-    // Start or stop service based on enabled state
+    // Handle service state changes
     if (newSettings.location_enabled && !wasEnabled) {
-      this.startLocationService();
+      // Service was disabled, now enabled
+      console.log('Starting location service (was disabled)');
+      await this.startLocationService();
     } else if (!newSettings.location_enabled && wasEnabled) {
+      // Service was enabled, now disabled
+      console.log('Stopping location service (now disabled)');
       this.stopLocationService();
-    } else if (newSettings.location_enabled && wasEnabled) {
-      // Restart with new frequency if it changed
-      this.restartLocationService();
+    } else if (newSettings.location_enabled && wasEnabled && 
+               oldFrequency !== newSettings.location_polling_frequency) {
+      // Frequency changed, restart polling
+      console.log('Restarting location service (frequency changed)');
+      await this.restartLocationService();
     }
   }
 
@@ -98,15 +119,8 @@ export class LocationService {
         return;
       }
 
-      // Add more detailed error handling and logging
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('Location obtained successfully:', {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
-          
           const locationData: LocationData = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -126,28 +140,22 @@ export class LocationService {
               break;
             case error.POSITION_UNAVAILABLE:
               errorMessage = 'Location information unavailable';
-              userFriendlyMessage = 'Location services may be disabled or unavailable. Try enabling location services on your device.';
+              userFriendlyMessage = 'Location services may be disabled or unavailable. Using stored location.';
               break;
             case error.TIMEOUT:
               errorMessage = 'Location request timed out';
-              userFriendlyMessage = 'Location request took too long. Please try again.';
+              userFriendlyMessage = 'Location request took too long. Using stored location.';
               break;
           }
-          
-          console.warn('Location error:', { 
-            code: error.code, 
-            message: errorMessage,
-            userMessage: userFriendlyMessage 
-          });
           
           const errorWithUserMessage = new Error(errorMessage);
           (errorWithUserMessage as any).userMessage = userFriendlyMessage;
           reject(errorWithUserMessage);
         },
         {
-          enableHighAccuracy: false, // Changed to false for better compatibility
-          timeout: 15000, // Increased timeout
-          maximumAge: 60000, // Allow cached location for 1 minute
+          enableHighAccuracy: false,
+          timeout: 15000,
+          maximumAge: 60000,
         }
       );
     });
@@ -254,25 +262,23 @@ export class LocationService {
         Math.abs(this.lastLocationRef.latitude - locationData.latitude) > 0.001 ||
         Math.abs(this.lastLocationRef.longitude - locationData.longitude) > 0.001;
 
-      if (!hasLocationChanged) return;
-
       // Update local state immediately
       this.lastLocationRef = locationData;
       this.lastUpdateRef = Date.now();
       this.notifyListeners(locationData, 'active');
 
-      // Update settings with coordinates immediately (background task)
-      if (updateSettings) {
-        // Use background task for settings update
+      // Only update settings if location actually changed and we have updateSettings function
+      if (hasLocationChanged && updateSettings) {
+        // Background task for settings update
         const backgroundUpdate = async () => {
           try {
             await updateSettings({
               location_latitude: locationData.latitude,
               location_longitude: locationData.longitude,
-              location_name: this.settings?.location_name, // Keep existing name for now
+              location_name: this.settings?.location_name,
             });
 
-            // Try reverse geocoding in background (non-blocking)
+            // Try reverse geocoding in background
             try {
               const locationName = await this.reverseGeocode(locationData.latitude, locationData.longitude);
               if (locationName) {
@@ -287,7 +293,7 @@ export class LocationService {
                 });
               }
             } catch (geocodeError) {
-              // Silently ignore geocoding errors - coordinates are already updated
+              // Silently ignore geocoding errors
               console.log('Reverse geocoding failed, continuing with coordinates only');
             }
           } catch (error) {
@@ -295,7 +301,7 @@ export class LocationService {
           }
         };
 
-        // Execute as background task if available, otherwise run normally
+        // Execute as background task if available
         if (typeof globalThis !== 'undefined' && 
             typeof (globalThis as any).EdgeRuntime !== 'undefined' && 
             (globalThis as any).EdgeRuntime.waitUntil) {
@@ -311,20 +317,25 @@ export class LocationService {
     }
   }
 
-  // Circuit breaker logic
+  // Improved circuit breaker logic
   private shouldAttemptLocation(): boolean {
     const now = Date.now();
     
-    // If circuit breaker is open, check if enough time has passed to retry
     if (this.isCircuitBreakerOpen) {
       const timeSinceLastFailure = now - this.lastFailureTime;
-      if (timeSinceLastFailure > 300000) { // 5 minutes
-        console.log('Circuit breaker: Attempting to close circuit breaker');
+      // Progressive backoff: 1 minute, then 5 minutes, then 15 minutes
+      const backoffTime = this.failureCount > 5 ? 900000 : // 15 minutes for persistent failures
+                         this.failureCount > 3 ? 300000 : // 5 minutes for multiple failures  
+                         60000; // 1 minute for initial failures
+      
+      if (timeSinceLastFailure > backoffTime) {
+        console.log('Circuit breaker: Attempting to close circuit breaker after backoff');
         this.isCircuitBreakerOpen = false;
-        this.failureCount = 0;
-      } else {
-        return false;
+        // Don't reset failure count completely - keep some memory
+        this.failureCount = Math.max(0, this.failureCount - 1);
+        return true;
       }
+      return false;
     }
     
     return true;
@@ -338,32 +349,31 @@ export class LocationService {
       console.log(`Circuit breaker: Opening circuit breaker after ${this.failureCount} failures`);
       this.isCircuitBreakerOpen = true;
       
-      // Stop polling when circuit breaker opens
-      if (this.intervalRef) {
-        clearInterval(this.intervalRef);
-        this.intervalRef = null;
+      // Only show error toast once when circuit breaker first opens
+      if (this.failureCount === this.maxFailures) {
+        toast.error('Location services temporarily unavailable. Using stored location.');
       }
     }
   }
 
   private handleLocationSuccess() {
-    // Reset failure count on success
-    this.failureCount = 0;
-    this.isCircuitBreakerOpen = false;
+    // Only fully reset on success after circuit breaker was open
+    if (this.isCircuitBreakerOpen || this.failureCount > 0) {
+      console.log('Circuit breaker: Location success, resetting failure count');
+      this.failureCount = 0;
+      this.isCircuitBreakerOpen = false;
+    }
   }
 
   // Polling logic
   private async pollLocation(updateSettings?: (settings: Partial<LocationSettings>) => Promise<void>) {
-    if (!this.settings?.location_enabled) {
-      console.log('Location polling skipped - location disabled');
+    if (!this.settings?.location_enabled || !this.isServiceRunning) {
       return;
     }
     
     // Check circuit breaker
     if (!this.shouldAttemptLocation()) {
-      console.log('Location polling skipped - circuit breaker open');
-      
-      // Use stored location if available
+      // Use stored location as fallback when circuit breaker is open
       if (this.settings.location_latitude && this.settings.location_longitude) {
         const storedLocation: LocationData = {
           latitude: this.settings.location_latitude,
@@ -373,27 +383,22 @@ export class LocationService {
         };
         this.lastLocationRef = storedLocation;
         this.notifyListeners(storedLocation, 'active');
-      } else {
-        this.notifyListeners(this.lastLocationRef, 'inactive');
       }
       return;
     }
     
-    console.log('Starting location poll...');
     this.notifyListeners(this.lastLocationRef, 'loading');
     
     try {
       const locationData = await this.getCurrentLocation();
-      console.log('Location poll successful');
       this.handleLocationSuccess();
       await this.updateLocationData(locationData, updateSettings);
     } catch (error: any) {
       console.warn('Location polling failed:', error);
       this.handleLocationFailure();
       
-      // If we have stored location data, use it and don't show errors
+      // Use stored location as fallback
       if (this.settings.location_latitude && this.settings.location_longitude) {
-        console.log('Using stored location data as fallback');
         const storedLocation: LocationData = {
           latitude: this.settings.location_latitude,
           longitude: this.settings.location_longitude,
@@ -406,59 +411,66 @@ export class LocationService {
       }
       
       this.notifyListeners(this.lastLocationRef, 'error');
-      
-      // Show user-friendly error message only once when circuit breaker opens
-      if (this.failureCount === this.maxFailures) {
-        const userMessage = error.userMessage || 'Location services are unavailable. Using manual mode.';
-        toast.error(userMessage);
-      }
     }
   }
 
-  // Service lifecycle
+  // Service lifecycle with proper async handling
   async startLocationService(updateSettings?: (settings: Partial<LocationSettings>) => Promise<void>) {
-    if (!this.settings?.location_enabled) {
-      console.log('Location service start skipped - location disabled');
+    if (!this.settings?.location_enabled || this.serviceLock) {
+      console.log('Location service start skipped - disabled or locked');
       return;
     }
     
-    console.log('Starting location service...');
-
-    // Clear any existing interval to prevent cycling
-    this.stopLocationService();
-
+    this.serviceLock = true;
+    
     try {
+      console.log('Starting location service...');
+      
+      // Stop any existing service first
+      this.stopLocationService(false); // Don't release lock yet
+      
+      this.isServiceRunning = true;
+
       // Get initial location
       await this.pollLocation(updateSettings);
 
-      // Only set up polling if circuit breaker is not open and we have some location data
-      if (!this.isCircuitBreakerOpen && (this.lastLocationRef || (this.settings.location_latitude && this.settings.location_longitude))) {
-        // Set up polling interval using user preference (default 5 minutes)
+      // Set up polling interval if service is still running and not in circuit breaker
+      if (this.isServiceRunning && !this.isCircuitBreakerOpen) {
         const pollFrequency = (this.settings.location_polling_frequency || 5) * 60 * 1000;
         console.log(`Setting up location polling every ${pollFrequency / 1000} seconds`);
         
         this.intervalRef = setInterval(() => {
           this.pollLocation(updateSettings);
         }, pollFrequency);
-      } else {
-        console.log('Location polling disabled - circuit breaker open or no location data');
       }
 
-      console.log('Location tracking started');
+      console.log('Location service started successfully');
     } catch (error) {
       console.error('Failed to start location service:', error);
+    } finally {
+      this.serviceLock = false;
     }
   }
 
-  private restartLocationService() {
-    if (this.settings?.location_enabled) {
-      this.stopLocationService();
-      // Restart will be handled by the settings update
+  private async restartLocationService() {
+    if (!this.settings?.location_enabled) {
+      return;
     }
+    
+    console.log('Restarting location service...');
+    this.stopLocationService();
+    // Add small delay to prevent race conditions
+    setTimeout(() => {
+      if (this.settings?.location_enabled) {
+        this.startLocationService();
+      }
+    }, 100);
   }
 
-  stopLocationService() {
+  stopLocationService(releaseLock: boolean = true) {
     console.log('Stopping location service...');
+
+    this.isServiceRunning = false;
 
     if (this.intervalRef) {
       clearInterval(this.intervalRef);
@@ -470,8 +482,43 @@ export class LocationService {
       this.watchIdRef = null;
     }
 
-    this.notifyListeners(this.lastLocationRef, 'inactive');
-    console.log('Location tracking stopped');
+    if (releaseLock) {
+      this.serviceLock = false;
+    }
+
+    this.notifyListeners(this.lastLocationRef, this.settings?.location_enabled ? 'inactive' : 'inactive');
+    console.log('Location service stopped');
+  }
+
+  // Manual refresh with proper error handling
+  async refreshLocation(updateSettings?: (settings: Partial<LocationSettings>) => Promise<void>) {
+    if (!this.settings?.location_enabled) {
+      throw new Error('Location services are disabled');
+    }
+
+    try {
+      this.notifyListeners(this.lastLocationRef, 'loading');
+      const locationData = await this.getCurrentLocation();
+      this.handleLocationSuccess();
+      await this.updateLocationData(locationData, updateSettings);
+    } catch (error: any) {
+      this.handleLocationFailure();
+      
+      // Use stored location as fallback for manual refresh too
+      if (this.settings.location_latitude && this.settings.location_longitude) {
+        const storedLocation: LocationData = {
+          latitude: this.settings.location_latitude,
+          longitude: this.settings.location_longitude,
+          timestamp: Date.now(),
+          name: this.settings.location_name
+        };
+        this.lastLocationRef = storedLocation;
+        this.notifyListeners(storedLocation, 'active');
+        return;
+      }
+      
+      throw error;
+    }
   }
 
   // Status management
@@ -510,15 +557,12 @@ export class LocationService {
     return this.settings?.location_enabled || false;
   }
 
-  // Manual refresh
-  async refreshLocation(updateSettings?: (settings: Partial<LocationSettings>) => Promise<void>) {
-    await this.pollLocation(updateSettings);
-  }
-
   // Cleanup
   destroy() {
     this.stopLocationService();
     this.listeners.clear();
+    this.settings = null;
+    this.lastLocationRef = null;
   }
 }
 

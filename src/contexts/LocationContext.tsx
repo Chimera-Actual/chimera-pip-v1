@@ -53,25 +53,23 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       frequency: settings.location_polling_frequency
     });
 
-    locationService.updateSettings({
-      location_enabled: settings.location_enabled || false,
-      location_latitude: settings.location_latitude,
-      location_longitude: settings.location_longitude,
-      location_name: settings.location_name,
-      location_polling_frequency: settings.location_polling_frequency || 5,
-    });
+    // Use async function to handle the service update properly
+    const updateLocationService = async () => {
+      await locationService.updateSettings({
+        location_enabled: settings.location_enabled || false,
+        location_latitude: settings.location_latitude,
+        location_longitude: settings.location_longitude,
+        location_name: settings.location_name,
+        location_polling_frequency: settings.location_polling_frequency || 5,
+      });
+    };
 
-    // Only start the service if location is enabled
-    if (settings.location_enabled) {
-      locationService.startLocationService(updateSettings);
-    } else {
-      locationService.stopLocationService();
-    }
+    updateLocationService();
   }, [
     settings?.location_enabled, 
-    settings?.location_polling_frequency,
-    updateSettings
-  ]); // Removed latitude/longitude from dependencies to prevent cycling
+    settings?.location_polling_frequency
+    // Intentionally removed updateSettings, latitude/longitude from dependencies to prevent cycling
+  ]);
 
   // Cleanup on unmount
   useEffect(() => {

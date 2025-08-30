@@ -13,7 +13,7 @@ export interface UserSettings {
   location_latitude?: number;
   location_longitude?: number;
   location_name?: string;
-  location_polling_frequency?: number; // in minutes
+  location_polling_frequency: number; // in minutes - made required with default
   color_scheme?: 'green' | 'amber' | 'blue' | 'red' | 'cyan' | 'purple';
 }
 
@@ -55,6 +55,7 @@ export const useUserSettings = () => {
           color_scheme: (data.color_scheme as 'green' | 'amber' | 'blue' | 'red' | 'cyan' | 'purple') || 'green',
         });
       } else {
+        // Create default settings for new users
         setSettings({
           location_enabled: false,
           location_polling_frequency: 5,
@@ -63,8 +64,11 @@ export const useUserSettings = () => {
       }
     } catch (error) {
       console.error('Error loading settings:', error);
+      // Provide safe fallback settings
       setSettings({
         location_enabled: false,
+        location_polling_frequency: 5,
+        color_scheme: 'green',
       });
     } finally {
       setLoading(false);
