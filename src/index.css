@@ -10,34 +10,37 @@ All colors MUST be HSL - Monochrome Green Theme
 
 @layer base {
   :root {
-    /* Core CRT Green Palette */
-    --background: 120 100% 3%;        /* Very dark green-black */
-    --foreground: 120 100% 75%;       /* Bright terminal green */
+    /* Dynamic Theme Hue - Will be updated by theme context */
+    --theme-hue: 120; /* Default: green */
     
-    --card: 120 100% 4%;              /* Slightly lighter dark green */
-    --card-foreground: 120 100% 70%;  /* Card text green */
+    /* Core CRT Color Palette (using dynamic hue) */
+    --background: var(--theme-hue) 100% 3%;        /* Very dark themed-black */
+    --foreground: var(--theme-hue) 100% 75%;       /* Bright terminal color */
     
-    --popover: 120 100% 5%;
-    --popover-foreground: 120 100% 75%;
+    --card: var(--theme-hue) 100% 4%;              /* Slightly lighter dark color */
+    --card-foreground: var(--theme-hue) 100% 70%;  /* Card text color */
     
-    --primary: 120 100% 50%;          /* Electric terminal green */
-    --primary-foreground: 120 100% 3%;
+    --popover: var(--theme-hue) 100% 5%;
+    --popover-foreground: var(--theme-hue) 100% 75%;
     
-    --secondary: 120 50% 15%;         /* Darker green for secondary elements */
-    --secondary-foreground: 120 100% 65%;
+    --primary: var(--theme-hue) 100% 50%;          /* Electric terminal color */
+    --primary-foreground: var(--theme-hue) 100% 3%;
     
-    --muted: 120 30% 10%;             /* Muted dark green */
-    --muted-foreground: 120 50% 45%;  /* Muted text */
+    --secondary: var(--theme-hue) 50% 15%;         /* Darker color for secondary elements */
+    --secondary-foreground: var(--theme-hue) 100% 65%;
     
-    --accent: 120 100% 40%;           /* Accent bright green */
-    --accent-foreground: 120 100% 5%;
+    --muted: var(--theme-hue) 30% 10%;             /* Muted dark color */
+    --muted-foreground: var(--theme-hue) 50% 45%;  /* Muted text */
     
-    --destructive: 0 100% 45%;        /* Red for errors */
-    --destructive-foreground: 120 100% 95%;
+    --accent: var(--theme-hue) 100% 40%;           /* Accent bright color */
+    --accent-foreground: var(--theme-hue) 100% 5%;
     
-    --border: 120 50% 20%;            /* Border green */
-    --input: 120 50% 12%;             /* Input background */
-    --ring: 120 100% 50%;             /* Focus ring */
+    --destructive: 0 100% 45%;        /* Red for errors (always red) */
+    --destructive-foreground: var(--theme-hue) 100% 95%;
+    
+    --border: var(--theme-hue) 50% 20%;            /* Border color */
+    --input: var(--theme-hue) 50% 12%;             /* Input background */
+    --ring: var(--theme-hue) 100% 50%;             /* Focus ring */
     
     --radius: 0.25rem;                /* Sharp corners for retro feel */
     
@@ -46,24 +49,24 @@ All colors MUST be HSL - Monochrome Green Theme
     --flicker-intensity: 0.98;
     --glow-size: 2px;
     
-    /* Custom gradients */
+    /* Custom gradients (using dynamic hue) */
     --gradient-crt: linear-gradient(180deg, 
-      hsl(120 100% 5%), 
-      hsl(120 100% 3%), 
-      hsl(120 100% 5%));
+      hsl(var(--theme-hue) 100% 5%), 
+      hsl(var(--theme-hue) 100% 3%), 
+      hsl(var(--theme-hue) 100% 5%));
     --gradient-screen: radial-gradient(ellipse at center,
-      hsl(120 100% 4%) 0%,
-      hsl(120 100% 2%) 100%);
+      hsl(var(--theme-hue) 100% 4%) 0%,
+      hsl(var(--theme-hue) 100% 2%) 100%);
       
     /* Sidebar specific */
-    --sidebar-background: 120 100% 4%;
-    --sidebar-foreground: 120 100% 70%;
-    --sidebar-primary: 120 100% 50%;
-    --sidebar-primary-foreground: 120 100% 3%;
-    --sidebar-accent: 120 50% 15%;
-    --sidebar-accent-foreground: 120 100% 65%;
-    --sidebar-border: 120 50% 20%;
-    --sidebar-ring: 120 100% 50%;
+    --sidebar-background: var(--theme-hue) 100% 4%;
+    --sidebar-foreground: var(--theme-hue) 100% 70%;
+    --sidebar-primary: var(--theme-hue) 100% 50%;
+    --sidebar-primary-foreground: var(--theme-hue) 100% 3%;
+    --sidebar-accent: var(--theme-hue) 50% 15%;
+    --sidebar-accent-foreground: var(--theme-hue) 100% 65%;
+    --sidebar-border: var(--theme-hue) 50% 20%;
+    --sidebar-ring: var(--theme-hue) 100% 50%;
   }
 }
 
@@ -100,8 +103,8 @@ All colors MUST be HSL - Monochrome Green Theme
       0deg,
       transparent,
       transparent 2px,
-      rgba(120, 255, 120, var(--scanline-opacity)) 2px,
-      rgba(120, 255, 120, var(--scanline-opacity)) 4px
+      hsla(var(--theme-hue), 100%, 50%, var(--scanline-opacity)) 2px,
+      hsla(var(--theme-hue), 100%, 50%, var(--scanline-opacity)) 4px
     );
     pointer-events: none;
     z-index: 1000;
@@ -112,6 +115,48 @@ All colors MUST be HSL - Monochrome Green Theme
       0 0 var(--glow-size) hsl(var(--primary)),
       0 0 calc(var(--glow-size) * 2) hsl(var(--primary)),
       0 0 calc(var(--glow-size) * 3) hsl(var(--primary));
+  }
+
+  /* Icon Color Utilities */
+  .icon-primary {
+    color: hsl(var(--primary));
+  }
+
+  .icon-secondary {
+    color: hsl(var(--secondary-foreground));
+  }
+
+  .icon-accent {
+    color: hsl(var(--accent));
+  }
+
+  .icon-muted {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .icon-destructive {
+    color: hsl(var(--destructive));
+  }
+
+  /* Icon CRT Glow Effects */
+  .icon-glow {
+    filter: drop-shadow(0 0 var(--glow-size) currentColor) 
+            drop-shadow(0 0 calc(var(--glow-size) * 2) currentColor);
+  }
+
+  /* All icons get CRT styling by default */
+  svg {
+    transition: all 0.2s ease;
+  }
+
+  /* Hover effects for interactive icons */
+  button svg, [role="button"] svg, .cursor-pointer svg {
+    transition: all 0.2s ease;
+  }
+
+  button:hover svg, [role="button"]:hover svg, .cursor-pointer:hover svg {
+    filter: drop-shadow(0 0 calc(var(--glow-size) * 1.5) currentColor);
+    transform: scale(1.05);
   }
 
   .crt-flicker {
@@ -241,8 +286,8 @@ All colors MUST be HSL - Monochrome Green Theme
         0deg,
         transparent,
         transparent 3px,
-        rgba(120, 255, 120, calc(var(--scanline-opacity) * 0.7)) 3px,
-        rgba(120, 255, 120, calc(var(--scanline-opacity) * 0.7)) 6px
+        hsla(var(--theme-hue), 100%, 50%, calc(var(--scanline-opacity) * 0.7)) 3px,
+        hsla(var(--theme-hue), 100%, 50%, calc(var(--scanline-opacity) * 0.7)) 6px
       );
     }
   }

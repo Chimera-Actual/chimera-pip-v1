@@ -136,6 +136,7 @@ export type Database = {
       user_settings: {
         Row: {
           auto_save_enabled: boolean | null
+          color_scheme: string | null
           created_at: string
           crt_effects_enabled: boolean | null
           data_backup_enabled: boolean | null
@@ -152,6 +153,7 @@ export type Database = {
         }
         Insert: {
           auto_save_enabled?: boolean | null
+          color_scheme?: string | null
           created_at?: string
           crt_effects_enabled?: boolean | null
           data_backup_enabled?: boolean | null
@@ -168,6 +170,7 @@ export type Database = {
         }
         Update: {
           auto_save_enabled?: boolean | null
+          color_scheme?: string | null
           created_at?: string
           crt_effects_enabled?: boolean | null
           data_backup_enabled?: boolean | null

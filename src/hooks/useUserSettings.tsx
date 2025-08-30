@@ -13,6 +13,7 @@ export interface UserSettings {
   location_latitude?: number;
   location_longitude?: number;
   location_name?: string;
+  color_scheme?: 'green' | 'amber' | 'blue' | 'red' | 'cyan' | 'purple';
 }
 
 export const useUserSettings = () => {
@@ -49,10 +50,12 @@ export const useUserSettings = () => {
           location_latitude: data.location_latitude || undefined,
           location_longitude: data.location_longitude || undefined,
           location_name: data.location_name || undefined,
+          color_scheme: (data.color_scheme as 'green' | 'amber' | 'blue' | 'red' | 'cyan' | 'purple') || 'green',
         });
       } else {
         setSettings({
           location_enabled: false,
+          color_scheme: 'green',
         });
       }
     } catch (error) {
@@ -101,6 +104,7 @@ export const useUserSettings = () => {
           location_latitude: data.location_latitude || undefined,
           location_longitude: data.location_longitude || undefined,
           location_name: data.location_name || undefined,
+          color_scheme: (data.color_scheme as 'green' | 'amber' | 'blue' | 'red' | 'cyan' | 'purple') || 'green',
         });
       }
     } catch (error) {

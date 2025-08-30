@@ -9,6 +9,7 @@ import { MapPin, RefreshCw, Save, AlertCircle, Monitor, Volume2, Bell, Database,
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme, THEME_CONFIGS, type ColorScheme } from '@/hooks/useTheme';
 
 interface UserSettings {
   location_enabled: boolean;
@@ -16,6 +17,7 @@ interface UserSettings {
   location_longitude?: number;
   location_name?: string;
   theme_mode: 'auto' | 'dark' | 'light';
+  color_scheme: ColorScheme;
   crt_effects_enabled: boolean;
   sound_enabled: boolean;
   notifications_enabled: boolean;
@@ -27,6 +29,7 @@ export const SystemSettingsWidget: React.FC = () => {
   const [settings, setSettings] = useState<UserSettings>({
     location_enabled: false,
     theme_mode: 'auto',
+    color_scheme: 'green',
     crt_effects_enabled: true,
     sound_enabled: true,
     notifications_enabled: true,
@@ -38,6 +41,7 @@ export const SystemSettingsWidget: React.FC = () => {
   const [gettingLocation, setGettingLocation] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { colorScheme, setColorScheme, themeConfig } = useTheme();
 
   useEffect(() => {
     loadSettings();
@@ -65,6 +69,7 @@ export const SystemSettingsWidget: React.FC = () => {
           location_longitude: data.location_longitude || undefined,
           location_name: data.location_name || undefined,
           theme_mode: (data as any).theme_mode || 'auto',
+          color_scheme: (data.color_scheme as ColorScheme) || 'green',
           crt_effects_enabled: (data as any).crt_effects_enabled ?? true,
           sound_enabled: (data as any).sound_enabled ?? true,
           notifications_enabled: (data as any).notifications_enabled ?? true,
@@ -98,6 +103,7 @@ export const SystemSettingsWidget: React.FC = () => {
           location_longitude: settings.location_longitude,
           location_name: settings.location_name,
           theme_mode: settings.theme_mode,
+          color_scheme: settings.color_scheme,
           crt_effects_enabled: settings.crt_effects_enabled,
           sound_enabled: settings.sound_enabled,
           notifications_enabled: settings.notifications_enabled,
@@ -215,7 +221,7 @@ export const SystemSettingsWidget: React.FC = () => {
         <Card className="bg-card/50 border-border">
           <CardHeader>
             <CardTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
+              <MapPin className="w-5 h-5 icon-primary icon-glow" />
               LOCATION SERVICES
             </CardTitle>
           </CardHeader>
@@ -332,7 +338,7 @@ export const SystemSettingsWidget: React.FC = () => {
         <Card className="bg-card/50 border-border">
           <CardHeader>
             <CardTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
-              <Monitor className="w-5 h-5" />
+              <Monitor className="w-5 h-5 icon-primary icon-glow" />
               DISPLAY & INTERFACE
             </CardTitle>
           </CardHeader>
@@ -364,6 +370,50 @@ export const SystemSettingsWidget: React.FC = () => {
               </Select>
             </div>
 
+            {/* Color Scheme */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-mono text-foreground">
+                  Color Scheme
+                </Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Choose your preferred monochrome color theme
+                </p>
+              </div>
+              <Select
+                value={settings.color_scheme}
+                onValueChange={async (value: ColorScheme) => {
+                  setSettings(prev => ({ ...prev, color_scheme: value }));
+                  await setColorScheme(value);
+                }}
+              >
+                <SelectTrigger className="w-40 font-mono bg-background/50 border-border">
+                  <SelectValue>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded border border-border"
+                        style={{ backgroundColor: `hsl(${THEME_CONFIGS[settings.color_scheme].hue} 100% 50%)` }}
+                      />
+                      {THEME_CONFIGS[settings.color_scheme].displayName}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-background border-border">
+                  {Object.entries(THEME_CONFIGS).map(([key, config]) => (
+                    <SelectItem key={key} value={key} className="font-mono">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded border border-border"
+                          style={{ backgroundColor: `hsl(${config.hue} 100% 50%)` }}
+                        />
+                        {config.displayName}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* CRT Effects */}
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -388,7 +438,7 @@ export const SystemSettingsWidget: React.FC = () => {
         <Card className="bg-card/50 border-border">
           <CardHeader>
             <CardTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
-              <Volume2 className="w-5 h-5" />
+              <Volume2 className="w-5 h-5 icon-primary icon-glow" />
               AUDIO & NOTIFICATIONS
             </CardTitle>
           </CardHeader>
@@ -436,7 +486,7 @@ export const SystemSettingsWidget: React.FC = () => {
         <Card className="bg-card/50 border-border">
           <CardHeader>
             <CardTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2">
-              <Zap className="w-5 h-5" />
+              <Zap className="w-5 h-5 icon-primary icon-glow" />
               PERFORMANCE
             </CardTitle>
           </CardHeader>
