@@ -145,6 +145,7 @@ export type Database = {
           location_latitude: number | null
           location_longitude: number | null
           location_name: string | null
+          location_polling_frequency: number | null
           notifications_enabled: boolean | null
           sound_enabled: boolean | null
           theme_mode: string | null
@@ -162,6 +163,7 @@ export type Database = {
           location_latitude?: number | null
           location_longitude?: number | null
           location_name?: string | null
+          location_polling_frequency?: number | null
           notifications_enabled?: boolean | null
           sound_enabled?: boolean | null
           theme_mode?: string | null
@@ -179,6 +181,7 @@ export type Database = {
           location_latitude?: number | null
           location_longitude?: number | null
           location_name?: string | null
+          location_polling_frequency?: number | null
           notifications_enabled?: boolean | null
           sound_enabled?: boolean | null
           theme_mode?: string | null

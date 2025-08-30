@@ -3,15 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
-import { useUserSettings } from '@/hooks/useUserSettings';
-import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-
-interface LocationData {
-  latitude: number;
-  longitude: number;
-}
 
 interface SearchResult {
   lat: number;
@@ -20,15 +14,6 @@ interface SearchResult {
   formatted_name: string;
   type: string;
   importance: number;
-}
-
-interface PlaceOfInterest {
-  id: string;
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  category?: string;
 }
 
 type MapLayer = 'standard' | 'satellite' | 'terrain' | 'transport';
@@ -60,42 +45,18 @@ interface MapWidgetProps {
 }
 
 export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
-  const { user } = useAuth();
-  const { settings: userSettings, updateSettings } = useUserSettings();
+  const { location: contextLocation, autoFollow, setAutoFollow, getCurrentLocation, status } = useLocation();
   const { toast } = useToast();
-  const [location, setLocation] = useState<LocationData>({ latitude: 37.7749, longitude: -122.4194 });
-  const [userLocation, setUserLocation] = useState<LocationData | null>(null);
+  
+  // Display location can be different from the tracked location when user searches or manually selects
+  const [displayLocation, setDisplayLocation] = useState({ latitude: 37.7749, longitude: -122.4194 });
   const [loading, setLoading] = useState(false);
-  const [activeLayer, setActiveLayer] = useState<MapLayer>('standard');
-  const [autoFollow, setAutoFollow] = useState(true);
+  const [activeLayer, setActiveLayer] = useState<MapLayer>(settings?.defaultLayer || 'standard');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
-
-  // Reverse geocoding function using the edge function
-  const reverseGeocode = useCallback(async (lat: number, lon: number) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('geocoding', {
-        body: { type: 'reverse', lat, lon }
-      });
-
-      if (error) throw error;
-      
-      if (data.success && data.location_name) {
-        // Update user settings with the geocoded location name
-        if (userSettings && updateSettings) {
-          await updateSettings({ 
-            location_name: data.location_name 
-          });
-        }
-      }
-    } catch (error) {
-      console.log('Reverse geocoding failed (non-critical):', error);
-      // Silently fail for reverse geocoding as it's non-critical
-    }
-  }, [userSettings, updateSettings]);
 
   // Forward geocoding function for search
   const searchLocations = useCallback(async (query: string) => {
@@ -146,89 +107,54 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     };
   }, [searchQuery, searchLocations]);
 
-  // Update map location when user settings change (real-time location updates)
+  // Update display location when context location changes and auto-follow is enabled
   useEffect(() => {
-    if (userSettings?.location_enabled && 
-        userSettings.location_latitude && 
-        userSettings.location_longitude) {
-      
-      const newLocation = {
-        latitude: userSettings.location_latitude,
-        longitude: userSettings.location_longitude
-      };
-      
-      // Only update if location actually changed significantly (> ~10 meters)
-      const hasLocationChanged = !userLocation ||
-        Math.abs(userLocation.latitude - newLocation.latitude) > 0.0001 ||
-        Math.abs(userLocation.longitude - newLocation.longitude) > 0.0001;
-
-      if (hasLocationChanged) {
-        setUserLocation(newLocation);
-        
-        // Auto-follow: update map center if auto-follow is enabled
-        if (autoFollow) {
-          setLocation(newLocation);
-        }
-
-        // Reverse geocode the new location to get the name
-        reverseGeocode(newLocation.latitude, newLocation.longitude);
-      }
+    if (contextLocation && autoFollow) {
+      setDisplayLocation({
+        latitude: contextLocation.latitude,
+        longitude: contextLocation.longitude,
+      });
     }
-  }, [userSettings?.location_latitude, userSettings?.location_longitude, userSettings?.location_enabled, autoFollow, reverseGeocode]);
+  }, [contextLocation, autoFollow]);
 
-  // Initialize location on mount
+  // Initialize display location from context on mount
   useEffect(() => {
-    if (userSettings?.location_enabled && 
-        userSettings.location_latitude && 
-        userSettings.location_longitude) {
-      const savedLocation = {
-        latitude: userSettings.location_latitude,
-        longitude: userSettings.location_longitude
-      };
-      setLocation(savedLocation);
-      setUserLocation(savedLocation);
+    if (contextLocation) {
+      setDisplayLocation({
+        latitude: contextLocation.latitude,
+        longitude: contextLocation.longitude,
+      });
     }
-  }, [userSettings?.location_enabled]);
+  }, [contextLocation]);
 
-  const getCurrentLocation = () => {
+  const handleGetCurrentLocation = async () => {
     setLoading(true);
-    
-    if (!navigator.geolocation) {
+    try {
+      const currentLocation = await getCurrentLocation();
+      setDisplayLocation({
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      });
+      setAutoFollow(true); // Enable auto-follow when manually getting location
+    } catch (error) {
+      console.error('Failed to get current location:', error);
+      toast({
+        title: "Location Error",
+        description: "Could not get your current location. Please check permissions.",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-      return;
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const newLocation = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
-        setUserLocation(newLocation);
-        setLocation(newLocation);
-        setAutoFollow(true); // Re-enable auto-follow when manually getting location
-        setLoading(false);
-      },
-      () => {
-        setLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
   };
 
   const toggleAutoFollow = () => {
-    const newAutoFollow = !autoFollow;
-    setAutoFollow(newAutoFollow);
-    
-    // If enabling auto-follow and we have a user location, center on it
-    if (newAutoFollow && userLocation) {
-      setLocation(userLocation);
-    }
+    setAutoFollow(!autoFollow);
   };
 
   const handleSearchResultSelect = (result: SearchResult) => {
     const newLocation = { latitude: result.lat, longitude: result.lon };
-    setLocation(newLocation);
+    setDisplayLocation(newLocation);
     setAutoFollow(false); // Disable auto-follow when manually selecting location
     setShowSearchResults(false);
     setSearchQuery('');
@@ -239,7 +165,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     });
   };
 
-  const mapUrl = mapLayers[activeLayer].url(location.latitude, location.longitude);
+  const mapUrl = mapLayers[activeLayer].url(displayLocation.latitude, displayLocation.longitude);
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
@@ -272,7 +198,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
               </SelectContent>
             </Select>
             <Button 
-              onClick={getCurrentLocation} 
+              onClick={handleGetCurrentLocation} 
               disabled={loading}
               variant="ghost"
               size="sm"
@@ -319,7 +245,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
       {/* Main Map Area - Fill all remaining space */}
       <div className="flex-1 relative w-full overflow-hidden">
         <iframe
-          key={`${activeLayer}-${location.latitude}-${location.longitude}`}
+          key={`${activeLayer}-${displayLocation.latitude}-${displayLocation.longitude}`}
           src={mapUrl}
           className="absolute inset-0 w-full h-full border-0"
           style={{ 
@@ -336,18 +262,23 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
           <div className="absolute bottom-3 left-3">
             <div className="bg-background/95 border border-border rounded px-3 py-2 backdrop-blur-sm">
               <div className="text-xs font-mono text-primary space-y-1">
-                <div>LAT: {location.latitude.toFixed(6)}</div>
-                <div>LON: {location.longitude.toFixed(6)}</div>
-                {userSettings?.location_name && (
+                <div>LAT: {displayLocation.latitude.toFixed(6)}</div>
+                <div>LON: {displayLocation.longitude.toFixed(6)}</div>
+                {contextLocation?.name && (
                   <div className="text-xs text-muted-foreground">
-                    {userSettings.location_name}
+                    📍 {contextLocation.name}
+                  </div>
+                )}
+                {contextLocation && (
+                  <div className="text-xs text-muted-foreground border-t border-border/50 pt-1 mt-1">
+                    GPS: {contextLocation.latitude.toFixed(6)}, {contextLocation.longitude.toFixed(6)}
                   </div>
                 )}
               </div>
             </div>
           </div>
           
-          {userLocation && (
+          {contextLocation && (
             <div className="absolute bottom-3 right-3">
               <div className={`border rounded px-3 py-2 backdrop-blur-sm ${
                 autoFollow 
@@ -355,7 +286,10 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
                   : 'bg-background/95 border-border text-muted-foreground'
               }`}>
                 <div className="text-xs font-mono font-bold">
-                  {autoFollow ? 'AUTO-TRACKING ACTIVE' : 'USER POSITION LOCKED'}
+                  {autoFollow ? 'AUTO-TRACKING ACTIVE' : 'MANUAL MODE'}
+                </div>
+                <div className="text-xs font-mono">
+                  Status: {status.toUpperCase()}
                 </div>
               </div>
             </div>
