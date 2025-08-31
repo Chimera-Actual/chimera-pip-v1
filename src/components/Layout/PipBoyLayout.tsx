@@ -7,6 +7,7 @@ import { TabManager } from './TabManager';
 import { useTabManager, UserTab } from '@/hooks/useTabManager';
 import { useWidgetManager } from '@/hooks/useWidgetManager';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Settings } from 'lucide-react';
 
 export type AppletType = 'user-info' | 'user-profile' | 'clock' | 'map' | 'weather' | 'email' | 'calendar' | 'radio' | 'browser' | 'chat' | 'voice' | 'system-settings';
@@ -42,6 +43,7 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
   } = useTabManager();
   
   const { moveWidgetToTab } = useWidgetManager();
+  const isMobile = useIsMobile();
   
   const [activeTab, setActiveTab] = useState<string>('');
   const [showTabManager, setShowTabManager] = useState(false);
@@ -140,14 +142,14 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
     <div className="w-full h-screen bg-background crt-screen overflow-hidden">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
         {/* Header */}
-        <div className="flex-shrink-0 h-16 bg-card border-b border-border px-6 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-mono font-bold text-primary crt-glow uppercase tracking-wider">
-              CHIMERA-PIP 3000
+        <div className={`flex-shrink-0 ${isMobile ? 'h-12' : 'h-16'} bg-card border-b border-border ${isMobile ? 'px-4' : 'px-6'} flex items-center justify-between`}>
+          <div className="flex items-center space-x-2">
+            <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-mono font-bold text-primary crt-glow uppercase tracking-wider`}>
+              {isMobile ? 'CHIMERA' : 'CHIMERA-PIP 3000'}
             </h1>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <UserAvatar />
           </div>
         </div>
@@ -155,23 +157,25 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
         {/* Tab Navigation */}
         <div className="flex-shrink-0 border-b border-border bg-card/50">
           <div className="flex items-center">
-            <TabsList className="flex-1 h-14 bg-transparent rounded-none border-none p-0">
+            <TabsList className={`flex-1 ${isMobile ? 'h-12' : 'h-14'} bg-transparent rounded-none border-none p-0 ${isMobile ? 'overflow-x-auto scrollbar-hide' : ''}`}>
               {userTabs.map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  onDragOver={(e) => handleTabDragOver(e, tab.id)}
-                  onDragLeave={handleTabDragLeave}
-                  onDrop={(e) => handleTabDrop(e, tab.id)}
-                  className={`flex-1 h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider hover:bg-muted/50 transition-all duration-200 ${tab.font_size || 'text-sm'} ${
+                  onDragOver={!isMobile ? (e) => handleTabDragOver(e, tab.id) : undefined}
+                  onDragLeave={!isMobile ? handleTabDragLeave : undefined}
+                  onDrop={!isMobile ? (e) => handleTabDrop(e, tab.id) : undefined}
+                  className={`${isMobile ? 'flex-shrink-0 min-w-24 px-3' : 'flex-1'} h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider hover:bg-muted/50 transition-all duration-200 ${isMobile ? 'text-xs' : tab.font_size || 'text-sm'} ${
                     dragOverTab === tab.id && dragOverTab !== activeTab
                       ? 'bg-primary/10 border-b-2 border-primary/50 shadow-inner'
                       : ''
-                  }`}
+                  } touch-target`}
                 >
-                  <span className="mr-2 text-lg">{tab.icon}</span>
-                  {tab.name}
-                  {dragOverTab === tab.id && dragOverTab !== activeTab && (
+                  <span className={`${isMobile ? 'mr-1' : 'mr-2'} ${isMobile ? 'text-sm' : 'text-lg'}`}>{tab.icon}</span>
+                  <span className={`${isMobile ? 'truncate max-w-16' : ''}`}>
+                    {isMobile && tab.name.length > 8 ? tab.name.substring(0, 8) : tab.name}
+                  </span>
+                  {dragOverTab === tab.id && dragOverTab !== activeTab && !isMobile && (
                     <span className="ml-2 text-xs opacity-70">DROP HERE</span>
                   )}
                 </TabsTrigger>
@@ -179,15 +183,15 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
             </TabsList>
             
             {/* Manage Tabs Button */}
-            <div className="px-4">
+            <div className={`${isMobile ? 'px-2' : 'px-4'}`}>
               <Button
                 onClick={() => setShowTabManager(true)}
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 opacity-70 hover:opacity-100 hover:bg-primary/10"
+                className={`${isMobile ? 'h-7 w-7' : 'h-8 w-8'} p-0 opacity-70 hover:opacity-100 hover:bg-primary/10 touch-target`}
                 title="Manage Tabs"
               >
-                <Settings className="w-4 h-4" />
+                <Settings className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
               </Button>
             </div>
           </div>

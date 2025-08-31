@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,6 +16,7 @@ import {
 export const UserAvatar: React.FC = () => {
   const { user, signOut } = useAuth();
   const { profile } = useUserProfile();
+  const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = useState(false);
 
   // Create 8-bit style pixelated avatar
@@ -44,7 +46,7 @@ export const UserAvatar: React.FC = () => {
         <Button
           variant="ghost"
           size="icon"
-          className="relative w-12 h-12 p-1 hover:bg-primary/10 transition-colors"
+          className={`relative ${isMobile ? 'w-8 h-8' : 'w-12 h-12'} p-1 hover:bg-primary/10 transition-colors touch-target`}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >

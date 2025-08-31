@@ -367,4 +367,14 @@ All colors MUST be HSL - Monochrome Green Theme
   .will-change-transform { will-change: transform; }
   .will-change-opacity { will-change: opacity; }
   .will-change-auto { will-change: auto; }
+
+  /* Mobile scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
 }
