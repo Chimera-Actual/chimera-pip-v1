@@ -49,7 +49,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
 
   // Update location service when settings change
   useEffect(() => {
-    if (!settings) return;
+    if (!settings || !isInitialized) return;
 
     console.log('Settings changed, updating location service:', {
       enabled: settings.location_enabled,
@@ -71,8 +71,10 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     updateLocationService();
   }, [
     settings?.location_enabled, 
-    settings?.location_polling_frequency
-    // Intentionally removed updateSettings, latitude/longitude from dependencies to prevent cycling
+    settings?.location_polling_frequency,
+    settings?.location_latitude,
+    settings?.location_longitude,
+    isInitialized
   ]);
 
   // Cleanup on unmount

@@ -82,15 +82,17 @@ export class LocationService {
       newFrequency: newSettings.location_polling_frequency
     });
 
-    // Initialize location from settings if available
+    // Always initialize location from settings if available - this ensures widgets have data immediately
     if (newSettings.location_latitude && newSettings.location_longitude) {
       const locationData: LocationData = {
         latitude: newSettings.location_latitude,
         longitude: newSettings.location_longitude,
         timestamp: Date.now(),
         name: newSettings.location_name || undefined,
+        accuracy: 1000, // Mark as stored location
       };
       this.lastLocationRef = locationData;
+      console.log('Providing stored location to widgets immediately:', locationData);
       this.notifyListeners(locationData, newSettings.location_enabled ? 'active' : 'inactive');
     }
 
@@ -154,8 +156,8 @@ export class LocationService {
         },
         {
           enableHighAccuracy: false,
-          timeout: 15000,
-          maximumAge: 60000,
+          timeout: 30000, // 30 second timeout for better GPS acquisition
+          maximumAge: 300000, // Accept 5-minute old position
         }
       );
     });
@@ -431,7 +433,21 @@ export class LocationService {
       
       this.isServiceRunning = true;
 
-      // Get initial location
+      // Emit stored location immediately if available before trying to get current location
+      if (this.settings.location_latitude && this.settings.location_longitude) {
+        const storedLocation: LocationData = {
+          latitude: this.settings.location_latitude,
+          longitude: this.settings.location_longitude,
+          timestamp: Date.now(),
+          name: this.settings.location_name,
+          accuracy: 1000 // Mark as stored location
+        };
+        this.lastLocationRef = storedLocation;
+        this.notifyListeners(storedLocation, 'active');
+        console.log('Emitted stored location to widgets on service start');
+      }
+      
+      // Get initial location (this will try to get fresh GPS data)
       await this.pollLocation(updateSettings);
 
       // Set up polling interval if service is still running and not in circuit breaker
