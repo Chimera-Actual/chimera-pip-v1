@@ -283,10 +283,80 @@ All colors MUST be HSL - Monochrome Green Theme
   .touch-target {
     min-height: 44px;
     min-width: 44px;
+    position: relative;
   }
 
   .mobile-nav {
     @apply touch-target;
+  }
+
+  /* Mobile widget optimizations */
+  .mobile-widget {
+    /* Ensure widgets are touch-friendly on mobile */
+    @apply p-1;
+  }
+
+  .mobile-widget > * {
+    /* Ensure all widget content respects mobile layout */
+    height: 100%;
+    width: 100%;
+  }
+
+  /* Mobile-specific responsive classes */
+  @media (max-width: 768px) {
+    .mobile-widget .grid {
+      @apply grid-cols-1 gap-2;
+    }
+    
+    .mobile-widget .grid-cols-2 {
+      @apply grid-cols-1;
+    }
+    
+    .mobile-widget .grid-cols-3 {
+      @apply grid-cols-1;
+    }
+    
+    .mobile-widget .grid-cols-4 {
+      @apply grid-cols-2;
+    }
+    
+    /* Increase touch targets */
+    .mobile-widget button,
+    .mobile-widget [role="button"] {
+      @apply min-h-11 px-4 py-2;
+    }
+    
+    /* Optimize text sizes for mobile */
+    .mobile-widget .text-xs {
+      @apply text-sm;
+    }
+    
+    .mobile-widget .text-sm {
+      @apply text-base;
+    }
+    
+    /* Add proper spacing for cards */
+    .mobile-widget .space-y-4 > * + * {
+      @apply mt-3;
+    }
+    
+    .mobile-widget .space-y-6 > * + * {
+      @apply mt-4;
+    }
+
+    /* Mobile-specific widget padding */
+    .mobile-widget .p-4 {
+      @apply p-3;
+    }
+    
+    .mobile-widget .p-6 {
+      @apply p-4;
+    }
+
+    /* Ensure mobile cards have proper spacing */
+    .mobile-widget .card-content {
+      @apply p-4;
+    }
   }
 
   /* Improve touch responsiveness */

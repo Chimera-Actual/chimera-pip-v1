@@ -281,7 +281,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
     const widgetSettings = getWidgetSettings(activeWidget.id);
     const widgetName = activeWidget.custom_name || activeWidget.widget_definition.name;
     return (
-      <div className="widget-container w-full h-full">
+      <div className={`widget-container w-full h-full ${isMobile ? 'mobile-widget' : ''}`}>
         <WidgetComponent 
           settings={widgetSettings} 
           widgetName={widgetName}
@@ -410,14 +410,14 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
       onDrop={!isMobile ? handleDrop : undefined}
     >
       {isMobile ? (
-        // Mobile: Sheet-based drawer
+        // Mobile: Sheet-based drawer with optimized widget display
         <>
           <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute top-4 left-4 z-50 bg-background/80 hover:bg-background border border-border touch-target"
+                className="absolute top-2 left-2 z-50 bg-background/90 hover:bg-background border border-border touch-target backdrop-blur-sm"
                 title="Show widgets"
               >
                 <Menu className="h-4 w-4" />
@@ -430,9 +430,13 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
             </SheetContent>
           </Sheet>
           
-          {/* Main Content - Full Width on Mobile */}
-          <div className="w-full pt-16 flex flex-col overflow-hidden">
-            {renderActiveWidget}
+          {/* Main Content - Optimized for Mobile */}
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <div className="flex-1 pt-12 px-1 pb-1 min-h-0">
+              <div className="w-full h-full rounded-lg overflow-hidden bg-background/50 backdrop-blur-sm border border-border/50">
+                {renderActiveWidget}
+              </div>
+            </div>
           </div>
         </>
       ) : (
