@@ -38,7 +38,7 @@ export const LocationStatusBar: React.FC<LocationStatusBarProps> = ({
 
   return (
     <div className={cn(
-      "bg-background/95 border border-border rounded px-3 py-2 backdrop-blur-sm",
+      "bg-background/95 rounded px-3 py-2 backdrop-blur-sm",
       compact ? "text-xs" : "text-xs",
       className
     )}>
