@@ -61,9 +61,9 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
             settings={currentSettings}
             onSettingsChange={(settings) => {
               onSettingsUpdate(widget.id, settings);
-              // Also update the widget name if assistantName changed
-              if (settings.assistantName && onWidgetNameUpdate) {
-                onWidgetNameUpdate(widget.id, settings.assistantName);
+              // Also update the widget name if agentName changed
+              if (settings.agentName && onWidgetNameUpdate) {
+                onWidgetNameUpdate(widget.id, settings.agentName);
               }
             }}
             onClose={onClose}

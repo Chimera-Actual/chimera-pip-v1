@@ -77,8 +77,8 @@ export const AssistantChat: React.FC = () => {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('assistant_webhooks')
-        .select('assistant_id, webhook_url')
+        .from('agent_webhooks')
+        .select('agent_id, webhook_url')
         .eq('user_id', user.id);
 
       if (error) {
@@ -88,7 +88,7 @@ export const AssistantChat: React.FC = () => {
 
       // Update assistants with saved webhook URLs
       const updatedAssistants = defaultAssistants.map(assistant => {
-        const savedConfig = data.find(config => config.assistant_id === assistant.id);
+        const savedConfig = data.find(config => config.agent_id === assistant.id);
         return {
           ...assistant,
           webhookUrl: savedConfig?.webhook_url || ''
@@ -308,10 +308,10 @@ export const AssistantChat: React.FC = () => {
     // Save to database
     try {
       const { error } = await supabase
-        .from('assistant_webhooks')
+        .from('agent_webhooks')
         .upsert({
           user_id: user.id,
-          assistant_id: assistantId,
+          agent_id: assistantId,
           webhook_url: webhookUrl
         });
 

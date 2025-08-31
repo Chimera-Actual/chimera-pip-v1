@@ -20,7 +20,7 @@ export const CustomAssistantSettings: React.FC<CustomAssistantSettingsProps> = (
   onClose
 }) => {
   const { toast } = useToast();
-  const [assistantName, setAssistantName] = useState(settings.assistantName || 'CUSTOM AI');
+  const [agentName, setAgentName] = useState(settings.agentName || 'CUSTOM AI');
   const [webhookUrl, setWebhookUrl] = useState(settings.webhookUrl || '');
   const [apiKey, setApiKey] = useState(settings.apiKey || '');
   const [maxTokens, setMaxTokens] = useState(settings.maxTokens || 150);
@@ -74,7 +74,7 @@ export const CustomAssistantSettings: React.FC<CustomAssistantSettingsProps> = (
 
   const handleSave = () => {
     const newSettings = {
-      assistantName,
+      agentName,
       webhookUrl,
       apiKey,
       maxTokens,
@@ -98,13 +98,16 @@ export const CustomAssistantSettings: React.FC<CustomAssistantSettingsProps> = (
         <Label className="text-sm font-mono text-primary">BASIC CONFIGURATION</Label>
         
         <div className="space-y-2">
-          <Label className="text-xs font-mono text-foreground">ASSISTANT NAME</Label>
+          <Label className="text-xs font-mono text-foreground">AGENT NAME</Label>
           <Input
-            value={assistantName}
-            onChange={(e) => setAssistantName(e.target.value)}
+            value={agentName}
+            onChange={(e) => setAgentName(e.target.value)}
             placeholder="CUSTOM AI"
             className="font-mono bg-background/50 border-border"
           />
+          <p className="text-xs text-muted-foreground font-mono">
+            This name will be used for both the widget and agent identity
+          </p>
         </div>
       </div>
 

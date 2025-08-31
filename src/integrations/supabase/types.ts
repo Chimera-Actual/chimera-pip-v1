@@ -14,9 +14,9 @@ export type Database = {
   }
   public: {
     Tables: {
-      assistant_webhooks: {
+      agent_webhooks: {
         Row: {
-          assistant_id: string
+          agent_id: string
           created_at: string
           id: string
           updated_at: string
@@ -24,7 +24,7 @@ export type Database = {
           webhook_url: string
         }
         Insert: {
-          assistant_id: string
+          agent_id: string
           created_at?: string
           id?: string
           updated_at?: string
@@ -32,7 +32,7 @@ export type Database = {
           webhook_url: string
         }
         Update: {
-          assistant_id?: string
+          agent_id?: string
           created_at?: string
           id?: string
           updated_at?: string

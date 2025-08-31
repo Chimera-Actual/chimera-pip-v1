@@ -145,7 +145,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
       setConfig(prev => ({
         ...prev,
         webhookUrl: settings.webhookUrl,
-        name: settings.assistantName || prev.name,
+        name: settings.agentName || prev.name,
         systemPrompt: settings.customPrompt || prev.systemPrompt
       }));
     }
@@ -164,7 +164,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
       setConfig(prev => ({
         ...prev,
         webhookUrl: settings.webhookUrl,
-        name: settings.assistantName || prev.name,
+        name: settings.agentName || prev.name,
         systemPrompt: settings.customPrompt || prev.systemPrompt
       }));
       return;
@@ -173,10 +173,10 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
     // Fallback to database configuration
     try {
       const { data, error } = await supabase
-        .from('assistant_webhooks')
+        .from('agent_webhooks')
         .select('*')
         .eq('user_id', user.id)
-        .eq('assistant_id', 'custom')
+        .eq('agent_id', 'custom')
         .single();
 
       if (data) {
@@ -202,10 +202,10 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
 
     try {
       const { error } = await supabase
-        .from('assistant_webhooks')
+        .from('agent_webhooks')
         .upsert({
           user_id: user.id,
-          assistant_id: 'custom',
+          agent_id: 'custom',
           webhook_url: config.webhookUrl.trim()
         });
 
@@ -266,7 +266,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
         max_tokens: settings?.maxTokens || 150,
         temperature: settings?.temperature || 0.7,
         enable_history: settings?.enableHistory ?? true,
-        assistant_name: settings?.assistantName || config.name
+        agent_name: settings?.agentName || config.name
       };
 
       // Add API key to headers if provided
