@@ -305,57 +305,64 @@ All colors MUST be HSL - Monochrome Green Theme
   /* Mobile-specific responsive classes */
   @media (max-width: 768px) {
     .mobile-widget .grid {
-      @apply grid-cols-1 gap-2;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+      gap: 0.5rem;
     }
     
     .mobile-widget .grid-cols-2 {
-      @apply grid-cols-1;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
     }
     
     .mobile-widget .grid-cols-3 {
-      @apply grid-cols-1;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
     }
     
     .mobile-widget .grid-cols-4 {
-      @apply grid-cols-2;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     
     /* Increase touch targets */
     .mobile-widget button,
     .mobile-widget [role="button"] {
-      @apply min-h-11 px-4 py-2;
+      min-height: 2.75rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
     }
     
     /* Optimize text sizes for mobile */
     .mobile-widget .text-xs {
-      @apply text-sm;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
     }
     
     .mobile-widget .text-sm {
-      @apply text-base;
+      font-size: 1rem;
+      line-height: 1.5rem;
     }
     
     /* Add proper spacing for cards */
     .mobile-widget .space-y-4 > * + * {
-      @apply mt-3;
+      margin-top: 0.75rem;
     }
     
     .mobile-widget .space-y-6 > * + * {
-      @apply mt-4;
+      margin-top: 1rem;
     }
 
     /* Mobile-specific widget padding */
     .mobile-widget .p-4 {
-      @apply p-3;
+      padding: 0.75rem;
     }
     
     .mobile-widget .p-6 {
-      @apply p-4;
+      padding: 1rem;
     }
 
     /* Ensure mobile cards have proper spacing */
     .mobile-widget .card-content {
-      @apply p-4;
+      padding: 1rem;
     }
   }
 
