@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { AppletType } from './PipBoyLayout';
 import { Settings, X, Plus, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
 import { WidgetLibrary } from './WidgetLibrary';
@@ -21,6 +29,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   tabId,
   onAppletChange,
 }) => {
+  const isMobile = useIsMobile();
   const {
     getActiveWidgetsForTab,
     getAvailableWidgetsForTab,
@@ -121,6 +130,12 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   };
 
   const handleDragStart = (e: React.DragEvent, widget: UserWidgetInstance) => {
+    // Disable drag on mobile
+    if (isMobile) {
+      e.preventDefault();
+      return;
+    }
+    
     // Add a semi-transparent drag image
     const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
     dragImage.style.opacity = '0.7';
@@ -289,114 +304,164 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   }
 
 
+  // Render sidebar content function to avoid duplication
+  const renderSidebarContent = () => (
+    <>
+      {/* Header */}
+      <div className="flex-shrink-0 p-4 border-b border-border bg-background/50">
+        <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-mono text-primary uppercase tracking-wider crt-glow`}>
+          {tabName} Widgets
+        </h2>
+      </div>
+
+      {/* Widget List */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-1 p-2">
+          {widgets.map((widget, index) => (
+            <div
+              key={widget.id}
+              draggable={!isMobile}
+              onDragStart={!isMobile ? (e) => handleDragStart(e, widget) : undefined}
+              onDragOver={!isMobile ? (e) => handleWidgetDragOver(e, index) : undefined}
+              onDrop={!isMobile ? (e) => handleWidgetDrop(e, index) : undefined}
+              onDragLeave={!isMobile ? () => setDragOverIndex(null) : undefined}
+              className={`rounded transition-all duration-200 hover:shadow-md relative touch-target ${
+                !isMobile ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
+              } ${
+                activeApplet === widget.id
+                  ? 'bg-primary/20 border border-primary/50'
+                  : 'border border-transparent hover:bg-muted/50 hover:border-primary/20'
+              } ${
+                !isMobile && dragOverIndex === index ? 'border-t-2 border-t-primary' : ''
+              }`}
+              title={isMobile ? "Tap to select widget" : "Drag to reorder or move to another tab"}
+            >
+              <div
+                className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-3'} cursor-pointer`}
+                onClick={() => {
+                  onAppletChange(widget.id);
+                  if (isMobile) {
+                    setShowSidebar(false); // Auto-close sidebar on mobile after selection
+                  }
+                }}
+              >
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  <span className={`${isMobile ? 'text-xl' : 'text-lg'}`}>{widget.widget_definition?.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className={`${isMobile ? 'text-sm' : 'text-responsive-sm'} font-mono font-medium text-foreground truncate`}>
+                      {widget.custom_name || widget.widget_definition?.name}
+                    </div>
+                    <div className={`${isMobile ? 'text-xs' : 'text-responsive-xs'} text-muted-foreground font-mono truncate`}>
+                      {widget.widget_definition?.description}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenWidgetSettings(widget);
+                    }}
+                    className={`opacity-70 hover:opacity-100 ${isMobile ? 'p-2 h-8 w-8 touch-target' : 'p-1 h-6 w-6'}`}
+                  >
+                    <Settings className={`${isMobile ? 'h-4 w-4' : 'h-3 w-3'}`} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveWidget(widget.id, widget.widget_id);
+                    }}
+                    className={`opacity-70 hover:opacity-100 hover:text-destructive ${isMobile ? 'p-2 h-8 w-8 touch-target' : 'p-1 h-6 w-6'}`}
+                  >
+                    <X className={`${isMobile ? 'h-4 w-4' : 'h-3 w-3'}`} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {/* Add Widget Button */}
+          <Button
+            onClick={() => {
+              setShowWidgetLibrary(true);
+              if (isMobile) {
+                setShowSidebar(false); // Auto-close sidebar on mobile
+              }
+            }}
+            variant="outline"
+            className={`w-full mt-4 font-mono border-dashed hover:border-primary/50 hover:bg-primary/10 touch-target ${isMobile ? 'text-sm py-3' : 'text-sm'}`}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            ADD WIDGET
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div 
       className="flex h-full overflow-hidden relative"
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      onDragOver={!isMobile ? handleDragOver : undefined}
+      onDrop={!isMobile ? handleDrop : undefined}
     >
-      {/* Toggle Button - Always Available */}
-      <Button
-        onClick={() => setShowSidebar(!showSidebar)}
-        variant="ghost"
-        size="sm"
-        className={`${showSidebar ? 'absolute top-4 left-56 z-50' : 'absolute top-4 left-4 z-50'} bg-background/80 hover:bg-background border border-border`}
-        title={showSidebar ? "Hide sidebar" : "Show sidebar"}
-      >
-        <Menu className="h-4 w-4" />
-      </Button>
-
-      {/* Sidebar */}
-      {showSidebar && (
-        <div className="w-72 bg-card border-r border-border flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
-        {/* Header */}
-        <div className="flex-shrink-0 p-4 border-b border-border bg-background/50">
-          <h2 className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
-            {tabName} Widgets
-          </h2>
-        </div>
-
-        {/* Widget List */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-1 p-2">
-            {widgets.map((widget, index) => (
-              <div
-                key={widget.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, widget)}
-                onDragOver={(e) => handleWidgetDragOver(e, index)}
-                onDrop={(e) => handleWidgetDrop(e, index)}
-                onDragLeave={() => setDragOverIndex(null)}
-                className={`rounded transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md relative ${
-                  activeApplet === widget.id
-                    ? 'bg-primary/20 border border-primary/50'
-                    : 'border border-transparent hover:bg-muted/50 hover:border-primary/20'
-                } ${
-                  dragOverIndex === index ? 'border-t-2 border-t-primary' : ''
-                }`}
-                title="Drag to reorder or move to another tab"
+      {isMobile ? (
+        // Mobile: Sheet-based drawer
+        <>
+          <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-4 left-4 z-50 bg-background/80 hover:bg-background border border-border touch-target"
+                title="Show widgets"
               >
-                <div
-                  className="flex items-center justify-between p-3 cursor-pointer"
-                  onClick={() => onAppletChange(widget.id)}
-                >
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <span className="text-lg">{widget.widget_definition?.icon}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-responsive-sm font-mono font-medium text-foreground truncate">
-                        {widget.custom_name || widget.widget_definition?.name}
-                      </div>
-                      <div className="text-responsive-xs text-muted-foreground font-mono truncate">
-                        {widget.widget_definition?.description}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenWidgetSettings(widget);
-                      }}
-                      className="opacity-70 hover:opacity-100 p-1 h-6 w-6"
-                    >
-                      <Settings className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveWidget(widget.id, widget.widget_id);
-                      }}
-                      className="opacity-70 hover:opacity-100 p-1 h-6 w-6 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-full sm:w-80 bg-card border-border p-0">
+              <div className="flex flex-col h-full">
+                {renderSidebarContent()}
               </div>
-            ))}
-            
-            {/* Add Widget Button */}
-            <Button
-              onClick={() => setShowWidgetLibrary(true)}
-              variant="outline"
-              className="w-full mt-4 font-mono text-sm border-dashed hover:border-primary/50 hover:bg-primary/10"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              ADD WIDGET
-            </Button>
+            </SheetContent>
+          </Sheet>
+          
+          {/* Main Content - Full Width on Mobile */}
+          <div className="w-full pt-16 flex flex-col overflow-hidden">
+            {renderActiveWidget}
           </div>
-        </div>
-        </div>
-      )}
+        </>
+      ) : (
+        // Desktop: Original sidebar behavior
+        <>
+          {/* Toggle Button - Always Available */}
+          <Button
+            onClick={() => setShowSidebar(!showSidebar)}
+            variant="ghost"
+            size="sm"
+            className={`${showSidebar ? 'absolute top-4 left-56 z-50' : 'absolute top-4 left-4 z-50'} bg-background/80 hover:bg-background border border-border`}
+            title={showSidebar ? "Hide sidebar" : "Show sidebar"}
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
 
-      {/* Main Content */}
-      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full pt-16'}`}>
-        {renderActiveWidget}
-      </div>
+          {/* Sidebar */}
+          {showSidebar && (
+            <div className="w-72 bg-card border-r border-border flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
+              {renderSidebarContent()}
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full pt-16'}`}>
+            {renderActiveWidget}
+          </div>
+        </>
+      )}
 
       {/* Widget Library Dialog */}
       <WidgetLibrary
