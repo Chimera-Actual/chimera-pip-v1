@@ -200,37 +200,6 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
           </div>
         </div>
         
-        {/* Search Bar */}
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder="Search locations... (city, address, coordinates)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-8 text-xs font-mono bg-background/50 border-border placeholder:text-muted-foreground"
-          />
-          {searchLoading && (
-            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-              <div className="w-3 h-3 border border-primary/50 border-t-primary rounded-full animate-spin"></div>
-            </div>
-          )}
-          
-          {/* Search Results Dropdown */}
-          {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
-              {searchResults.map((result, index) => (
-                <button
-                  key={`${result.lat}-${result.lon}-${index}`}
-                  onClick={() => handleSearchResultSelect(result)}
-                  className="w-full text-left px-3 py-2 text-xs font-mono hover:bg-primary/10 border-b border-border/50 last:border-b-0"
-                >
-                  <div className="font-semibold text-primary">{result.formatted_name}</div>
-                  <div className="text-muted-foreground truncate">{result.display_name}</div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
       
       {/* Main Map Area - Fill all remaining space */}
