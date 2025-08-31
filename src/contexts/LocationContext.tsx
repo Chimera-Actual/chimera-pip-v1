@@ -7,6 +7,7 @@ interface LocationContextType {
   status: LocationStatus;
   isLocationEnabled: boolean;
   autoFollow: boolean;
+  lastUpdate: number | null;
   setAutoFollow: (enabled: boolean) => void;
   getCurrentLocation: () => Promise<LocationData>;
   refreshLocation: () => Promise<void>;
@@ -32,6 +33,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const [location, setLocation] = useState<LocationData | null>(null);
   const [status, setStatus] = useState<LocationStatus>('inactive');
   const [autoFollow, setAutoFollow] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<number | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Subscribe to location service updates
@@ -39,6 +41,9 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     const unsubscribe = locationService.subscribe((newLocation, newStatus) => {
       setLocation(newLocation);
       setStatus(newStatus);
+      if (newLocation) {
+        setLastUpdate(newLocation.timestamp);
+      }
     });
 
     // Mark as initialized after setting up subscription
@@ -101,6 +106,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     status,
     isLocationEnabled: settings?.location_enabled || false,
     autoFollow,
+    lastUpdate,
     setAutoFollow,
     getCurrentLocation,
     refreshLocation,

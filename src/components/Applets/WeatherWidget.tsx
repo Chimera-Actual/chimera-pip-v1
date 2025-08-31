@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
+import { LocationStatusBar } from '@/components/ui/location-status-bar';
 import { useLocation } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -119,7 +119,7 @@ interface WeatherWidgetProps {
 }
 
 export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
-  const { location } = useLocation();
+  const { location, status, lastUpdate, refreshLocation } = useLocation();
   const temperatureUnit = settings?.temperatureUnit || 'celsius';
   const showLocation = settings?.showLocation !== false;
   const showForecast = settings?.showForecast !== false;
@@ -162,6 +162,9 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
     setError(null);
     
     try {
+      // Refresh location first, then weather
+      await refreshLocation();
+      
       const locationData = location ? {
         latitude: location.latitude,
         longitude: location.longitude,
@@ -190,12 +193,24 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Header Controls */}
-      <div className="flex-shrink-0 h-16 bg-card border-b border-border px-4 flex items-center justify-between">
+      <div className="flex-shrink-0 h-16 bg-card border-b border-border px-4 flex items-center justify-between relative">
         <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
           ☰ WEATHER MONITORING
         </span>
-        <div className="flex items-center gap-4">
-          <LocationStatusIndicator className="mr-2" />
+        
+        {/* Location Status Bar - Top Right */}
+        <div className="absolute top-2 right-4">
+          <LocationStatusBar
+            location={location}
+            status={status}
+            lastUpdate={lastUpdate || undefined}
+            onRefresh={refreshLocation}
+            compact
+            loading={loading}
+          />
+        </div>
+        
+        <div className="flex items-center gap-4 mt-6">
           <div className="text-xs font-mono text-muted-foreground">
             LAST UPDATE: {formatTime(lastUpdated)}
           </div>
@@ -209,7 +224,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
             disabled={loading}
             variant="ghost"
             size="sm"
-            className="h-10 px-4 text-sm font-mono bg-background/50 hover:bg-primary/20"
+            className="h-8 px-3 text-xs font-mono bg-background/50 hover:bg-primary/20"
           >
             {loading ? 'SYNC...' : '🔄 REFRESH'}
           </Button>

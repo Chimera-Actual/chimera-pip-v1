@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
+import { LocationStatusBar } from '@/components/ui/location-status-bar';
 import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -44,7 +44,7 @@ interface MapWidgetProps {
 }
 
 export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
-  const { location: contextLocation, autoFollow, setAutoFollow, getCurrentLocation, status, searchLocations } = useLocation();
+  const { location: contextLocation, autoFollow, setAutoFollow, getCurrentLocation, status, lastUpdate, refreshLocation, searchLocations } = useLocation();
   const { toast } = useToast();
   
   // Display location can be different from the tracked location when user searches or manually selects
@@ -162,13 +162,24 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Header Controls */}
-      <div className="flex-shrink-0 h-20 bg-card border-b border-border px-4 flex flex-col gap-2 py-2">
+      <div className="flex-shrink-0 h-20 bg-card border-b border-border px-4 flex flex-col gap-2 py-2 relative">
+        {/* Location Status Bar - Top Right */}
+        <div className="absolute top-2 right-4 z-20">
+          <LocationStatusBar
+            location={contextLocation}
+            status={status}
+            lastUpdate={lastUpdate || undefined}
+            onRefresh={refreshLocation}
+            compact
+            loading={loading}
+          />
+        </div>
+        
         <div className="flex items-center justify-between">
           <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
             ◈ TACTICAL MAP SYSTEM
           </span>
-          <div className="flex items-center gap-3">
-            <LocationStatusIndicator className="mr-2" />
+          <div className="flex items-center gap-3 mt-6">
             <Button
               onClick={toggleAutoFollow}
               variant={autoFollow ? "default" : "outline"}
@@ -177,18 +188,6 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
             >
               {autoFollow ? '🎯 FOLLOW' : '📍 MANUAL'}
             </Button>
-            <Select value={activeLayer} onValueChange={(value: MapLayer) => setActiveLayer(value)}>
-              <SelectTrigger className="w-32 h-8 bg-background/50 border-border text-xs font-mono">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                {Object.entries(mapLayers).map(([key, layer]) => (
-                  <SelectItem key={key} value={key} className="font-mono text-xs">
-                    {layer.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Button 
               onClick={handleGetCurrentLocation} 
               disabled={loading}
@@ -250,6 +249,25 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
         
         {/* Overlay UI Elements */}
         <div className="absolute inset-0 pointer-events-none z-10">
+          {/* Layer Selector - Bottom Right */}
+          <div className="absolute bottom-3 right-3 pointer-events-auto">
+            <div className="bg-background/95 border border-border rounded px-3 py-2 backdrop-blur-sm">
+              <div className="text-xs font-mono text-muted-foreground mb-2">MAP LAYER</div>
+              <Select value={activeLayer} onValueChange={(value: MapLayer) => setActiveLayer(value)}>
+                <SelectTrigger className="w-32 h-8 bg-background/50 border-border text-xs font-mono">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-border">
+                  {Object.entries(mapLayers).map(([key, layer]) => (
+                    <SelectItem key={key} value={key} className="font-mono text-xs">
+                      {layer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
           {/* Bottom Status Bar */}
           <div className="absolute bottom-3 left-3">
             <div className="bg-background/95 border border-border rounded px-3 py-2 backdrop-blur-sm">
@@ -270,17 +288,18 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
             </div>
           </div>
           
+          {/* Mode Status - Bottom Center */}
           {contextLocation && (
-            <div className="absolute bottom-3 right-3">
+            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2">
               <div className={`border rounded px-3 py-2 backdrop-blur-sm ${
                 autoFollow 
                   ? 'bg-primary/20 border-primary text-primary animate-pulse' 
                   : 'bg-background/95 border-border text-muted-foreground'
               }`}>
-                <div className="text-xs font-mono font-bold">
+                <div className="text-xs font-mono font-bold text-center">
                   {autoFollow ? 'AUTO-TRACKING ACTIVE' : 'MANUAL MODE'}
                 </div>
-                <div className="text-xs font-mono">
+                <div className="text-xs font-mono text-center">
                   Status: {status.toUpperCase()}
                 </div>
               </div>
