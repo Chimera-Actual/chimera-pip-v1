@@ -11,11 +11,13 @@ import { useLocation } from '@/contexts/LocationContext';
 import { LocationStatusIndicator } from '@/components/ui/location-status-indicator';
 import { locationService } from '@/lib/locationService';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const LocationSettings: React.FC = () => {
   const { settings, updateSettings } = useUserSettings();
   const { location, status, refreshLocation } = useLocation();
   const [loading, setLoading] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleLocationToggle = async (enabled: boolean) => {
     if (!settings) return;
@@ -80,22 +82,22 @@ export const LocationSettings: React.FC = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="w-5 h-5" />
+    <Card className={isMobile ? 'mx-2' : ''}>
+      <CardHeader className={isMobile ? 'pb-3 px-4 py-3' : ''}>
+        <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
+          <MapPin className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
           Location Services
         </CardTitle>
-        <CardDescription>
+        <CardDescription className={isMobile ? 'text-sm' : ''}>
           Configure location tracking and update preferences
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className={`space-y-4 md:space-y-6 ${isMobile ? 'px-4 pb-4' : ''}`}>
         {/* Location Enable/Disable */}
-        <div className="flex items-center justify-between">
+        <div className={`flex justify-between ${isMobile ? 'flex-col gap-3' : 'items-center'}`}>
           <div className="space-y-0.5">
-            <Label htmlFor="location-enabled">Enable Location Services</Label>
-            <div className="text-sm text-muted-foreground">
+            <Label htmlFor="location-enabled" className={isMobile ? 'text-sm' : ''}>Enable Location Services</Label>
+            <div className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'}`}>
               Allow the system to track your location for weather, maps, and other location-based features
             </div>
           </div>
@@ -104,6 +106,7 @@ export const LocationSettings: React.FC = () => {
             checked={settings.location_enabled}
             onCheckedChange={handleLocationToggle}
             disabled={loading}
+            className="touch-target"
           />
         </div>
 
@@ -111,8 +114,8 @@ export const LocationSettings: React.FC = () => {
 
         {/* Current Location Status */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>Current Location Status</Label>
+          <div className={`flex justify-between ${isMobile ? 'flex-col gap-3' : 'items-center'}`}>
+            <Label className={isMobile ? 'text-sm' : ''}>Current Location Status</Label>
             <div className="flex items-center gap-2">
               <LocationStatusIndicator />
               <Button
@@ -120,25 +123,26 @@ export const LocationSettings: React.FC = () => {
                 size="sm"
                 onClick={handleRefreshLocation}
                 disabled={loading || !settings.location_enabled}
+                className={`touch-target ${isMobile ? 'h-9 text-sm' : ''}`}
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`mr-2 ${loading ? 'animate-spin' : ''} ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
                 Refresh
               </Button>
             </div>
           </div>
           
           {location && (
-            <div className="bg-muted/50 p-3 rounded-lg space-y-2">
-              <div className="text-sm font-mono">
-                <div>Latitude: {location.latitude.toFixed(6)}</div>
-                <div>Longitude: {location.longitude.toFixed(6)}</div>
+            <div className={`bg-muted/50 p-3 rounded-lg space-y-2 ${isMobile ? 'text-sm' : ''}`}>
+              <div className="font-mono">
+                <div>Latitude: {location.latitude.toFixed(isMobile ? 4 : 6)}</div>
+                <div>Longitude: {location.longitude.toFixed(isMobile ? 4 : 6)}</div>
               </div>
               {location.name && (
-                <div className="text-sm text-muted-foreground">
+                <div className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'}`}>
                   📍 {location.name}
                 </div>
               )}
-              <div className="text-xs text-muted-foreground">
+              <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
                 Last updated: {new Date(location.timestamp).toLocaleString()}
               </div>
             </div>
@@ -150,11 +154,11 @@ export const LocationSettings: React.FC = () => {
         {/* Polling Frequency */}
         <div className="space-y-4">
           <div className="space-y-0.5">
-            <Label className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+            <Label className={`flex items-center gap-2 ${isMobile ? 'text-sm' : ''}`}>
+              <Clock className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
               Update Frequency
             </Label>
-            <div className="text-sm text-muted-foreground">
+            <div className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'}`}>
               How often to check for location changes
             </div>
           </div>
@@ -164,17 +168,17 @@ export const LocationSettings: React.FC = () => {
             onValueChange={handlePollingFrequencyChange}
             disabled={loading || !settings.location_enabled}
           >
-            <SelectTrigger>
+            <SelectTrigger className={`touch-target ${isMobile ? 'h-10' : ''}`}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Every minute</SelectItem>
-              <SelectItem value="2">Every 2 minutes</SelectItem>
-              <SelectItem value="5">Every 5 minutes</SelectItem>
-              <SelectItem value="10">Every 10 minutes</SelectItem>
-              <SelectItem value="15">Every 15 minutes</SelectItem>
-              <SelectItem value="30">Every 30 minutes</SelectItem>
-              <SelectItem value="60">Every hour</SelectItem>
+              <SelectItem value="1" className="touch-target">Every minute</SelectItem>
+              <SelectItem value="2" className="touch-target">Every 2 minutes</SelectItem>
+              <SelectItem value="5" className="touch-target">Every 5 minutes</SelectItem>
+              <SelectItem value="10" className="touch-target">Every 10 minutes</SelectItem>
+              <SelectItem value="15" className="touch-target">Every 15 minutes</SelectItem>
+              <SelectItem value="30" className="touch-target">Every 30 minutes</SelectItem>
+              <SelectItem value="60" className="touch-target">Every hour</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -182,12 +186,12 @@ export const LocationSettings: React.FC = () => {
         <Separator />
 
         {/* Privacy Notice */}
-        <div className="bg-muted/30 p-4 rounded-lg border border-muted">
+        <div className={`bg-muted/30 p-4 rounded-lg border border-muted ${isMobile ? 'p-3' : ''}`}>
           <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <Shield className={`text-muted-foreground mt-0.5 flex-shrink-0 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
             <div className="space-y-2">
-              <div className="font-medium text-sm">Privacy Notice</div>
-              <div className="text-xs text-muted-foreground leading-relaxed">
+              <div className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Privacy Notice</div>
+              <div className={`text-muted-foreground leading-relaxed ${isMobile ? 'text-sm' : 'text-xs'}`}>
                 Your location data is stored securely and used only for providing location-based features. 
                 Location tracking can be disabled at any time. We use OpenStreetMap for reverse geocoding, 
                 which may involve sending coordinates to their service.
