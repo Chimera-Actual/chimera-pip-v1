@@ -83,13 +83,30 @@ export const BaseWidgetTemplate: React.FC<BaseWidgetTemplateProps> = ({
       </StandardWidgetTemplate>
 
       {/* Settings Modal */}
-      {showSettings && SettingsComponent && onSettingsChange && (
+      {showSettings && SettingsComponent && onSettingsChange ? (
         <SettingsComponent
           widgetInstanceId={widgetInstanceId}
           settings={settings}
           onSettingsChange={onSettingsChange}
           onClose={() => setShowSettings(false)}
         />
+      ) : showSettings && (
+        /* Fallback settings modal if no custom settings component */
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card border border-border rounded-lg p-6 max-w-md mx-4">
+            <h3 className="font-mono text-primary uppercase tracking-wider mb-4">Widget Settings</h3>
+            <p className="text-muted-foreground font-mono text-sm mb-4">
+              Settings for this widget are not yet configured.
+            </p>
+            <Button 
+              onClick={() => setShowSettings(false)}
+              variant="outline"
+              className="w-full font-mono"
+            >
+              CLOSE
+            </Button>
+          </div>
+        </div>
       )}
     </>
   );
