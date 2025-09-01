@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Trash2, GripVertical } from 'lucide-react';
 import { AudioWaveform } from './AudioWaveform';
 import { useAudio } from '@/contexts/AudioContext';
@@ -255,11 +256,11 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
             </Button>
           </div>
           {/* Waveform container */}
-          <div className="absolute inset-0 p-4">
+          <div className="absolute inset-0">
             <AudioWaveform 
               audioElement={audioRef.current}
               isPlaying={isPlaying}
-              className="w-full h-full"
+              className="w-full h-full border border-border"
               style={settings?.waveformStyle || 'bars'}
               color={settings?.waveformColor || 'primary'}
             />
@@ -267,72 +268,73 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
         </div>
       )}
 
-      {/* Current Track Display - Song Information */}
+      {/* Current Track & Controls - Consolidated */}
       <div className="flex-shrink-0 bg-background/30 border-b border-border p-3">
-        <div className="text-center space-y-1">
-          <div className="text-sm font-mono text-primary truncate">
-            {currentTrack ? currentTrack.title : 'NO TRACK SELECTED'}
+        <div className="text-center space-y-3">
+          {/* Track Info */}
+          <div className="space-y-1">
+            <div className="text-sm font-mono text-primary truncate">
+              {currentTrack ? currentTrack.title : 'NO TRACK SELECTED'}
+            </div>
+            <div className="text-xs text-muted-foreground font-mono">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </div>
+            {duration > 0 && (
+              <Slider
+                value={[currentTime]}
+                onValueChange={(value) => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = value[0];
+                  }
+                }}
+                max={duration}
+                step={1}
+                className="w-full"
+              />
+            )}
           </div>
-          <div className="text-xs text-muted-foreground font-mono">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </div>
-          {duration > 0 && (
-            <Slider
-              value={[currentTime]}
-              onValueChange={(value) => {
-                if (audioRef.current) {
-                  audioRef.current.currentTime = value[0];
-                }
-              }}
-              max={duration}
-              step={1}
-              className="w-full"
-            />
-          )}
-        </div>
-      </div>
 
-      {/* Controls - Play Controls */}
-      <div className="flex-shrink-0 bg-background/20 border-b border-border p-3">
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            onClick={prevTrack}
-            size="sm"
-            variant="ghost"
-            disabled={playlist.length === 0}
-            className="h-10 w-10 p-0"
-          >
-            <SkipBack size={20} />
-          </Button>
-          
-          <Button
-            onClick={togglePlayPause}
-            size="lg"
-            disabled={playlist.length === 0}
-            className="h-12 w-12 rounded-full"
-          >
-            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-          </Button>
-          
-          <Button
-            onClick={stopPlayback}
-            size="sm"
-            variant="ghost"
-            disabled={!currentTrack}
-            className="h-10 w-10 p-0"
-          >
-            <Square size={20} />
-          </Button>
-          
-          <Button
-            onClick={nextTrack}
-            size="sm"
-            variant="ghost"
-            disabled={playlist.length === 0}
-            className="h-10 w-10 p-0"
-          >
-            <SkipForward size={20} />
-          </Button>
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              onClick={prevTrack}
+              size="sm"
+              variant="ghost"
+              disabled={playlist.length === 0}
+              className="h-10 w-10 p-0"
+            >
+              <SkipBack size={20} />
+            </Button>
+            
+            <Button
+              onClick={togglePlayPause}
+              size="lg"
+              disabled={playlist.length === 0}
+              className="h-12 w-12 rounded-full"
+            >
+              {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+            </Button>
+            
+            <Button
+              onClick={stopPlayback}
+              size="sm"
+              variant="ghost"
+              disabled={!currentTrack}
+              className="h-10 w-10 p-0"
+            >
+              <Square size={20} />
+            </Button>
+            
+            <Button
+              onClick={nextTrack}
+              size="sm"
+              variant="ghost"
+              disabled={playlist.length === 0}
+              className="h-10 w-10 p-0"
+            >
+              <SkipForward size={20} />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -344,7 +346,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
           </Label>
         </div>
         
-        <div className="px-4 pb-4 overflow-y-auto h-full">
+        <ScrollArea className="h-full px-4">
           {playlist.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm font-mono">
               NO AUDIO FILES IN PLAYLIST
@@ -361,7 +363,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
                 items={playlist.map(track => track.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-2">
+                <div className="space-y-2 pb-4">
                   {playlist.map((track) => (
                     <SortableTrack
                       key={track.id}
@@ -375,7 +377,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
               </SortableContext>
             </DndContext>
           )}
-        </div>
+        </ScrollArea>
       </div>
 
       {/* Upload Audio Files section at bottom */}
