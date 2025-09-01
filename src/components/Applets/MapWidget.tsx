@@ -27,76 +27,36 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string>('');
-  const [tokenInputMode, setTokenInputMode] = useState<boolean>(false);
-  const [manualToken, setManualToken] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLayer, setSelectedLayer] = useState<string>(settings.layer || 'standard');
   const [zoom, setZoom] = useState<number>(settings.zoom || 10);
 
   const title = settings.title || 'Tactical Map';
 
-  // Fetch Mapbox token
+  // Fetch Mapbox token from Supabase
   useEffect(() => {
-    // First try to get from localStorage
-    const storedToken = localStorage.getItem('mapbox_token');
-    if (storedToken) {
-      console.log('Using stored token from localStorage');
-      setMapboxToken(storedToken);
-      return;
-    }
-
-    // Fallback to edge function
     const fetchToken = async () => {
       try {
-        console.log('Fetching Mapbox token from edge function...');
+        console.log('Fetching Mapbox public token from Supabase...');
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        console.log('Token response:', { data, error });
         
         if (error) {
-          console.error('Edge function failed, switching to manual input mode');
-          setTokenInputMode(true);
+          console.error('Error fetching Mapbox token:', error);
           return;
         }
+        
         if (data && data.token) {
-          console.log('Token received successfully');
+          console.log('✅ Public token received successfully');
           setMapboxToken(data.token);
-          localStorage.setItem('mapbox_token', data.token);
         } else {
-          console.error('No token in response, switching to manual input mode');
-          setTokenInputMode(true);
+          console.error('No token in response:', data);
         }
       } catch (error) {
-        console.error('Failed to fetch Mapbox token, switching to manual input mode');
-        setTokenInputMode(true);
+        console.error('Failed to fetch Mapbox token:', error);
       }
     };
     fetchToken();
   }, []);
-
-  const handleManualTokenSubmit = () => {
-    if (manualToken.trim()) {
-      // Validate token format
-      if (!manualToken.trim().startsWith('pk.')) {
-        alert('Invalid token! Please use a PUBLIC token that starts with "pk." not a secret token that starts with "sk."');
-        return;
-      }
-      setMapboxToken(manualToken.trim());
-      localStorage.setItem('mapbox_token', manualToken.trim());
-      setTokenInputMode(false);
-      setManualToken('');
-    }
-  };
-
-  // Add token validation for any existing token
-  useEffect(() => {
-    if (mapboxToken && !mapboxToken.startsWith('pk.')) {
-      console.error('Invalid token detected! Token must start with "pk." not "sk."');
-      // Clear invalid token and show input mode
-      setMapboxToken('');
-      localStorage.removeItem('mapbox_token');
-      setTokenInputMode(true);
-    }
-  }, [mapboxToken]);
 
   // Initialize map
   useEffect(() => {
@@ -195,16 +155,6 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
     }
   };
 
-  const controls = (
-    <div className="flex items-center gap-2">
-      <LocationStatusInline 
-        location={location} 
-        status={status} 
-        className="text-xs"
-      />
-    </div>
-  );
-
   const primaryControls = (
     <LocationStatusInline 
       location={location} 
@@ -226,62 +176,11 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
         primaryControls={primaryControls}
       >
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center space-y-4 max-w-md">
+          <div className="text-center space-y-4">
             <div className="text-4xl opacity-50">🗺️</div>
-            {tokenInputMode ? (
-              <div className="space-y-4">
-                <div className="text-sm text-red-400 font-mono mb-2">
-                  ❌ Invalid Token Detected!
-                </div>
-                <div className="text-xs text-muted-foreground font-mono mb-4">
-                  You need a <strong>PUBLIC</strong> token that starts with <code>pk.</code><br/>
-                  NOT a secret token that starts with <code>sk.</code>
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    value={manualToken}
-                    onChange={(e) => setManualToken(e.target.value)}
-                    placeholder="pk.eyJ1Ijoi... (must start with pk.)"
-                    className="font-mono text-xs"
-                  />
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={handleManualTokenSubmit}
-                      disabled={!manualToken.trim() || !manualToken.startsWith('pk.')}
-                      className="font-mono text-xs"
-                      size="sm"
-                    >
-                      Set Token
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.open('https://account.mapbox.com/access-tokens/', '_blank')}
-                      className="font-mono text-xs"
-                      size="sm"
-                    >
-                      Get Public Token
-                    </Button>
-                  </div>
-                </div>
-                <div className="text-xs text-amber-400 font-mono border border-amber-400/20 p-2 rounded">
-                  <strong>Important:</strong> Use the "Default public token" or create a new PUBLIC token (not secret)
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground font-mono">
-                  Loading map...
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setTokenInputMode(true)}
-                  className="font-mono"
-                >
-                  Enter Token Manually
-                </Button>
-              </div>
-            )}
+            <div className="text-sm text-muted-foreground font-mono">
+              Loading Mapbox token...
+            </div>
           </div>
         </div>
       </BaseWidgetTemplate>
