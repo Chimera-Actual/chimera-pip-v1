@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Music, Volume2 } from 'lucide-react';
+import { Music, Volume2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useResponsive } from '@/hooks/useResponsive';
 import { cn } from '@/lib/utils';
+import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
+import { WidgetSettings } from '@/components/Layout/WidgetSettings';
 
 // New component imports
 import { AudioWaveformVisualizer } from './AudioWaveformVisualizer';
@@ -49,6 +51,7 @@ export function AudioPlayerWidget({ widgetInstanceId, onSettingsUpdate, settings
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Audio event handlers
   useEffect(() => {
@@ -322,25 +325,22 @@ export function AudioPlayerWidget({ widgetInstanceId, onSettingsUpdate, settings
   const canGoNext = playlist.length > 1 && currentIndex < playlist.length - 1;
   const canGoPrev = playlist.length > 1 && currentIndex > 0;
 
+  const headerControls = (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowSettings(true)}>
+        <Settings className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   // Mobile layout (vertical stack)
   if (isMobile) {
     return (
-      <div className="flex flex-col h-full bg-background">
-        {/* Custom Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-card">
-          <div className="flex items-center gap-2">
-            <Music className="h-5 w-5 text-primary" />
-            <h1 className="font-semibold text-lg">AUDIO PLAYER</h1>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleToggleMute}
-            className="h-8 w-8 p-0"
-          >
-            <Volume2 className="h-4 w-4" />
-          </Button>
-        </div>
+      <StandardWidgetTemplate
+        icon={<Music className="h-5 w-5" />}
+        title="AUDIO PLAYER"
+        controls={headerControls}
+      >
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col p-4 gap-6 min-h-0">
@@ -406,38 +406,29 @@ export function AudioPlayerWidget({ widgetInstanceId, onSettingsUpdate, settings
             layout="mobile"
           />
         </div>
+        <WidgetSettings
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          widget={{
+            id: widgetInstanceId || 'audio-player-widget',
+            widget_definition: { component_name: 'AudioPlayerWidget' }
+          } as any}
+          onSettingsUpdate={(widgetId, newSettings) => onSettingsUpdate?.(newSettings)}
+          currentSettings={settings || {}}
+        />
 
         <audio ref={audioRef} />
-      </div>
+      </StandardWidgetTemplate>
     );
   }
 
   // Desktop/Tablet layout (side-by-side)
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Custom Header */}
-      <div className="flex items-center justify-between p-6 border-b bg-card">
-        <div className="flex items-center gap-2">
-          <Music className="h-5 w-5 text-primary" />
-          <h1 className="font-semibold text-xl">AUDIO PLAYER</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Volume2 className="h-4 w-4 text-muted-foreground" />
-          <div className="w-24">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={isMuted ? 0 : volume}
-              onChange={(e) => handleVolumeChange(Number(e.target.value))}
-              className="w-full accent-primary"
-            />
-          </div>
-          <span className="text-xs text-muted-foreground font-mono min-w-[30px]">
-            {Math.round(isMuted ? 0 : volume)}
-          </span>
-        </div>
-      </div>
+    <StandardWidgetTemplate
+      icon={<Music className="h-5 w-5" />}
+      title="AUDIO PLAYER"
+      controls={headerControls}
+    >
 
       {/* Main Content */}
       <div className="flex-1 flex gap-6 p-6 min-h-0">
@@ -507,8 +498,18 @@ export function AudioPlayerWidget({ widgetInstanceId, onSettingsUpdate, settings
           />
         </div>
       </div>
+      <WidgetSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        widget={{
+          id: widgetInstanceId || 'audio-player-widget',
+          widget_definition: { component_name: 'AudioPlayerWidget' }
+        } as any}
+        onSettingsUpdate={(widgetId, newSettings) => onSettingsUpdate?.(newSettings)}
+        currentSettings={settings || {}}
+      />
 
       <audio ref={audioRef} />
-    </div>
+    </StandardWidgetTemplate>
   );
 }

@@ -5,6 +5,7 @@ import { Clock, Globe, Settings, Plus, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
+import { WidgetSettings } from '@/components/Layout/WidgetSettings';
 
 interface WorldClock {
   id: string;
@@ -231,6 +232,8 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
     }
   };
 
+  const [showSettings, setShowSettings] = useState(false);
+
   const headerControls = (
     <div className="flex items-center gap-2">
       <Dialog>
@@ -265,7 +268,7 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
           </div>
         </DialogContent>
       </Dialog>
-      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowSettings(true)}>
         <Settings className="h-4 w-4" />
       </Button>
     </div>
@@ -327,6 +330,16 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
           ))}
         </div>
       </div>
+      <WidgetSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        widget={{
+          id: widgetInstanceId || 'clock-widget',
+          widget_definition: { component_name: 'ClockWidget' }
+        } as any}
+        onSettingsUpdate={(widgetId, newSettings) => onSettingsUpdate?.(newSettings)}
+        currentSettings={settings || {}}
+      />
     </StandardWidgetTemplate>
   );
 };

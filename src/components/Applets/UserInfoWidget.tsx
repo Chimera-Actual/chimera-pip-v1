@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Edit3, Save, X, Upload, Clock, Calendar, Lock, Shield, Database, Trash2 } from 'lucide-react';
+import { User, Edit3, Save, X, Upload, Clock, Calendar, Lock, Shield, Database, Trash2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
+import { WidgetSettings } from '@/components/Layout/WidgetSettings';
 import { useResponsive } from '@/hooks/useResponsive';
 
 export const UserInfoWidget: React.FC = () => {
@@ -286,6 +287,8 @@ export const UserInfoWidget: React.FC = () => {
     }
   };
 
+  const [showSettings, setShowSettings] = useState(false);
+
   // Header controls
   const headerControls = (
     <div className="flex items-center gap-2">
@@ -294,6 +297,9 @@ export const UserInfoWidget: React.FC = () => {
           <Edit3 className="w-4 h-4" />
         </Button>
       )}
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowSettings(true)}>
+        <Settings className="h-4 w-4" />
+      </Button>
     </div>
   );
 
@@ -581,6 +587,16 @@ export const UserInfoWidget: React.FC = () => {
           </Card>
         </div>
       </ScrollArea>
+      <WidgetSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        widget={{
+          id: 'user-info-widget',
+          widget_definition: { component_name: 'UserInfoWidget' }
+        } as any}
+        onSettingsUpdate={() => {}}
+        currentSettings={{}}
+      />
     </StandardWidgetTemplate>
   );
 };

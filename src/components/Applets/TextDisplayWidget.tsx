@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Settings, Grid3x3 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
+import { WidgetSettings } from '@/components/Layout/WidgetSettings';
 
 interface TextDisplayWidgetProps {
   settings?: Record<string, any>;
@@ -182,12 +183,14 @@ export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, 
     );
   };
 
+  const [showSettings, setShowSettings] = useState(false);
+
   const headerControls = (
     <div className="flex items-center gap-2">
       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
         <Grid3x3 className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowSettings(true)}>
         <Settings className="h-4 w-4" />
       </Button>
     </div>
@@ -203,6 +206,16 @@ export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, 
       <div className={`flex-1 overflow-auto ${isMobile ? 'p-2' : 'p-4'}`}>
         {getLayoutGrid()}
       </div>
+      <WidgetSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        widget={{
+          id: widgetInstanceId || 'text-display-widget',
+          widget_definition: { component_name: 'TextDisplayWidget' }
+        } as any}
+        onSettingsUpdate={(widgetId, newSettings) => onSettingsUpdate?.(newSettings)}
+        currentSettings={settings || {}}
+      />
     </StandardWidgetTemplate>
   );
 };

@@ -5,6 +5,9 @@ import { LocationStatusBar } from '@/components/ui/location-status-bar';
 import { useLocation } from '@/contexts/LocationContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
+import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
+import { WidgetSettings } from '@/components/Layout/WidgetSettings';
+import { Settings, CloudSun } from 'lucide-react';
 
 interface WeatherData {
   current: {
@@ -131,6 +134,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Update weather data when location or settings change
   useEffect(() => {
@@ -192,16 +196,40 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
     });
   };
 
+  const headerControls = (
+    <div className="flex items-center gap-2">
+      <div className="text-xs font-mono text-muted-foreground">
+        LAST UPDATE: {formatTime(lastUpdated)}
+      </div>
+      {error && (
+        <div className="text-xs font-mono text-destructive">
+          ⚠ {error}
+        </div>
+      )}
+      <Button 
+        onClick={refreshWeather} 
+        disabled={loading}
+        variant="ghost"
+        size="sm"
+        className="h-8 px-3 text-xs font-mono bg-background/50 hover:bg-primary/20"
+      >
+        {loading ? 'SYNC...' : '🔄 REFRESH'}
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowSettings(true)}>
+        <Settings className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
-      {/* Header Controls */}
-      <div className="flex-shrink-0 h-16 bg-card border-b border-border px-4 flex items-center justify-between relative">
-        <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
-          ☰ WEATHER MONITORING
-        </span>
-        
-        {/* Location Status Bar - Top Right */}
-        <div className="absolute top-2 right-4">
+    <StandardWidgetTemplate
+      icon={<CloudSun className="h-5 w-5" />}
+      title={widgetName || 'WEATHER MONITORING'}
+      controls={headerControls}
+    >
+      <div className="flex-1 p-4 overflow-y-auto">
+        {/* Location Status Bar */}
+        <div className="mb-4">
           <LocationStatusBar
             location={location}
             status={status}
@@ -211,30 +239,6 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
             loading={loading}
           />
         </div>
-        
-        <div className="flex items-center gap-4 mt-6">
-          <div className="text-xs font-mono text-muted-foreground">
-            LAST UPDATE: {formatTime(lastUpdated)}
-          </div>
-          {error && (
-            <div className="text-xs font-mono text-destructive">
-              ⚠ {error}
-            </div>
-          )}
-          <Button 
-            onClick={refreshWeather} 
-            disabled={loading}
-            variant="ghost"
-            size="sm"
-            className="h-8 px-3 text-xs font-mono bg-background/50 hover:bg-primary/20"
-          >
-            {loading ? 'SYNC...' : '🔄 REFRESH'}
-          </Button>
-        </div>
-      </div>
-      
-      {/* Main Weather Content */}
-      <div className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-4">
           
           {/* Current Conditions */}
@@ -371,6 +375,16 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
           </div>
         </div>
       </div>
-    </div>
+      <WidgetSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        widget={{
+          id: widgetInstanceId || 'weather-widget',
+          widget_definition: { component_name: 'WeatherWidget' }
+        } as any}
+        onSettingsUpdate={(widgetId, newSettings) => onSettingsUpdate?.(newSettings)}
+        currentSettings={settings || {}}
+      />
+    </StandardWidgetTemplate>
   );
 };

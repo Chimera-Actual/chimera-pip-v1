@@ -6,10 +6,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Send, User, Bot, Webhook } from 'lucide-react';
+import { Send, User, Bot, Webhook, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
+import { WidgetSettings } from '@/components/Layout/WidgetSettings';
 
 interface Message {
   id: string;
@@ -40,6 +42,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   
   const [config, setConfig] = useState<CustomAssistantConfig>({
     name: 'Custom Assistant',
@@ -378,30 +381,31 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
     });
   };
 
-  return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex-shrink-0 h-16 bg-card border-b border-border px-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-lg">{config.icon}</span>
-          <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
-            {config.name.toUpperCase()}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="text-xs font-mono text-muted-foreground">
-            {messages.filter(m => m.type === 'user').length} QUERIES
-          </div>
-          <Button
-            onClick={clearConversation}
-            variant="ghost"
-            size="sm"
-            className="h-8 px-3 text-xs font-mono bg-background/50 hover:bg-primary/20"
-          >
-            CLEAR
-          </Button>
-        </div>
+  const headerControls = (
+    <div className="flex items-center gap-2">
+      <div className="text-xs font-mono text-muted-foreground">
+        {messages.filter(m => m.type === 'user').length} QUERIES
       </div>
+      <Button
+        onClick={clearConversation}
+        variant="ghost"
+        size="sm"
+        className="h-8 px-3 text-xs font-mono bg-background/50 hover:bg-primary/20"
+      >
+        CLEAR
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowSettings(true)}>
+        <Settings className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  return (
+    <StandardWidgetTemplate
+      icon={<span className="text-lg">{config.icon}</span>}
+      title={config.name.toUpperCase()}
+      controls={headerControls}
+    >
 
       {/* Messages */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -529,6 +533,16 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
           </div>
         </div>
       </div>
-    </div>
+      <WidgetSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        widget={{
+          id: widgetInstanceId || 'custom-assistant-widget',
+          widget_definition: { component_name: 'CustomAssistantWidget' }
+        } as any}
+        onSettingsUpdate={(widgetId, newSettings) => onSettingsUpdate?.(newSettings)}
+        currentSettings={settings || {}}
+      />
+    </StandardWidgetTemplate>
   );
 };
