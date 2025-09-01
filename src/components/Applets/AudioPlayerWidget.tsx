@@ -202,8 +202,8 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
   return (
     <div className="w-full h-full flex flex-col bg-background">
       {/* Header - Widget Title & Volume Control (TOP) */}
-      <div className="flex-shrink-0 bg-background/50 border-b border-border p-4">
-        <div className="flex items-center justify-between">
+      <div className="flex-shrink-0 bg-background/50 border-b border-border py-4 px-0">
+        <div className="flex items-center justify-between px-4">
           <Label className="text-lg font-mono text-primary font-bold uppercase tracking-wider">
             🎵 AUDIO PLAYER
           </Label>
