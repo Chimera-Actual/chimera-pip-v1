@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts"
-import { corsHeaders } from '../_shared/cors.ts'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -9,20 +13,14 @@ serve(async (req) => {
 
   try {
     console.log('=== get-mapbox-token function called ===');
-    console.log('Environment check:');
-    
-    // List all available env vars (for debugging)
-    const envKeys = Object.keys(Deno.env.toObject());
-    console.log('Available env keys:', envKeys.filter(key => key.includes('MAPBOX')));
     
     const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN')
     console.log('MAPBOX_PUBLIC_TOKEN exists:', !!mapboxToken);
-    console.log('Token length:', mapboxToken ? mapboxToken.length : 0);
     
     if (!mapboxToken) {
-      console.error('❌ MAPBOX_PUBLIC_TOKEN not found in environment variables');
+      console.error('❌ MAPBOX_PUBLIC_TOKEN not found');
       return new Response(
-        JSON.stringify({ error: 'Mapbox token not configured', debug: 'MAPBOX_PUBLIC_TOKEN env var missing' }), 
+        JSON.stringify({ error: 'Mapbox token not configured' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -39,7 +37,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('💥 Error in get-mapbox-token function:', error)
+    console.error('💥 Error:', error.message)
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       {

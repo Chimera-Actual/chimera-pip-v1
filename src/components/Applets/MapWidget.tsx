@@ -27,6 +27,8 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string>('');
+  const [showTokenInput, setShowTokenInput] = useState<boolean>(false);
+  const [tempToken, setTempToken] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLayer, setSelectedLayer] = useState<string>(settings.layer || 'standard');
   const [zoom, setZoom] = useState<number>(settings.zoom || 10);
@@ -42,6 +44,7 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
         
         if (error) {
           console.error('Error fetching Mapbox token:', error);
+          setTimeout(() => setShowTokenInput(true), 2000); // Show input after 2 seconds
           return;
         }
         
@@ -50,13 +53,24 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
           setMapboxToken(data.token);
         } else {
           console.error('No token in response:', data);
+          setTimeout(() => setShowTokenInput(true), 2000);
         }
       } catch (error) {
         console.error('Failed to fetch Mapbox token:', error);
+        setTimeout(() => setShowTokenInput(true), 2000);
       }
     };
     fetchToken();
   }, []);
+
+  const handleTempTokenSubmit = () => {
+    if (tempToken.trim().startsWith('pk.')) {
+      setMapboxToken(tempToken.trim());
+      setShowTokenInput(false);
+    } else {
+      alert('Please enter a valid PUBLIC token starting with "pk."');
+    }
+  };
 
   // Initialize map
   useEffect(() => {
@@ -176,11 +190,58 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
         primaryControls={primaryControls}
       >
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-4 max-w-md">
             <div className="text-4xl opacity-50">🗺️</div>
-            <div className="text-sm text-muted-foreground font-mono">
-              Loading Mapbox token...
-            </div>
+            {showTokenInput ? (
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground font-mono">
+                  Edge function failed. Enter your Mapbox public token:
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    value={tempToken}
+                    onChange={(e) => setTempToken(e.target.value)}
+                    placeholder="pk.eyJ1Ijoi... (must start with pk.)"
+                    className="font-mono text-xs"
+                  />
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleTempTokenSubmit}
+                      disabled={!tempToken.trim().startsWith('pk.')}
+                      size="sm"
+                      className="font-mono text-xs"
+                    >
+                      Load Map
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.open('https://account.mapbox.com/access-tokens/', '_blank')}
+                      size="sm"
+                      className="font-mono text-xs"
+                    >
+                      Get Token
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-xs text-amber-400 font-mono">
+                  Use your "Default public token" from Mapbox
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground font-mono">
+                  Loading Mapbox token...
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowTokenInput(true)}
+                  className="font-mono text-xs"
+                >
+                  Enter Token Manually
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </BaseWidgetTemplate>
