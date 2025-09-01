@@ -707,4 +707,9 @@ All colors MUST be HSL - Monochrome Green Theme
     transform: none;
     backface-visibility: visible;
   }
+  
+  /* Retro button styling for settings */
+  .retro-button {
+    @apply rounded-none border-2 font-bold tracking-wider;
+  }
 }

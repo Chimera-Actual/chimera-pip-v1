@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Thermometer, MapPin, Gauge, Wind } from 'lucide-react';
+import { RectangularSwitch } from '@/components/ui/rectangular-switch';
+import { BlockRadioGroup, BlockRadioGroupItem } from '@/components/ui/block-radio-group';
+import { StandardSettingsTemplate } from '@/components/Layout/StandardSettingsTemplate';
+import { Thermometer, MapPin, Gauge, Wind, CloudRain } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface WeatherSettingsProps {
@@ -41,7 +42,12 @@ export const WeatherSettings: React.FC<WeatherSettingsProps> = ({
   };
 
   return (
-    <div className={`space-y-4 md:space-y-6 max-h-[80vh] overflow-y-auto ${isMobile ? 'px-1' : ''}`}>
+    <StandardSettingsTemplate
+      widgetIcon={<CloudRain className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} />}
+      widgetName="Weather"
+      onSave={handleSave}
+      onCancel={onClose}
+    >
       {/* Temperature Unit */}
       <Card className="border-border">
         <CardHeader className={isMobile ? 'pb-2 px-4 py-3' : 'pb-3'}>
@@ -53,24 +59,24 @@ export const WeatherSettings: React.FC<WeatherSettingsProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent className={isMobile ? 'px-4 pb-4' : ''}>
-          <RadioGroup
+          <BlockRadioGroup
             value={temperatureUnit}
             onValueChange={setTemperatureUnit}
             className={`grid gap-3 md:gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="celsius" id="celsius" className="touch-target" />
+              <BlockRadioGroupItem value="celsius" id="celsius" className="touch-target" />
               <Label htmlFor="celsius" className={`font-mono ${isMobile ? 'text-sm' : 'text-xs'}`}>
                 Celsius (°C)
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="fahrenheit" id="fahrenheit" className="touch-target" />
+              <BlockRadioGroupItem value="fahrenheit" id="fahrenheit" className="touch-target" />
               <Label htmlFor="fahrenheit" className={`font-mono ${isMobile ? 'text-sm' : 'text-xs'}`}>
                 Fahrenheit (°F)
               </Label>
             </div>
-          </RadioGroup>
+          </BlockRadioGroup>
         </CardContent>
       </Card>
 
@@ -87,7 +93,7 @@ export const WeatherSettings: React.FC<WeatherSettingsProps> = ({
         <CardContent className={`space-y-3 md:space-y-4 ${isMobile ? 'px-4 pb-4' : ''}`}>
           <div className={`flex justify-between ${isMobile ? 'flex-col gap-2' : 'items-center'}`}>
             <Label className={`font-mono text-foreground ${isMobile ? 'text-sm' : 'text-xs'}`}>Show Location</Label>
-            <Switch
+            <RectangularSwitch
               checked={showLocation}
               onCheckedChange={setShowLocation}
               className="touch-target"
@@ -95,7 +101,7 @@ export const WeatherSettings: React.FC<WeatherSettingsProps> = ({
           </div>
           <div className={`flex justify-between ${isMobile ? 'flex-col gap-2' : 'items-center'}`}>
             <Label className={`font-mono text-foreground ${isMobile ? 'text-sm' : 'text-xs'}`}>Show 3-Day Forecast</Label>
-            <Switch
+            <RectangularSwitch
               checked={showForecast}
               onCheckedChange={setShowForecast}
               className="touch-target"
@@ -103,7 +109,7 @@ export const WeatherSettings: React.FC<WeatherSettingsProps> = ({
           </div>
           <div className={`flex justify-between ${isMobile ? 'flex-col gap-2' : 'items-center'}`}>
             <Label className={`font-mono text-foreground ${isMobile ? 'text-sm' : 'text-xs'}`}>Show Weather Details</Label>
-            <Switch
+            <RectangularSwitch
               checked={showDetails}
               onCheckedChange={setShowDetails}
               className="touch-target"
@@ -125,7 +131,7 @@ export const WeatherSettings: React.FC<WeatherSettingsProps> = ({
         <CardContent className={`space-y-3 md:space-y-4 ${isMobile ? 'px-4 pb-4' : ''}`}>
           <div className={`flex justify-between ${isMobile ? 'flex-col gap-2' : 'items-center'}`}>
             <Label className={`font-mono text-foreground ${isMobile ? 'text-sm' : 'text-xs'}`}>Enable Auto Refresh</Label>
-            <Switch
+            <RectangularSwitch
               checked={autoRefresh}
               onCheckedChange={setAutoRefresh}
               className="touch-target"
@@ -134,24 +140,24 @@ export const WeatherSettings: React.FC<WeatherSettingsProps> = ({
           {autoRefresh && (
             <div>
               <Label className={`font-mono text-muted-foreground ${isMobile ? 'text-sm' : 'text-xs'}`}>Refresh Interval (minutes)</Label>
-              <RadioGroup
+              <BlockRadioGroup
                 value={refreshInterval.toString()}
                 onValueChange={(value) => setRefreshInterval(parseInt(value))}
                 className={`grid gap-3 md:gap-4 mt-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="15" id="15min" className="touch-target" />
+                  <BlockRadioGroupItem value="15" id="15min" className="touch-target" />
                   <Label htmlFor="15min" className={`font-mono ${isMobile ? 'text-sm' : 'text-xs'}`}>15</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="30" id="30min" className="touch-target" />
+                  <BlockRadioGroupItem value="30" id="30min" className="touch-target" />
                   <Label htmlFor="30min" className={`font-mono ${isMobile ? 'text-sm' : 'text-xs'}`}>30</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="60" id="60min" className="touch-target" />
+                  <BlockRadioGroupItem value="60" id="60min" className="touch-target" />
                   <Label htmlFor="60min" className={`font-mono ${isMobile ? 'text-sm' : 'text-xs'}`}>60</Label>
                 </div>
-              </RadioGroup>
+              </BlockRadioGroup>
             </div>
           )}
         </CardContent>
@@ -178,27 +184,6 @@ export const WeatherSettings: React.FC<WeatherSettingsProps> = ({
           </div>
         </CardContent>
       </Card>
-
-      {/* Action Buttons */}
-      <div className={`flex gap-3 pt-4 border-t border-border ${isMobile ? 'flex-col' : ''}`}>
-        <Button
-          onClick={onClose}
-          variant="outline"
-          className={`font-mono touch-target ${
-            isMobile ? 'flex-1 h-10 text-sm' : 'flex-1 text-xs'
-          }`}
-        >
-          CANCEL
-        </Button>
-        <Button
-          onClick={handleSave}
-          className={`font-mono touch-target ${
-            isMobile ? 'flex-1 h-10 text-sm' : 'flex-1 text-xs'
-          }`}
-        >
-          SAVE SETTINGS
-        </Button>
-      </div>
-    </div>
+    </StandardSettingsTemplate>
   );
 };

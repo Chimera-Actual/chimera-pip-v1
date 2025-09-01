@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Plus, X, Save } from 'lucide-react';
+import { RectangularSwitch } from '@/components/ui/rectangular-switch';
+import { StandardSettingsTemplate } from '@/components/Layout/StandardSettingsTemplate';
+import { Plus, X, Save, Clock } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TimeZone {
@@ -65,7 +66,12 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
   };
 
   return (
-    <div className={`space-y-4 md:space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
+    <StandardSettingsTemplate
+      widgetIcon={<Clock className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} />}
+      widgetName="Clock"
+      onSave={handleSave}
+      onCancel={onClose}
+    >
       {/* Display Format */}
       <div className="space-y-3">
         <Label className={`font-mono text-primary ${isMobile ? 'text-sm' : 'text-sm'}`}>TIME FORMAT</Label>
@@ -123,7 +129,7 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
               Display seconds in time readout
             </p>
           </div>
-          <Switch checked={showSeconds} onCheckedChange={setShowSeconds} className="touch-target" />
+          <RectangularSwitch checked={showSeconds} onCheckedChange={setShowSeconds} className="touch-target" />
         </div>
 
         <div className={`flex justify-between ${isMobile ? 'flex-col gap-3' : 'items-center'}`}>
@@ -133,7 +139,7 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
               Reduce spacing for more time zones
             </p>
           </div>
-          <Switch checked={compactMode} onCheckedChange={setCompactMode} className="touch-target" />
+          <RectangularSwitch checked={compactMode} onCheckedChange={setCompactMode} className="touch-target" />
         </div>
       </div>
 
@@ -154,7 +160,7 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => removeTimezone(index)}
-                  className={`text-destructive hover:text-destructive touch-target ${isMobile ? 'w-full' : ''}`}
+                  className={`text-destructive hover:text-destructive touch-target retro-button ${isMobile ? 'w-full' : ''}`} 
                 >
                   <X className="w-3 h-3 mr-1" />
                   Remove
@@ -207,7 +213,7 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
             <Button
               onClick={addTimezone}
               disabled={!newTimezoneName || !newTimezoneValue}
-              className={`w-full font-mono touch-target ${isMobile ? 'h-10' : ''}`}
+              className={`w-full font-mono touch-target retro-button ${isMobile ? 'h-10' : ''}`}
             >
               <Plus className="w-4 h-4 mr-2" />
               ADD TIME ZONE
@@ -215,17 +221,6 @@ export const ClockSettings: React.FC<ClockSettingsProps> = ({
           </div>
         )}
       </div>
-
-      {/* Actions */}
-      <div className={`flex gap-3 pt-4 border-t border-border ${isMobile ? 'flex-col' : 'justify-end'}`}>
-        <Button variant="outline" onClick={onClose} className={`font-mono touch-target ${isMobile ? 'h-10' : ''}`}>
-          CANCEL
-        </Button>
-        <Button onClick={handleSave} className={`font-mono touch-target ${isMobile ? 'h-10' : ''}`}>
-          <Save className="w-4 h-4 mr-2" />
-          SAVE SETTINGS
-        </Button>
-      </div>
-    </div>
+    </StandardSettingsTemplate>
   );
 };

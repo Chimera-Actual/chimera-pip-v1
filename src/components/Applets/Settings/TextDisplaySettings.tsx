@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Plus, Trash2, Grid, Layout, ChevronUp, ChevronDown } from 'lucide-react';
+import { StandardSettingsTemplate } from '@/components/Layout/StandardSettingsTemplate';
+import { FileText, Plus, Trash2, Grid, Layout, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface TextContainer {
   id: string;
@@ -175,7 +176,12 @@ export const TextDisplaySettings: React.FC<TextDisplaySettingsProps> = ({
   const availableLayouts = LAYOUT_CONFIGURATIONS[containerCount as keyof typeof LAYOUT_CONFIGURATIONS] || [];
 
   return (
-    <div className="space-y-6 p-6 max-h-[80vh] overflow-y-auto">
+    <StandardSettingsTemplate
+      widgetIcon={<FileText className="w-5 h-5" />}
+      widgetName="Text Display"
+      onSave={handleSave}
+      onCancel={onClose}
+    >
       {/* Container Configuration */}
       <div className="space-y-4">
         <Label className="text-sm font-mono text-primary flex items-center gap-2">
@@ -260,7 +266,7 @@ export const TextDisplaySettings: React.FC<TextDisplaySettingsProps> = ({
                       size="sm"
                       onClick={() => moveContainer(index, 'up')}
                       disabled={index === 0}
-                      className="p-1 h-6 w-6"
+                      className="p-1 h-6 w-6 retro-button"
                     >
                       <ChevronUp className="w-3 h-3" />
                     </Button>
@@ -271,7 +277,7 @@ export const TextDisplaySettings: React.FC<TextDisplaySettingsProps> = ({
                       size="sm"
                       onClick={() => moveContainer(index, 'down')}
                       disabled={index === containerCount - 1}
-                      className="p-1 h-6 w-6"
+                      className="p-1 h-6 w-6 retro-button"
                     >
                       <ChevronDown className="w-3 h-3" />
                     </Button>
@@ -282,7 +288,7 @@ export const TextDisplaySettings: React.FC<TextDisplaySettingsProps> = ({
                       size="sm"
                       onClick={() => removeContainer(index)}
                       disabled={containers.length <= 1}
-                      className="p-1 h-6 w-6 text-destructive hover:text-destructive"
+                      className="p-1 h-6 w-6 text-destructive hover:text-destructive retro-button"
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
@@ -393,17 +399,6 @@ export const TextDisplaySettings: React.FC<TextDisplaySettingsProps> = ({
           ))}
         </div>
       </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-border">
-        <Button variant="outline" onClick={onClose} className="font-mono">
-          CANCEL
-        </Button>
-        <Button onClick={handleSave} className="font-mono">
-          <Save className="w-4 h-4 mr-2" />
-          SAVE SETTINGS
-        </Button>
-      </div>
-    </div>
+    </StandardSettingsTemplate>
   );
 };
