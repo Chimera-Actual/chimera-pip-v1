@@ -116,93 +116,37 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
   onPlacemarkClick,
   className = ""
 }) => {
-  const mapRef = useRef<L.Map | null>(null);
+  console.log('MapRenderer: Rendering with props:', { center, zoom, layer, followUser });
 
+  // Temporary: Test without MapContainer to isolate the context error
   return (
     <div className={`relative w-full h-full ${className}`}>
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        className="w-full h-full z-0"
-        zoomControl={false}
-        ref={mapRef}
-        style={{ 
-          background: 'hsl(var(--background))',
-          filter: 'sepia(1) hue-rotate(calc(var(--theme-hue, 120) * 1deg)) saturate(0.8) brightness(0.8) contrast(1.2)'
-        }}
-      >
-        <TileLayer
-          url={mapLayers[layer]}
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        
-        <MapEventsHandler 
-          onCenterChange={onCenterChange}
-          onZoomChange={onZoomChange}
-        />
-        
-        <MapUpdater 
-          center={center}
-          zoom={zoom}
-          followUser={followUser}
-        />
+      <div className="absolute inset-0 flex items-center justify-center bg-background border border-border rounded">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto flex items-center justify-center">
+            <div className="w-6 h-6 bg-primary/50 rounded-full"></div>
+          </div>
+          <div className="font-mono text-primary text-sm">
+            ◈ MAP RENDERER ISOLATED TEST
+          </div>
+          <div className="text-xs text-muted-foreground font-mono space-y-1">
+            <div>Center: [{center[0].toFixed(4)}, {center[1].toFixed(4)}]</div>
+            <div>Zoom: {zoom}</div>
+            <div>Layer: {layer}</div>
+            <div>User Location: {userLocation ? '✓' : '✗'}</div>
+            <div>Follow User: {followUser ? '✓' : '✗'}</div>
+            <div>Placemarks: {placemarks.length}</div>
+          </div>
+        </div>
+      </div>
 
-        {/* User location marker */}
-        {userLocation && (
-          <Marker
-            position={[userLocation.latitude, userLocation.longitude]}
-            icon={createUserMarker()}
-          >
-            <Popup>
-              <div className="text-xs font-mono">
-                <div className="text-primary font-bold">◈ CURRENT LOCATION</div>
-                <div className="text-muted-foreground">
-                  LAT: {userLocation.latitude.toFixed(6)}<br/>
-                  LNG: {userLocation.longitude.toFixed(6)}
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        )}
-
-        {/* Placemark markers */}
-        {placemarks
-          .filter(placemark => placemark.visible)
-          .map(placemark => (
-            <Marker
-              key={placemark.id}
-              position={[placemark.latitude, placemark.longitude]}
-              icon={createPlacemarkMarker(placemark)}
-              eventHandlers={{
-                click: () => onPlacemarkClick?.(placemark)
-              }}
-            >
-              <Popup>
-                <div className="text-xs font-mono">
-                  <div className="text-accent font-bold">◈ {placemark.name}</div>
-                  {placemark.description && (
-                    <div className="text-muted-foreground mt-1">{placemark.description}</div>
-                  )}
-                  <div className="text-muted-foreground mt-1">
-                    LAT: {placemark.latitude.toFixed(6)}<br/>
-                    LNG: {placemark.longitude.toFixed(6)}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-      </MapContainer>
-
-      {/* Centerpoint crosshairs */}
+      {/* Test centerpoint overlay */}
       {showCenterpoint && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
           <div className="relative w-8 h-8">
-            {/* Crosshairs */}
             <div className="absolute top-1/2 left-0 w-full h-px bg-primary shadow-lg -translate-y-px"></div>
             <div className="absolute left-1/2 top-0 h-full w-px bg-primary shadow-lg -translate-x-px"></div>
-            {/* Center dot */}
             <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-            {/* Outer ring */}
             <div className="absolute top-1/2 left-1/2 w-6 h-6 border border-primary/50 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
           </div>
         </div>
