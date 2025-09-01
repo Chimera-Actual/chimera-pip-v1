@@ -1,3 +1,4 @@
+
 // Widget component registry with lazy loading
 import React, { Suspense } from 'react';
 import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
@@ -11,7 +12,7 @@ const BrowserWidget = React.lazy(() => import('@/components/Applets/BrowserWidge
 const SystemSettingsWidget = React.lazy(() => import('@/components/Applets/SystemSettingsWidget').then(m => ({ default: m.SystemSettingsWidget })));
 const CustomAssistantWidget = React.lazy(() => import('@/components/Applets/CustomAssistantWidget').then(m => ({ default: m.CustomAssistantWidget })));
 const TextDisplayWidget = React.lazy(() => import('@/components/Applets/TextDisplayWidget').then(m => ({ default: m.TextDisplayWidget })));
-const ImageDisplayWidget = React.lazy(() => import('@/components/Applets/ImageDisplayWidget').then(m => ({ default: m.ImageDisplayWidget })));
+const ImageDisplayWidget = React.lazy(() => import('@/components/Applets/ImageDisplayWidget'));
 const AudioPlayerWidget = React.lazy(() => import('@/components/Applets/AudioPlayerWidget').then(m => ({ default: m.AudioPlayerWidget })));
 const VoiceAgentWidget = React.lazy(() => import('@/components/Applets/VoiceAgentWidget').then(m => ({ default: m.VoiceAgentWidget })));
 

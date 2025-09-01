@@ -11,7 +11,7 @@ interface ImageDisplayWidgetProps {
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
-export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({ 
+const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({ 
   settings, 
   widgetName,
   widgetInstanceId,
@@ -241,3 +241,5 @@ export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({
     </div>
   );
 };
+
+export default ImageDisplayWidget;
