@@ -154,37 +154,59 @@ All colors MUST be HSL - Monochrome Green Theme
     color: hsl(var(--destructive));
   }
 
-  /* Monochrome System - Default for all icons and images */
+  /* Monochrome System - Theme-aware icons */
   .icon-monochrome,
   .lucide,
-  svg[class*="lucide"] {
+  svg[class*="lucide"],
+  button svg,
+  .icon {
     filter: 
-      grayscale(100%) 
-      brightness(0.8) 
-      contrast(1.2) 
-      hue-rotate(calc(var(--theme-hue, 142) * 1deg))
-      drop-shadow(0 0 2px hsl(var(--primary) / 0.4));
+      sepia(100%) 
+      hue-rotate(calc(var(--theme-hue, 120) * 1deg)) 
+      saturate(1.2) 
+      brightness(0.9) 
+      contrast(1.1)
+      drop-shadow(0 0 2px hsl(var(--primary) / 0.3)) !important;
     transition: filter 0.3s ease;
   }
 
   .icon-monochrome:hover,
   .lucide:hover,
-  svg[class*="lucide"]:hover {
+  svg[class*="lucide"]:hover,
+  button:hover svg,
+  .icon:hover {
     filter: 
-      grayscale(100%) 
-      brightness(1) 
-      contrast(1.3) 
-      hue-rotate(calc(var(--theme-hue, 142) * 1deg))
-      drop-shadow(0 0 4px hsl(var(--primary) / 0.6));
+      sepia(100%) 
+      hue-rotate(calc(var(--theme-hue, 120) * 1deg)) 
+      saturate(1.4) 
+      brightness(1.1) 
+      contrast(1.2)
+      drop-shadow(0 0 4px hsl(var(--primary) / 0.5)) !important;
   }
 
   /* Monochrome images */
   .image-monochrome {
     filter: 
-      grayscale(100%) 
-      contrast(1.1) 
+      sepia(50%) 
+      hue-rotate(calc(var(--theme-hue, 120) * 1deg)) 
+      saturate(0.8) 
       brightness(0.9)
-      hue-rotate(calc(var(--theme-hue, 142) * 1deg));
+      contrast(1.1);
+    transition: filter 0.3s ease;
+  }
+
+  /* Force monochrome on specific icon containers */
+  .widget-header svg,
+  .tab-item svg,
+  .sidebar svg,
+  [data-icon] svg {
+    filter: 
+      sepia(100%) 
+      hue-rotate(calc(var(--theme-hue, 120) * 1deg)) 
+      saturate(1.2) 
+      brightness(0.9) 
+      contrast(1.1)
+      drop-shadow(0 0 2px hsl(var(--primary) / 0.3)) !important;
   }
 
   /* Icon CRT Glow Effects */
