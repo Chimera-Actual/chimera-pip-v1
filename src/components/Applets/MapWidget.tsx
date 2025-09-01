@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Map, Search, Settings, MapPin, Layers, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { Map, Search, Layers, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { BaseWidgetTemplate } from '@/components/Layout/BaseWidgetTemplate';
 import { BaseWidgetProps } from '@/types/widget';
 import { MapWidgetSettings } from './MapWidgetSettings';
@@ -11,9 +11,10 @@ import { Card } from '@/components/ui/card';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useLocationStatus } from '@/hooks/useLocationStatus';
 import { useLocation } from '@/contexts/LocationContext';
-import { supabase } from '@/integrations/supabase/client';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { useMapState, type MapLayer } from '@/hooks/useMapState';
+import { MapStyleManager } from './Map/MapStyleManager';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 const MapWidget: React.FC<BaseWidgetProps> = ({
   widgetInstanceId,
@@ -25,96 +26,85 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
   const { status } = useLocationStatus();
   const { location } = useLocation();
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>('');
-  const [showTokenInput, setShowTokenInput] = useState<boolean>(false);
-  const [tempToken, setTempToken] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLayer, setSelectedLayer] = useState<string>(settings.layer || 'standard');
-  const [zoom, setZoom] = useState<number>(settings.zoom || 10);
+  const map = useRef<maplibregl.Map | null>(null);
+  const userMarker = useRef<maplibregl.Marker | null>(null);
+  
+  const {
+    mapState,
+    updateLayer,
+    updateZoom,
+    searchLocations,
+    navigateToLocation,
+    clearSearch
+  } = useMapState({
+    defaultLayer: settings.layer || 'standard',
+    defaultZoom: settings.zoom || 10
+  });
 
-  const title = settings.title || 'Tactical Map';
-
-  // Fetch Mapbox token from Supabase
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        console.log('Fetching Mapbox public token from Supabase...');
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        
-        if (error) {
-          console.error('Error fetching Mapbox token:', error);
-          setTimeout(() => setShowTokenInput(true), 2000); // Show input after 2 seconds
-          return;
-        }
-        
-        if (data && data.token) {
-          console.log('✅ Public token received successfully');
-          setMapboxToken(data.token);
-        } else {
-          console.error('No token in response:', data);
-          setTimeout(() => setShowTokenInput(true), 2000);
-        }
-      } catch (error) {
-        console.error('Failed to fetch Mapbox token:', error);
-        setTimeout(() => setShowTokenInput(true), 2000);
-      }
-    };
-    fetchToken();
-  }, []);
-
-  const handleTempTokenSubmit = () => {
-    if (tempToken.trim().startsWith('pk.')) {
-      setMapboxToken(tempToken.trim());
-      setShowTokenInput(false);
-    } else {
-      alert('Please enter a valid PUBLIC token starting with "pk."');
-    }
-  };
+  const title = settings.title || 'Open Source Map';
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    const mapStyle = MapStyleManager.getStyle(mapState.layer);
     
-    map.current = new mapboxgl.Map({
+    map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: getMapStyle(selectedLayer),
-      center: location ? [location.longitude, location.latitude] : [-74.0059, 40.7128],
-      zoom: zoom,
+      style: mapStyle.style,
+      center: mapState.center,
+      zoom: mapState.zoom,
       attributionControl: false
     });
 
     // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-    // Add user location marker if available
-    if (location) {
-      new mapboxgl.Marker({ color: '#3b82f6' })
-        .setLngLat([location.longitude, location.latitude])
-        .addTo(map.current);
-    }
+    // Update zoom when map zoom changes
+    map.current.on('zoom', () => {
+      if (map.current) {
+        updateZoom(map.current.getZoom());
+      }
+    });
 
     return () => {
       map.current?.remove();
     };
-  }, [mapboxToken, selectedLayer, location, zoom]);
+  }, []);
 
-  const getMapStyle = (layer: string) => {
-    switch (layer) {
-      case 'satellite': return 'mapbox://styles/mapbox/satellite-v9';
-      case 'terrain': return 'mapbox://styles/mapbox/outdoors-v12';
-      case 'transport': return 'mapbox://styles/mapbox/navigation-day-v1';
-      default: return 'mapbox://styles/mapbox/streets-v12';
+  // Update map style when layer changes
+  useEffect(() => {
+    if (map.current && mapState.layer) {
+      const mapStyle = MapStyleManager.getStyle(mapState.layer);
+      map.current.setStyle(mapStyle.style);
     }
-  };
+  }, [mapState.layer]);
+
+  // Update user location marker
+  useEffect(() => {
+    if (!map.current || !location) return;
+
+    // Remove existing marker
+    if (userMarker.current) {
+      userMarker.current.remove();
+    }
+
+    // Add new user location marker
+    userMarker.current = new maplibregl.Marker({ color: '#3b82f6' })
+      .setLngLat([location.longitude, location.latitude])
+      .addTo(map.current);
+
+    // Center map on user if following
+    if (mapState.followUser) {
+      map.current.flyTo({
+        center: [location.longitude, location.latitude],
+        zoom: mapState.zoom
+      });
+    }
+  }, [location, mapState.followUser, mapState.zoom]);
 
   const handleLayerChange = (layer: string) => {
-    setSelectedLayer(layer);
-    if (map.current) {
-      map.current.setStyle(getMapStyle(layer));
-    }
+    updateLayer(layer as MapLayer);
     if (onSettingsChange) {
       onSettingsChange({ ...settings, layer });
     }
@@ -123,19 +113,18 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
   const handleZoomIn = () => {
     if (map.current) {
       map.current.zoomIn();
-      setZoom(map.current.getZoom());
     }
   };
 
   const handleZoomOut = () => {
     if (map.current) {
       map.current.zoomOut();
-      setZoom(map.current.getZoom());
     }
   };
 
   const handleResetView = () => {
     if (map.current && location) {
+      navigateToLocation(location.longitude, location.latitude, 15);
       map.current.flyTo({
         center: [location.longitude, location.latitude],
         zoom: 15
@@ -144,28 +133,26 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
   };
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!mapState.activeSearch.trim()) return;
     
-    try {
-      // Use Mapbox Geocoding API or fallback to Nominatim
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${mapboxToken}&limit=1`
-      );
+    await searchLocations(mapState.activeSearch);
+    
+    // Navigate to first result if available
+    if (mapState.searchResults.length > 0) {
+      const result = mapState.searchResults[0];
+      navigateToLocation(result.longitude, result.latitude, 15);
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          const [lng, lat] = data.features[0].center;
-          map.current?.flyTo({ center: [lng, lat], zoom: 15 });
-          
-          // Add marker for search result
-          new mapboxgl.Marker({ color: '#ef4444' })
-            .setLngLat([lng, lat])
-            .addTo(map.current!);
-        }
+      if (map.current) {
+        map.current.flyTo({ 
+          center: [result.longitude, result.latitude], 
+          zoom: 15 
+        });
+        
+        // Add marker for search result
+        new maplibregl.Marker({ color: '#ef4444' })
+          .setLngLat([result.longitude, result.latitude])
+          .addTo(map.current);
       }
-    } catch (error) {
-      console.error('Search failed:', error);
     }
   };
 
@@ -177,76 +164,6 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
     />
   );
 
-  if (!mapboxToken) {
-    return (
-      <BaseWidgetTemplate
-        icon={<Map size={isMobile ? 16 : 20} />}
-        title={title}
-        widgetInstanceId={widgetInstanceId}
-        settings={settings}
-        onSettingsChange={onSettingsChange}
-        widgetName={widgetName}
-        settingsComponent={MapWidgetSettings}
-        primaryControls={primaryControls}
-      >
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center space-y-4 max-w-md">
-            <div className="text-4xl opacity-50">🗺️</div>
-            {showTokenInput ? (
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground font-mono">
-                  Edge function failed. Enter your Mapbox public token:
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    value={tempToken}
-                    onChange={(e) => setTempToken(e.target.value)}
-                    placeholder="pk.eyJ1Ijoi... (must start with pk.)"
-                    className="font-mono text-xs"
-                  />
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={handleTempTokenSubmit}
-                      disabled={!tempToken.trim().startsWith('pk.')}
-                      size="sm"
-                      className="font-mono text-xs"
-                    >
-                      Load Map
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.open('https://account.mapbox.com/access-tokens/', '_blank')}
-                      size="sm"
-                      className="font-mono text-xs"
-                    >
-                      Get Token
-                    </Button>
-                  </div>
-                </div>
-                <div className="text-xs text-amber-400 font-mono">
-                  Use your "Default public token" from Mapbox
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground font-mono">
-                  Loading Mapbox token...
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowTokenInput(true)}
-                  className="font-mono text-xs"
-                >
-                  Enter Token Manually
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </BaseWidgetTemplate>
-    );
-  }
 
   return (
     <BaseWidgetTemplate
@@ -267,9 +184,9 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
         <Card className="absolute top-4 left-4 right-4 z-10 p-2">
           <div className="flex gap-2">
             <Input
-              placeholder="Location Search input component"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search locations..."
+              value={mapState.activeSearch}
+              onChange={(e) => searchLocations(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               className="flex-1 h-8 text-xs"
             />
@@ -300,7 +217,7 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
         <Card className="absolute right-4 bottom-16 z-10 p-2">
           <div className="flex items-center gap-2">
             <Layers size={14} />
-            <Select value={selectedLayer} onValueChange={handleLayerChange}>
+            <Select value={mapState.layer} onValueChange={handleLayerChange}>
               <SelectTrigger className="w-24 h-6 text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -309,6 +226,8 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
                 <SelectItem value="satellite">Satellite</SelectItem>
                 <SelectItem value="terrain">Terrain</SelectItem>
                 <SelectItem value="transport">Transport</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="light">Light</SelectItem>
               </SelectContent>
             </Select>
           </div>
