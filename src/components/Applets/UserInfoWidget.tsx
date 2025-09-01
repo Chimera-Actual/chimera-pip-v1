@@ -1,26 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Edit3, Save, X, Upload, Clock, Calendar, Lock, AlertTriangle, Database, Trash2, Shield } from 'lucide-react';
+import { User, Edit3, Save, X, Upload, Clock, Calendar, Lock, Shield, Database, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
+import { useResponsive } from '@/hooks/useResponsive';
 
 export const UserInfoWidget: React.FC = () => {
   const { user } = useAuth();
   const { profile, updateProfile } = useUserProfile();
   const { toast } = useToast();
+  const { isMobile, isTablet } = useResponsive();
+  
   const [loginTime] = useState(new Date());
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [totalUsageTime, setTotalUsageTime] = useState(0);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [privacySettings, setPrivacySettings] = useState({
@@ -29,6 +33,7 @@ export const UserInfoWidget: React.FC = () => {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Utility functions
   const formatUptime = (startTime: Date) => {
     const now = new Date();
     const diffMs = now.getTime() - startTime.getTime();
@@ -74,7 +79,6 @@ export const UserInfoWidget: React.FC = () => {
     if (!user) return;
 
     try {
-      // Calculate total usage time based on user creation date
       const { data, error } = await supabase
         .from('profiles')
         .select('created_at')
@@ -171,7 +175,6 @@ export const UserInfoWidget: React.FC = () => {
       if (error) throw error;
 
       setIsChangingPassword(false);
-      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
 
@@ -191,7 +194,6 @@ export const UserInfoWidget: React.FC = () => {
 
   const handleClearCache = async () => {
     try {
-      // Clear localStorage
       const keysToKeep = ['supabase.auth.token'];
       const allKeys = Object.keys(localStorage);
       allKeys.forEach(key => {
@@ -200,18 +202,13 @@ export const UserInfoWidget: React.FC = () => {
         }
       });
 
-      // Clear sessionStorage
       sessionStorage.clear();
-
-      // Clear any cached data from Supabase (except auth)
-      // This would typically involve clearing any cached queries or local state
 
       toast({
         title: "Cache Cleared",
         description: "All cached data has been cleared successfully.",
       });
 
-      // Optionally reload the page to ensure clean state
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -262,7 +259,7 @@ export const UserInfoWidget: React.FC = () => {
 
       const { data: urlData } = await supabase.storage
         .from('avatars')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
       if (urlData?.signedUrl) {
         const { error: updateError } = await supabase
@@ -289,329 +286,301 @@ export const UserInfoWidget: React.FC = () => {
     }
   };
 
-  return (
-    <div className="h-full flex flex-col bg-card border border-border overflow-hidden">
-      {/* Header */}
-      <div className="border-b border-border bg-card p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-primary font-mono text-lg uppercase tracking-wider crt-glow">
-            ◉ USER PROFILE
-          </span>
-        </div>
-      </div>
-
-      {/* User Avatar and Basic Info */}
-      <div className="border-b border-border bg-card p-6">
-        <div className="flex items-center space-x-6">
-          <div className="relative">
-            <div className="w-24 h-24 border-2 border-primary bg-background/20 rounded-lg flex items-center justify-center overflow-hidden">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-12 h-12 text-primary crt-glow" />
-              )}
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="absolute -bottom-2 -right-2 h-8 w-8 p-0 rounded-full"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="w-3 h-3" />
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              {isEditing ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <Input
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    className="text-xl font-display bg-background/50"
-                    placeholder="Enter display name"
-                  />
-                  <Button size="sm" onClick={handleSaveProfile}>
-                    <Save className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => {
-                    setIsEditing(false);
-                    setEditedName(profile?.display_name || '');
-                  }}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <h2 className="text-2xl font-display text-primary crt-glow">
-                    {profile?.display_name || 'VAULT.DWELLER'}
-                  </h2>
-                  <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-            <div className="space-y-1 text-sm font-mono">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">ID:</span>
-                <span className="text-foreground">{user?.id.slice(-8).toUpperCase()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">EMAIL:</span>
-                <span className="text-primary">{user?.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">STATUS:</span>
-                <span className="text-primary">ACTIVE</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto crt-scrollbar">
-        {/* Usage Statistics */}
-      <div className="border-b border-border bg-card p-4">
-        <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
-          <Clock className="w-4 h-4" />
-          Usage Statistics
-        </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="border border-border bg-background/20 p-3">
-            <div className="text-xs text-muted-foreground font-mono mb-1">TOTAL APP USAGE</div>
-            <div className="text-primary font-mono text-sm crt-glow">
-              {formatTotalTime(totalUsageTime)}
-            </div>
-          </div>
-          <div className="border border-border bg-background/20 p-3">
-            <div className="text-xs text-muted-foreground font-mono mb-1">CURRENT SESSION</div>
-            <div className="text-primary font-mono text-sm crt-glow">{uptime}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Session Information */}
-      <div className="flex-1 p-4">
-        <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
-          Session Details
-        </h3>
-        <div className="space-y-3">
-          <div className="border border-border bg-background/20 p-3">
-            <div className="text-xs text-muted-foreground font-mono mb-1">LOGIN TIME</div>
-            <div className="text-primary font-mono text-sm crt-glow">
-              {loginTime.toLocaleString('en-US', { 
-                hour12: false,
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </div>
-          </div>
-          <div className="border border-border bg-background/20 p-3">
-            <div className="text-xs text-muted-foreground font-mono mb-1">MEMBER SINCE</div>
-            <div className="text-primary font-mono text-sm crt-glow">
-              {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-              }) : 'Loading...'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Security Settings */}
-      <div className="border-b border-border bg-card p-4">
-        <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
-          <Lock className="w-4 h-4" />
-          Security Settings
-        </h3>
-        <div className="space-y-3">
-          {!isChangingPassword ? (
-            <Button
-              onClick={() => setIsChangingPassword(true)}
-              variant="outline"
-              className="w-full font-mono text-sm"
-            >
-              <Lock className="w-4 h-4 mr-2" />
-              Change Password
-            </Button>
-          ) : (
-            <Card className="bg-background/20 border-border">
-              <CardContent className="p-4 space-y-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground font-mono">NEW PASSWORD</Label>
-                  <Input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="font-mono text-sm"
-                    placeholder="Enter new password"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground font-mono">CONFIRM PASSWORD</Label>
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="font-mono text-sm"
-                    placeholder="Confirm new password"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleChangePassword} size="sm" className="flex-1">
-                    <Save className="w-3 h-3 mr-1" />
-                    Save
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      setIsChangingPassword(false);
-                      setNewPassword('');
-                      setConfirmPassword('');
-                    }}
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex-1"
-                  >
-                    <X className="w-3 h-3 mr-1" />
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Data & Privacy */}
-      <div className="border-b border-border bg-card p-4">
-        <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
-          <Database className="w-4 h-4" />
-          Data & Privacy
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-sm font-mono text-foreground">
-                Auto-Save Settings
-              </Label>
-              <p className="text-xs text-muted-foreground font-mono">
-                Automatically save changes to your preferences
-              </p>
-            </div>
-            <Switch
-              checked={privacySettings.auto_save_enabled}
-              onCheckedChange={(checked) => {
-                setPrivacySettings(prev => ({ ...prev, auto_save_enabled: checked }));
-                // Auto-save this change immediately
-                setTimeout(() => savePrivacySettings(), 100);
-              }}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-sm font-mono text-foreground">
-                Cloud Data Backup
-              </Label>
-              <p className="text-xs text-muted-foreground font-mono">
-                Create backups of your settings and data
-              </p>
-            </div>
-            <Switch
-              checked={privacySettings.data_backup_enabled}
-              onCheckedChange={(checked) => {
-                setPrivacySettings(prev => ({ ...prev, data_backup_enabled: checked }));
-                setTimeout(() => savePrivacySettings(), 100);
-              }}
-            />
-          </div>
-
-          <div className="bg-background/20 border border-border rounded p-3 text-xs font-mono space-y-1">
-            <div className="text-muted-foreground">PRIVACY NOTICE:</div>
-            <div className="text-foreground">
-              • All data is encrypted and stored securely
-            </div>
-            <div className="text-foreground">
-              • You have full control over your data
-            </div>
-            <div className="text-foreground">
-              • Data can be exported or deleted at any time
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* System Maintenance */}
-      <div className="flex-1 p-4">
-        <h3 className="text-primary font-display mb-3 crt-glow text-sm uppercase flex items-center gap-2">
-          <Shield className="w-4 h-4" />
-          System Maintenance
-        </h3>
-        <div className="space-y-3">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" className="w-full font-mono text-sm text-destructive border-destructive/50 hover:bg-destructive/10">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Clear User Cache
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="bg-card border-border">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-primary font-mono flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" />
-                  Clear Cache Warning
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-muted-foreground font-mono">
-                  This will clear all cached data including:
-                  <br />• Temporary files and data
-                  <br />• Widget settings cache
-                  <br />• Application state
-                  <br /><br />
-                  You will remain logged in, but the app will reload to ensure a clean state.
-                  <br /><br />
-                  Are you sure you want to continue?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="font-mono">Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={handleClearCache}
-                  className="bg-destructive hover:bg-destructive/90 font-mono"
-                >
-                  Clear Cache
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          <div className="bg-background/20 border border-border rounded p-3 text-xs font-mono space-y-1">
-            <div className="text-muted-foreground">MAINTENANCE INFO:</div>
-            <div className="text-foreground">
-              • Use cache clearing if experiencing issues
-            </div>
-            <div className="text-foreground">
-              • This action is safe and reversible
-            </div>
-            <div className="text-foreground">
-              • Your account data will remain intact
-            </div>
-          </div>
-        </div>
-      </div>
-      </div>
+  // Header controls
+  const headerControls = (
+    <div className="flex items-center gap-2">
+      {!isEditing && (
+        <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
+          <Edit3 className="w-4 h-4" />
+        </Button>
+      )}
     </div>
+  );
+
+  return (
+    <StandardWidgetTemplate
+      icon={<User size={isMobile ? 16 : isTablet ? 18 : 20} />}
+      title="USER PROFILE"
+      controls={headerControls}
+    >
+      <ScrollArea className="h-full">
+        <div className={`space-y-4 ${isMobile ? 'p-3' : isTablet ? 'p-4' : 'p-6'}`}>
+          {/* User Avatar and Basic Info */}
+          <Card className="bg-card/50 border-border">
+            <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+              <div className={`flex ${isMobile ? 'flex-col items-center space-y-4' : 'items-center space-x-6'}`}>
+                <div className="relative">
+                  <div className={`${isMobile ? 'w-20 h-20' : isTablet ? 'w-24 h-24' : 'w-28 h-28'} border-2 border-primary bg-background/20 rounded-lg flex items-center justify-center overflow-hidden`}>
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className={`${isMobile ? 'w-10 h-10' : isTablet ? 'w-12 h-12' : 'w-14 h-14'} text-primary crt-glow`} />
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute -bottom-1 -right-1 h-6 w-6 p-0 rounded-full"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-3 h-3" />
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
+                
+                <div className={`flex-1 ${isMobile ? 'text-center' : ''}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={editedName}
+                          onChange={(e) => setEditedName(e.target.value)}
+                          className={`${isMobile ? 'text-lg' : isTablet ? 'text-xl' : 'text-2xl'} font-display bg-background/50`}
+                          placeholder="Enter display name"
+                        />
+                        <Button size="sm" onClick={handleSaveProfile}>
+                          <Save className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => {
+                          setIsEditing(false);
+                          setEditedName(profile?.display_name || '');
+                        }}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <h2 className={`${isMobile ? 'text-lg' : isTablet ? 'text-xl' : 'text-2xl'} font-display text-primary crt-glow`}>
+                        {profile?.display_name || 'VAULT.DWELLER'}
+                      </h2>
+                    )}
+                  </div>
+                  
+                  <div className={`space-y-1 ${isMobile ? 'text-xs' : 'text-sm'} font-mono`}>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">ID:</span>
+                      <span className="text-foreground">{user?.id.slice(-8).toUpperCase()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">EMAIL:</span>
+                      <span className="text-primary truncate">{user?.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">STATUS:</span>
+                      <span className="text-primary">ACTIVE</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Usage Statistics */}
+          <Card className="bg-card/50 border-border">
+            <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+              <h3 className={`text-primary font-display mb-3 crt-glow ${isMobile ? 'text-sm' : 'text-base'} uppercase flex items-center gap-2`}>
+                <Clock className="w-4 h-4" />
+                Usage Statistics
+              </h3>
+              <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-4'}`}>
+                <div className="border border-border bg-background/20 p-3">
+                  <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground font-mono mb-1`}>TOTAL APP USAGE</div>
+                  <div className={`text-primary font-mono ${isMobile ? 'text-sm' : 'text-sm'} crt-glow`}>
+                    {formatTotalTime(totalUsageTime)}
+                  </div>
+                </div>
+                <div className="border border-border bg-background/20 p-3">
+                  <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground font-mono mb-1`}>CURRENT SESSION</div>
+                  <div className={`text-primary font-mono ${isMobile ? 'text-sm' : 'text-sm'} crt-glow`}>{uptime}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Session Information */}
+          <Card className="bg-card/50 border-border">
+            <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+              <h3 className={`text-primary font-display mb-3 crt-glow ${isMobile ? 'text-sm' : 'text-base'} uppercase flex items-center gap-2`}>
+                <Calendar className="w-4 h-4" />
+                Session Details
+              </h3>
+              <div className="space-y-3">
+                <div className="border border-border bg-background/20 p-3">
+                  <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground font-mono mb-1`}>LOGIN TIME</div>
+                  <div className={`text-primary font-mono ${isMobile ? 'text-sm' : 'text-sm'} crt-glow`}>
+                    {loginTime.toLocaleString('en-US', { 
+                      hour12: false,
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+                <div className="border border-border bg-background/20 p-3">
+                  <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground font-mono mb-1`}>MEMBER SINCE</div>
+                  <div className={`text-primary font-mono ${isMobile ? 'text-sm' : 'text-sm'} crt-glow`}>
+                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    }) : 'Loading...'}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Security Settings */}
+          <Card className="bg-card/50 border-border">
+            <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+              <h3 className={`text-primary font-display mb-3 crt-glow ${isMobile ? 'text-sm' : 'text-base'} uppercase flex items-center gap-2`}>
+                <Lock className="w-4 h-4" />
+                Security Settings
+              </h3>
+              <div className="space-y-3">
+                {!isChangingPassword ? (
+                  <Button
+                    onClick={() => setIsChangingPassword(true)}
+                    variant="outline"
+                    className="w-full font-mono text-sm"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Change Password
+                  </Button>
+                ) : (
+                  <Card className="bg-background/20 border-border">
+                    <CardContent className="p-4 space-y-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground font-mono">NEW PASSWORD</Label>
+                        <Input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="font-mono text-sm"
+                          placeholder="Enter new password"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground font-mono">CONFIRM PASSWORD</Label>
+                        <Input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="font-mono text-sm"
+                          placeholder="Confirm new password"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={handleChangePassword} size="sm" className="flex-1">
+                          <Save className="w-3 h-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            setIsChangingPassword(false);
+                            setNewPassword('');
+                            setConfirmPassword('');
+                          }}
+                          variant="ghost" 
+                          size="sm" 
+                          className="flex-1"
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Privacy Settings */}
+          <Card className="bg-card/50 border-border">
+            <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+              <h3 className={`text-primary font-display mb-3 crt-glow ${isMobile ? 'text-sm' : 'text-base'} uppercase flex items-center gap-2`}>
+                <Shield className="w-4 h-4" />
+                Privacy Settings
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-mono text-foreground">Auto-Save Settings</Label>
+                    <div className="text-xs text-muted-foreground font-mono">
+                      Automatically save widget settings
+                    </div>
+                  </div>
+                  <Switch
+                    checked={privacySettings.auto_save_enabled}
+                    onCheckedChange={(checked) => {
+                      setPrivacySettings(prev => ({ ...prev, auto_save_enabled: checked }));
+                      savePrivacySettings();
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-mono text-foreground">Data Backup</Label>
+                    <div className="text-xs text-muted-foreground font-mono">
+                      Create backups of your data
+                    </div>
+                  </div>
+                  <Switch
+                    checked={privacySettings.data_backup_enabled}
+                    onCheckedChange={(checked) => {
+                      setPrivacySettings(prev => ({ ...prev, data_backup_enabled: checked }));
+                      savePrivacySettings();
+                    }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* System Maintenance */}
+          <Card className="bg-card/50 border-border">
+            <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+              <h3 className={`text-primary font-display mb-3 crt-glow ${isMobile ? 'text-sm' : 'text-base'} uppercase flex items-center gap-2`}>
+                <Database className="w-4 h-4" />
+                System Maintenance
+              </h3>
+              <div className="space-y-3">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="w-full font-mono text-sm">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear User Cache
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear User Cache</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action will clear all cached data except your authentication session. 
+                        The page will reload automatically after clearing the cache.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearCache}>
+                        Clear Cache
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </ScrollArea>
+    </StandardWidgetTemplate>
   );
 };
