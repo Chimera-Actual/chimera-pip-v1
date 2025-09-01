@@ -169,10 +169,10 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
                     dragOverTab === tab.id && dragOverTab !== activeTab
                       ? 'bg-primary/10 border-b-2 border-primary/50 shadow-inner'
                       : ''
-                  } touch-target flex-col items-center justify-center`}
+                  } touch-target flex items-center justify-center gap-2`}
                   title={isMobile ? tab.name : undefined}
                 >
-                  <span className={`${isMobile ? 'text-lg' : 'mr-2 text-lg'}`}>{tab.icon}</span>
+                  <span className="text-lg">{tab.icon}</span>
                   {!isMobile && (
                     <span>{tab.name}</span>
                   )}

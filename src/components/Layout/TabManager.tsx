@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { IconPicker } from '@/components/ui/icon-picker';
 import { Plus, Edit, Trash2, GripVertical, Save, X } from 'lucide-react';
 import { UserTab } from '@/hooks/useTabManager';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +33,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
   canDeleteTab,
 }) => {
   const [newTabName, setNewTabName] = useState('');
-  const [newTabIcon, setNewTabIcon] = useState('◉');
+  const [newTabIcon, setNewTabIcon] = useState('Settings');
   const [newTabFontSize, setNewTabFontSize] = useState('text-sm');
   const [editingTab, setEditingTab] = useState<UserTab | null>(null);
   const [editName, setEditName] = useState('');
@@ -40,6 +41,8 @@ export const TabManager: React.FC<TabManagerProps> = ({
   const [editFontSize, setEditFontSize] = useState('text-sm');
   const [creating, setCreating] = useState(false);
   const [draggedTab, setDraggedTab] = useState<UserTab | null>(null);
+  const [showNewTabIconPicker, setShowNewTabIconPicker] = useState(false);
+  const [showEditIconPicker, setShowEditIconPicker] = useState(false);
   const { toast } = useToast();
 
   const fontSizeOptions = [
@@ -64,7 +67,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
     try {
       await onCreateTab(newTabName.trim(), newTabIcon, newTabFontSize);
       setNewTabName('');
-      setNewTabIcon('◉');
+      setNewTabIcon('Settings');
       setNewTabFontSize('text-sm');
       toast({
         title: "Tab Created",
@@ -223,31 +226,16 @@ export const TabManager: React.FC<TabManagerProps> = ({
                   
                   <div>
                     <Label className="text-xs font-mono text-muted-foreground">ICON</Label>
-                    <div className="grid grid-cols-8 gap-1 mb-3 max-h-32 overflow-y-auto">
-                      {Object.entries(iconCategories).map(([category, icons]) => (
-                        <React.Fragment key={category}>
-                          {icons.slice(0, 8).map(icon => (
-                            <Button
-                              key={icon}
-                              variant={newTabIcon === icon ? "default" : "outline"}
-                              size="sm"
-                              className="w-8 h-8 p-0 text-xs icon-monochrome hover:scale-110 transition-transform"
-                              onClick={() => setNewTabIcon(icon)}
-                              title={`${category}: ${icon}`}
-                            >
-                              {icon}
-                            </Button>
-                          ))}
-                        </React.Fragment>
-                      ))}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowNewTabIconPicker(true)}
+                        className="flex-1 h-10 font-mono border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary"
+                        title="Click to select icon"
+                      >
+                        {newTabIcon}
+                      </Button>
                     </div>
-                    <Input
-                      value={newTabIcon}
-                      onChange={(e) => setNewTabIcon(e.target.value)}
-                      placeholder="Or type custom icon..."
-                      className="font-mono bg-background/50 border-border text-center h-10 md:h-9"
-                      maxLength={2}
-                    />
                   </div>
 
                   <div>
@@ -311,12 +299,14 @@ export const TabManager: React.FC<TabManagerProps> = ({
                             </div>
                             <div>
                               <Label className="text-xs font-mono text-muted-foreground">ICON</Label>
-                              <Input
-                                value={editIcon}
-                                onChange={(e) => setEditIcon(e.target.value)}
-                                className="font-mono bg-background/50 border-border text-center h-10 md:h-9"
-                                maxLength={2}
-                              />
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowEditIconPicker(true)}
+                                className="w-full h-10 font-mono border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary"
+                                title="Click to select icon"
+                              >
+                                {editIcon}
+                              </Button>
                             </div>
                             <div>
                               <Label className="text-xs font-mono text-muted-foreground">FONT SIZE</Label>
@@ -398,6 +388,23 @@ export const TabManager: React.FC<TabManagerProps> = ({
           </div>
           </div>
         </div>
+
+        {/* Icon Pickers */}
+        <IconPicker
+          isOpen={showNewTabIconPicker}
+          onClose={() => setShowNewTabIconPicker(false)}
+          onSelectIcon={(iconName) => setNewTabIcon(iconName)}
+          currentIcon={newTabIcon}
+          title="Select Tab Icon"
+        />
+        
+        <IconPicker
+          isOpen={showEditIconPicker}
+          onClose={() => setShowEditIconPicker(false)}
+          onSelectIcon={(iconName) => setEditIcon(iconName)}
+          currentIcon={editIcon}
+          title="Select Tab Icon"
+        />
       </DialogContent>
     </Dialog>
   );

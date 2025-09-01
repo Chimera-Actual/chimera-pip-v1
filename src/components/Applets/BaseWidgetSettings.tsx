@@ -46,7 +46,12 @@ export const BaseWidgetSettings: React.FC<BaseWidgetSettingsProps> = ({
       widgetName="Base Widget"
       widgetInstanceId={widgetInstanceId}
       initialWidgetName={localSettings.title}
+      currentIconName="Cpu"
       onWidgetNameChange={(name) => updateSetting('title', name)}
+      onIconChange={(iconName) => {
+        // Handle icon change - you can add this to settings if needed
+        console.log('Icon changed to:', iconName);
+      }}
       onSave={handleSave}
       onCancel={onClose}
     >

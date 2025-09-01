@@ -4,7 +4,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { IconPicker } from '@/components/ui/icon-picker';
 import { Edit3, Save } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface BaseWidgetSettingsTemplateProps {
@@ -24,6 +26,10 @@ interface BaseWidgetSettingsTemplateProps {
   initialWidgetName?: string;
   /** Callback when widget name changes */
   onWidgetNameChange?: (name: string) => void;
+  /** Current icon name */
+  currentIconName?: string;
+  /** Callback when icon changes */
+  onIconChange?: (iconName: string) => void;
   /** Custom className */
   className?: string;
 }
@@ -37,12 +43,14 @@ export const BaseWidgetSettingsTemplate: React.FC<BaseWidgetSettingsTemplateProp
   widgetInstanceId,
   initialWidgetName = '',
   onWidgetNameChange,
+  currentIconName,
+  onIconChange,
   className = ''
 }) => {
   const { isMobile } = useResponsive();
   const [localWidgetName, setLocalWidgetName] = useState(initialWidgetName || widgetName);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [showIconSelector, setShowIconSelector] = useState(false);
+  const [showIconPicker, setShowIconPicker] = useState(false);
 
   const handleWidgetNameChange = (value: string) => {
     setLocalWidgetName(value);
@@ -54,9 +62,11 @@ export const BaseWidgetSettingsTemplate: React.FC<BaseWidgetSettingsTemplateProp
   };
 
   const handleIconDoubleClick = () => {
-    setShowIconSelector(true);
-    // TODO: Implement icon selector modal
-    console.log('Opening icon selector...');
+    setShowIconPicker(true);
+  };
+
+  const handleIconSelect = (iconName: string) => {
+    onIconChange?.(iconName);
   };
 
   const handleNameEdit = () => {
@@ -73,6 +83,11 @@ export const BaseWidgetSettingsTemplate: React.FC<BaseWidgetSettingsTemplateProp
     setLocalWidgetName(initialWidgetName || widgetName);
   };
 
+  // Get the current icon component for display
+  const currentIcon = currentIconName && (Icons as any)[currentIconName] 
+    ? React.createElement((Icons as any)[currentIconName], { className: "w-5 h-5" })
+    : widgetIcon;
+
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className={`bg-card border border-border rounded-lg shadow-lg w-full max-w-2xl h-[80vh] flex flex-col ${className}`}>
@@ -84,7 +99,7 @@ export const BaseWidgetSettingsTemplate: React.FC<BaseWidgetSettingsTemplateProp
             onDoubleClick={handleIconDoubleClick}
             title="Double-click to change icon"
           >
-            {widgetIcon}
+            {currentIcon}
           </Button>
           
           <div className="flex-1 flex items-center gap-2">
@@ -134,6 +149,15 @@ export const BaseWidgetSettingsTemplate: React.FC<BaseWidgetSettingsTemplateProp
             Save Changes
           </Button>
         </div>
+
+        {/* Icon Picker */}
+        <IconPicker
+          isOpen={showIconPicker}
+          onClose={() => setShowIconPicker(false)}
+          onSelectIcon={handleIconSelect}
+          currentIcon={currentIconName}
+          title="Select Widget Icon"
+        />
 
         {/* Content Area with Scroll */}
         <div className="flex-1 overflow-hidden">
