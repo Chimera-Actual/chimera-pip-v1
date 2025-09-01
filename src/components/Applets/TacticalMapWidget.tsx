@@ -3,15 +3,16 @@ import { Map, Settings, Target, Navigation, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useLocation } from '@/contexts/LocationContext';
-import { useMapState, Placemark } from '@/hooks/useMapState';
 import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
-import { MapRenderer } from './MapComponents/MapRenderer';
-import { MapControls } from './MapComponents/MapControls';
-import { LocationSearch } from './MapComponents/LocationSearch';
-import { CoordinateDisplay } from './MapComponents/CoordinateDisplay';
-import { PlacemarksManager } from './MapComponents/PlacemarksManager';
 import { LocationStatusBar } from '@/components/ui/location-status-bar';
 import { MapWidgetSettings } from './Settings/MapWidgetSettings';
+
+// Temporarily disable Leaflet imports to debug
+// import { MapRenderer } from './MapComponents/MapRenderer';
+// import { MapControls } from './MapComponents/MapControls';
+// import { LocationSearch } from './MapComponents/LocationSearch';
+// import { CoordinateDisplay } from './MapComponents/CoordinateDisplay';
+// import { PlacemarksManager } from './MapComponents/PlacemarksManager';
 
 interface TacticalMapWidgetProps {
   settings?: any;
@@ -26,74 +27,14 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
   const { location, status, lastUpdate, refreshLocation } = useLocation();
   
   const [showSettings, setShowSettings] = useState(false);
-  const [bearing, setBearing] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const {
-    mapState,
-    updateCenter,
-    updateZoom,
-    updateLayer,
-    addPlacemark,
-    removePlacemark,
-    togglePlacemarkVisibility,
-    updatePlacemark,
-    searchLocations,
-    clearSearch,
-    navigateToLocation,
-    toggleFollowUser,
-    centerOnUser
-  } = useMapState(settings);
+  console.log('TacticalMapWidget: Rendering with settings:', settings);
+  console.log('TacticalMapWidget: Location data:', location);
 
-  // Update map center when user location changes and follow mode is active
-  useEffect(() => {
-    if (location && mapState.followUser) {
-      updateCenter([location.latitude, location.longitude]);
-    }
-  }, [location, mapState.followUser, updateCenter]);
-
-  // Map control handlers
-  const handleZoomIn = () => {
-    const newZoom = Math.min(mapState.zoom + 1, 18);
-    updateZoom(newZoom);
-  };
-
-  const handleZoomOut = () => {
-    const newZoom = Math.max(mapState.zoom - 1, 1);
-    updateZoom(newZoom);
-  };
-
-  const handleResetBearing = () => {
-    setBearing(0);
-  };
-
-  // Search handlers
-  const handleSearchResultClick = (result: any) => {
-    navigateToLocation(result.latitude, result.longitude, settings.autoZoom ? 15 : mapState.zoom);
-  };
-
-  const handleAddPlacemark = (result: any) => {
-    const placemark = {
-      name: result.name,
-      latitude: result.latitude,
-      longitude: result.longitude,
-      description: result.display_name
-    };
-    addPlacemark(placemark);
-    clearSearch();
-  };
-
-  // Placemark handlers
-  const handlePlacemarkNavigation = (placemark: Placemark) => {
-    navigateToLocation(placemark.latitude, placemark.longitude, settings.autoZoom ? 15 : mapState.zoom);
-  };
-
-  const handlePlacemarkClick = (placemark: Placemark) => {
-    console.log('Placemark clicked:', placemark);
-  };
-
-  // Location handlers
+  // Simplified handlers for debugging
   const handleRefreshLocation = async () => {
+    console.log('TacticalMapWidget: Refresh location called');
     setLoading(true);
     try {
       await refreshLocation();
@@ -102,17 +43,8 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
     }
   };
 
-  const handleCenterOnUser = async () => {
-    setLoading(true);
-    try {
-      await centerOnUser();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Settings handlers
   const handleSettingsChange = (newSettings: any) => {
+    console.log('TacticalMapWidget: Settings changed:', newSettings);
     onSettingsChange?.(newSettings);
     setShowSettings(false);
   };
@@ -130,20 +62,23 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
   );
 
   if (showSettings) {
+    console.log('TacticalMapWidget: Showing settings');
     return (
       <MapWidgetSettings
         settings={{
-          defaultLayer: mapState.layer,
-          placemarks: mapState.placemarks,
+          defaultLayer: 'standard',
+          placemarks: [],
           showCenterpoint: settings.showCenterpoint ?? true,
           autoZoom: settings.autoZoom ?? true,
-          followUser: mapState.followUser
+          followUser: false
         }}
         onSettingsChange={handleSettingsChange}
         onClose={() => setShowSettings(false)}
       />
     );
   }
+
+  console.log('TacticalMapWidget: Rendering main UI');
 
   return (
     <StandardWidgetTemplate
@@ -182,92 +117,23 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
           </div>
         )}
 
-        {/* Search and Controls Bar */}
-        <div className={`flex-shrink-0 bg-card/50 border-b border-border ${isMobile ? 'p-3' : 'p-4'}`}>
-          <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
-            {/* Search Bar */}
-            <LocationSearch
-              searchQuery={mapState.activeSearch}
-              searchResults={mapState.searchResults}
-              isSearching={mapState.isSearching}
-              onSearchChange={searchLocations}
-              onSearchResultClick={handleSearchResultClick}
-              onAddPlacemark={handleAddPlacemark}
-              onClearSearch={clearSearch}
-              className="flex-1 max-w-md"
-            />
-
-            {/* Action Buttons */}
-            <div className={`flex gap-2 ${isMobile ? 'flex-wrap' : ''}`}>
-              <Button
-                onClick={toggleFollowUser}
-                variant={mapState.followUser ? "default" : "outline"}
-                size="sm"
-                className={`font-mono retro-button ${isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'}`}
-              >
-                {mapState.followUser ? '🎯 FOLLOW' : '📍 MANUAL'}
-              </Button>
-              <Button
-                onClick={handleCenterOnUser}
-                disabled={loading}
-                variant="ghost"
-                size="sm"
-                className={`font-mono bg-background/50 hover:bg-primary/20 retro-button ${isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'}`}
-              >
-                {loading ? 'GPS...' : '📍 LOCATE'}
-              </Button>
+        {/* Temporary Map Placeholder */}
+        <div className="flex-1 bg-background relative">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <Map size={64} className="mx-auto text-primary" />
+              <div className="font-mono text-primary">
+                ◈ TACTICAL MAP SYSTEM INITIALIZING...
+              </div>
+              <div className="text-sm text-muted-foreground font-mono">
+                Map components temporarily disabled for debugging
+                <br />
+                Location: {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'No location'}
+                <br />
+                Status: {status}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Map Container */}
-        <div className="flex-1 relative bg-background min-h-0">
-          <MapRenderer
-            center={mapState.center}
-            zoom={mapState.zoom}
-            layer={mapState.layer}
-            placemarks={mapState.placemarks}
-            userLocation={location}
-            showCenterpoint={settings.showCenterpoint ?? true}
-            followUser={mapState.followUser}
-            onCenterChange={updateCenter}
-            onZoomChange={updateZoom}
-            onPlacemarkClick={handlePlacemarkClick}
-            className="w-full h-full"
-          />
-
-          {/* Map Controls - Right Side */}
-          <div className={`absolute ${isMobile ? 'top-4 right-4' : 'top-6 right-6'} z-10`}>
-            <MapControls
-              zoom={mapState.zoom}
-              layer={mapState.layer}
-              bearing={bearing}
-              onZoomIn={handleZoomIn}
-              onZoomOut={handleZoomOut}
-              onLayerChange={updateLayer}
-              onResetBearing={handleResetBearing}
-            />
-          </div>
-
-          {/* Coordinate Display - Bottom Left */}
-          <div className={`absolute ${isMobile ? 'bottom-4 left-4' : 'bottom-6 left-6'} z-10`}>
-            <CoordinateDisplay
-              center={mapState.center}
-              userLocation={location}
-            />
-          </div>
-
-          {/* Placemarks Manager - Bottom Right (Desktop Only) */}
-          {!isMobile && mapState.placemarks.length > 0 && (
-            <div className="absolute bottom-6 right-48 z-10 w-64">
-              <PlacemarksManager
-                placemarks={mapState.placemarks}
-                onPlacemarkVisibilityToggle={togglePlacemarkVisibility}
-                onPlacemarkDelete={removePlacemark}
-                onNavigateToPlacemark={handlePlacemarkNavigation}
-              />
-            </div>
-          )}
         </div>
       </div>
     </StandardWidgetTemplate>
