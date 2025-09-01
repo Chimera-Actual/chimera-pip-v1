@@ -1,6 +1,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileText, Settings, Grid3x3 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
 
 interface TextDisplayWidgetProps {
   settings?: Record<string, any>;
@@ -179,12 +182,27 @@ export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, 
     );
   };
 
+  const headerControls = (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+        <Grid3x3 className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+        <Settings className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <StandardWidgetTemplate
+      icon={<FileText className="h-5 w-5" />}
+      title={widgetName || 'TEXT DISPLAY'}
+      controls={headerControls}
+    >
       {/* Content Display */}
       <div className={`flex-1 overflow-auto ${isMobile ? 'p-2' : 'p-4'}`}>
         {getLayoutGrid()}
       </div>
-    </div>
+    </StandardWidgetTemplate>
   );
 };

@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Clock, Globe, Settings, Plus, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
 
 interface WorldClock {
   id: string;
@@ -230,19 +231,52 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
     }
   };
 
-  return (
-    <div className="h-full flex flex-col bg-card border border-border overflow-hidden">
-      {/* Header Controls */}
-      <div className="flex-shrink-0 border-b border-border bg-card p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-primary font-mono text-lg uppercase tracking-wider crt-glow">
-              ◐ {widgetName || 'CHRONOMETER'}
-            </span>
+  const headerControls = (
+    <div className="flex items-center gap-2">
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Globe className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add World Clock</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Select value={newTimezone} onValueChange={setNewTimezone}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMON_TIMEZONES.map(tz => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end gap-2">
+              <Button onClick={addWorldClock} disabled={!newTimezone || worldClocks.length >= 6}>
+                <Plus className="h-4 w-4" />
+                Add Clock
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+        <Settings className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 
+  return (
+    <StandardWidgetTemplate
+      icon={<Clock className="h-5 w-5" />}
+      title={widgetName || 'CHRONOMETER'}
+      controls={headerControls}
+    >
       {/* Main Clock Area - Digital Only */}
       <div className="flex-1 p-4 flex flex-col justify-center">
         {/* Large Digital Clock Display */}
@@ -268,10 +302,10 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
       </div>
 
       {/* World Clocks Strip */}
-      <div className="flex-shrink-0 border-b border-border bg-background/50 p-3">
+      <div className="flex-shrink-0 border-t border-border bg-background/50 p-3">
         <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
           {worldClocks.map(clock => (
-            <div key={clock.id} className="bg-background/20 border-2 border-primary/30 rounded p-3 text-center backdrop-blur-sm">
+            <div key={clock.id} className="bg-background/20 border-2 border-primary/30 rounded p-3 text-center backdrop-blur-sm relative group">
               <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1">{clock.label}</div>
               <div className="font-['VT323'] text-primary text-lg crt-glow">
                 {formatTime(currentTime, clock.timezone, is24Hour)}
@@ -279,11 +313,21 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
               <div className="text-xs text-muted-foreground font-mono mt-1 opacity-75">
                 {formatDate(currentTime, clock.timezone)}
               </div>
+              {worldClocks.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive text-destructive-foreground rounded-full"
+                  onClick={() => removeWorldClock(clock.id)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </StandardWidgetTemplate>
   );
 };
 
