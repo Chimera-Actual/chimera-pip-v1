@@ -2,6 +2,7 @@ import React from 'react';
 import { Cpu } from 'lucide-react';
 import { BaseWidgetTemplate } from '@/components/Layout/BaseWidgetTemplate';
 import { BaseWidgetProps } from '@/types/widget';
+import { BaseWidgetSettings } from './Settings/BaseWidgetSettings';
 import { useResponsive } from '@/hooks/useResponsive';
 
 const BaseWidget: React.FC<BaseWidgetProps> = ({
@@ -23,6 +24,7 @@ const BaseWidget: React.FC<BaseWidgetProps> = ({
       settings={settings}
       onSettingsChange={onSettingsChange}
       widgetName={widgetName}
+      settingsComponent={BaseWidgetSettings}
     >
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center space-y-4 max-w-md">
