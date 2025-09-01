@@ -24,13 +24,13 @@ interface AudioPlayerProps {
     volume?: number;
     showWaveform?: boolean;
   };
-  onSettingsUpdate?: (settings: any) => void;
+  onSettingsChange?: (settings: any) => void;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   widgetInstanceId,
   settings = {},
-  onSettingsUpdate
+  onSettingsChange
 }) => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -301,8 +301,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       audioRef.current.volume = newVolume / 100;
     }
     saveVolumeSettings(newVolume);
-    if (onSettingsUpdate) {
-      onSettingsUpdate({ ...settings, volume: newVolume });
+    if (onSettingsChange) {
+      onSettingsChange({ ...settings, volume: newVolume });
     }
   };
 

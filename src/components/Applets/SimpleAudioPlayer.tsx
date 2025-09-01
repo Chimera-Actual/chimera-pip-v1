@@ -26,13 +26,13 @@ interface SimpleAudioPlayerProps {
     waveformSize?: string;
     showWaveform?: boolean;
   };
-  onSettingsUpdate?: (settings: any) => void;
+  onSettingsChange?: (settings: any) => void;
 }
 
 export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({ 
   widgetInstanceId, 
   settings = {},
-  onSettingsUpdate 
+  onSettingsChange
 }) => {
   const { user } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -201,15 +201,15 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
     }
     
     // Update settings
-    if (onSettingsUpdate) {
-      onSettingsUpdate({ ...settings, volume: vol });
+    if (onSettingsChange) {
+      onSettingsChange({ ...settings, volume: vol });
     }
   };
 
   const handleWaveformSizeChange = (size: string) => {
     setWaveformSize(size);
-    if (onSettingsUpdate) {
-      onSettingsUpdate({ ...settings, waveformSize: size });
+    if (onSettingsChange) {
+      onSettingsChange({ ...settings, waveformSize: size });
     }
   };
 

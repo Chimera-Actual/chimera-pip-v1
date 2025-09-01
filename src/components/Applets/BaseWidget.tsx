@@ -2,7 +2,7 @@ import React from 'react';
 import { Cpu } from 'lucide-react';
 import { BaseWidgetTemplate } from '@/components/Layout/BaseWidgetTemplate';
 import { BaseWidgetProps } from '@/types/widget';
-import { BaseWidgetSettings } from './Settings/BaseWidgetSettings';
+import { BaseWidgetSettings } from './BaseWidgetSettings';
 import { useResponsive } from '@/hooks/useResponsive';
 
 const BaseWidget: React.FC<BaseWidgetProps> = ({

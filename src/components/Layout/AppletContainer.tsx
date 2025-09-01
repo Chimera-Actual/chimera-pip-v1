@@ -13,7 +13,6 @@ import {
 import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
 import { WidgetLibrary } from './WidgetLibrary';
-import { WidgetSettings } from './WidgetSettings';
 import { useToast } from '@/hooks/use-toast';
 
 interface AppletContainerProps {
@@ -49,8 +48,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   
   const { toast } = useToast();
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
-  const [showWidgetSettings, setShowWidgetSettings] = useState(false);
-  const [selectedWidgetForSettings, setSelectedWidgetForSettings] = useState<UserWidgetInstance | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
 
@@ -117,16 +114,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
         variant: "destructive"
       });
     }
-  };
-
-  const handleOpenWidgetSettings = (widget: UserWidgetInstance) => {
-    setSelectedWidgetForSettings(widget);
-    setShowWidgetSettings(true);
-  };
-
-  const handleCloseWidgetSettings = () => {
-    setShowWidgetSettings(false);
-    setSelectedWidgetForSettings(null);
   };
 
   const handleDragStart = (e: React.DragEvent, widget: UserWidgetInstance) => {
@@ -286,7 +273,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
           settings={widgetSettings} 
           widgetName={widgetName}
           widgetInstanceId={activeWidget.id}
-          onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeWidget.id, newSettings)}
+          onSettingsChange={(newSettings: Record<string, any>) => updateWidgetSettings(activeWidget.id, newSettings)}
         />
       </div>
     );
@@ -466,16 +453,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
         onAddTag={addTagToWidget}
         onRemoveTag={removeTagFromWidget}
         allUserTags={getAllUserTags()}
-      />
-
-      {/* Widget Settings Dialog */}
-      <WidgetSettings
-        isOpen={showWidgetSettings}
-        onClose={handleCloseWidgetSettings}
-        widget={selectedWidgetForSettings}
-        onSettingsUpdate={updateWidgetSettings}
-        onWidgetNameUpdate={updateWidgetName}
-        currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.id) : {}}
       />
     </div>
   );
