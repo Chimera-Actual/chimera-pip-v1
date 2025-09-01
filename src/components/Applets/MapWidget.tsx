@@ -178,23 +178,41 @@ const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInsta
       <StandardWidgetTemplate
         icon={<Map size={isMobile ? 16 : 20} />}
         title="TACTICAL MAP SYSTEM"
-        controls={settingsGear}
-      >
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Controls Bar */}
-          <div className={`flex-shrink-0 bg-card/50 border-b border-border ${isMobile ? 'p-3' : 'p-4'}`}>
-            {/* Location Status Bar - Top Right */}
-            <div className={`absolute z-20 ${isMobile ? 'top-2 right-2' : 'top-2 right-4'}`}>
+        controls={
+          <div className="flex items-center gap-2">
+            {/* Location Status - Integrated into header controls */}
+            <div className="hidden md:block">
               <LocationStatusBar
                 location={contextLocation}
                 status={status}
                 lastUpdate={lastUpdate || undefined}
                 onRefresh={refreshLocation}
-                compact={!isMobile}
+                compact={true}
+                loading={loading}
+                className="border border-border"
+              />
+            </div>
+            {settingsGear}
+          </div>
+        }
+      >
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile Location Status - Above controls */}
+          {isMobile && (
+            <div className="flex-shrink-0 bg-card/30 border-b border-border p-3">
+              <LocationStatusBar
+                location={contextLocation}
+                status={status}
+                lastUpdate={lastUpdate || undefined}
+                onRefresh={refreshLocation}
+                compact={false}
                 loading={loading}
               />
             </div>
-            
+          )}
+          
+          {/* Controls Bar */}
+          <div className={`flex-shrink-0 bg-card/50 border-b border-border ${isMobile ? 'p-3' : 'p-4'}`}>
             <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
               {/* Search Bar */}
               <div className="relative flex-1 max-w-md">
@@ -235,7 +253,7 @@ const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInsta
                   onClick={toggleAutoFollow}
                   variant={autoFollow ? "default" : "outline"}
                   size="sm"
-                  className={`font-mono ${isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'}`}
+                  className={`font-mono retro-button ${isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'}`}
                 >
                   {autoFollow ? '🎯 FOLLOW' : '📍 MANUAL'}
                 </Button>
@@ -244,7 +262,7 @@ const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInsta
                   disabled={loading}
                   variant="ghost"
                   size="sm"
-                  className={`font-mono bg-background/50 hover:bg-primary/20 ${isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'}`}
+                  className={`font-mono bg-background/50 hover:bg-primary/20 retro-button ${isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'}`}
                 >
                   {loading ? 'GPS...' : '📍 LOCATE'}
                 </Button>
@@ -253,17 +271,19 @@ const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInsta
           </div>
           
           {/* Map Area */}
-          <div className="flex-1 relative w-full overflow-hidden">
+          <div className="flex-1 relative bg-background min-h-0">
             <iframe
               key={`${activeLayer}-${displayLocation.latitude}-${displayLocation.longitude}`}
               src={mapUrl}
               className="absolute inset-0 w-full h-full border-0"
               style={{ 
                 filter: 'sepia(1) hue-rotate(85deg) saturate(0.8) brightness(0.7) contrast(1.3)',
-                background: 'hsl(var(--background))'
+                background: 'hsl(var(--background))',
+                minHeight: '300px'
               }}
               title="Tactical Map"
               allowFullScreen
+              loading="lazy"
             />
             
             {/* Overlay UI Elements */}
