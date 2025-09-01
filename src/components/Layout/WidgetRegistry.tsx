@@ -5,6 +5,7 @@ import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
 
 // Base widget - the only widget in the standardized system
 const BaseWidget = React.lazy(() => import('@/components/Applets/BaseWidget'));
+const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget'));
 
 // Create wrapped components with suspense and optimized skeletons
 const createLazyWidget = (
@@ -20,6 +21,7 @@ const createLazyWidget = (
 
 export const WIDGET_COMPONENTS = {
   BaseWidget: createLazyWidget(BaseWidget, 'card'),
+  MapWidget: createLazyWidget(MapWidget, 'card'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
