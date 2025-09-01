@@ -498,9 +498,12 @@ All colors MUST be HSL - Monochrome Green Theme
       animation: none;
       opacity: 1;
       transform: scale(1);
+    }
+  }
+
   /* Retro button styling for consistency */
   .retro-button {
-    @apply transition-all duration-200 hover:shadow-lg;
+    @apply transition-all duration-200 hover:shadow-lg rounded-none border-2 font-bold tracking-wider;
     border: 1px solid hsl(var(--border));
     background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--background)));
   }
@@ -509,7 +512,6 @@ All colors MUST be HSL - Monochrome Green Theme
     background: linear-gradient(180deg, hsl(var(--accent) / 0.2), hsl(var(--card)));
     box-shadow: 0 0 8px hsl(var(--primary) / 0.3);
   }
-}
 
   /* High contrast mode optimizations */
   @media (prefers-contrast: high) {
@@ -716,10 +718,5 @@ All colors MUST be HSL - Monochrome Green Theme
   .no-effects .gpu-accelerated {
     transform: none;
     backface-visibility: visible;
-  }
-  
-  /* Retro button styling for settings */
-  .retro-button {
-    @apply rounded-none border-2 font-bold tracking-wider;
   }
 }
