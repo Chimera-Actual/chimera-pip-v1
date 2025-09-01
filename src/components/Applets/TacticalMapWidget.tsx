@@ -6,6 +6,7 @@ import { LocationStatusBar } from '@/components/ui/location-status-bar';
 import { useMapboxState } from '@/hooks/useMapboxState';
 import { useLocation } from '@/contexts/LocationContext';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useLocationStatus } from '@/hooks/useLocationStatus';
 import { MapboxRenderer } from './MapComponents/MapboxRenderer';
 import { MapboxControls } from './MapComponents/MapboxControls';
 import { MapboxLocationSearch } from './MapComponents/MapboxLocationSearch';
@@ -25,8 +26,9 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const { location } = useLocation();
+  const { location, getCurrentLocation } = useLocation();
   const { isMobile } = useResponsive();
+  const { status: locationStatus } = useLocationStatus();
 
   const {
     mapState,
@@ -34,6 +36,7 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
     updateZoom,
     updateLayer,
     updateBearing,
+    addPlacemark,
     navigateToLocation,
     searchLocations,
     clearSearch,
@@ -52,6 +55,16 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
     };
     fetchMapboxToken();
   }, []);
+
+  const handleAddPlacemark = (result: any) => {
+    addPlacemark({
+      name: result.name,
+      latitude: result.latitude,
+      longitude: result.longitude,
+      description: result.display_name
+    });
+    clearSearch();
+  };
 
   if (showSettings) {
     return (
@@ -83,7 +96,12 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
     >
       <div className="relative flex flex-col h-full overflow-hidden">
         {!isMobile && (
-          <LocationStatusBar className="flex-shrink-0 bg-card/50 backdrop-blur-sm" />
+          <LocationStatusBar 
+            location={location}
+            status={locationStatus}
+            onRefresh={async () => { await getCurrentLocation(); }}
+            className="flex-shrink-0 bg-card/50 backdrop-blur-sm" 
+          />
         )}
 
         <div className="absolute top-4 left-4 right-20 z-10">
@@ -93,7 +111,7 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
             isSearching={mapState.isSearching}
             onSearchChange={(query) => searchLocations(query, mapboxToken || undefined)}
             onResultSelect={(result) => navigateToLocation(result.longitude, result.latitude, 15)}
-            onAddPlacemark={(result) => console.log('Add placemark:', result)}
+            onAddPlacemark={handleAddPlacemark}
             onClear={clearSearch}
           />
         </div>
