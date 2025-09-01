@@ -176,7 +176,19 @@ export const TabManager: React.FC<TabManagerProps> = ({
     setDraggedTab(null);
   };
 
-  const commonIcons = ['◉', '◈', '◎', '◐', '◔', '☰', '⚙', '✉', '♫', '⌘', '🚀', '⭐', '🔧', '📊'];
+  // Expanded icon selection with categories
+  const iconCategories = {
+    system: ['⚙', '◉', '◈', '◎', '◐', '◔', '☰', '⌘', '⚡', '🔋', '💾', '🖥', '📡', '🔗'],
+    media: ['♫', '🎵', '🎧', '📷', '🎬', '🎮', '📺', '📻', '🔊', '🔇', '⏯', '⏸', '⏹', '⏪'],
+    communication: ['✉', '📧', '💬', '📞', '📱', '🌐', '👥', '📢', '📣', '📨', '📩', '📫', '📬', '📭'],
+    productivity: ['📊', '📈', '📉', '📋', '📝', '📄', '📁', '📂', '🗃', '🗂', '📆', '📅', '⏰', '⏲'],
+    navigation: ['🗺', '🧭', '📍', '🎯', '🔍', '🔎', '👁', '❤', '⭐', '🔖', '🏠', '📐', '🛠', '🔧'],
+    weather: ['☀', '⛅', '☁', '🌧', '⛈', '❄', '🌡', '💨', '🌈', '⚡', '🔥', '💧', '🌊', '🌀'],
+    symbols: ['🚀', '✨', '💎', '🎪', '🎨', '🎭', '🎯', '🎲', '🧩', '🔮', '💡', '🔬', '🔭', '⚗']
+  };
+  
+  const allIcons = Object.values(iconCategories).flat();
+  const commonIcons = allIcons;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -211,22 +223,28 @@ export const TabManager: React.FC<TabManagerProps> = ({
                   
                   <div>
                     <Label className="text-xs font-mono text-muted-foreground">ICON</Label>
-                    <div className="flex gap-1 flex-wrap mb-2">
-                      {commonIcons.slice(0, 8).map(icon => (
-                        <Button
-                          key={icon}
-                          variant={newTabIcon === icon ? "default" : "outline"}
-                          size="sm"
-                          className="w-9 h-9 md:w-8 md:h-8 p-0 text-sm touch-target"
-                          onClick={() => setNewTabIcon(icon)}
-                        >
-                          {icon}
-                        </Button>
+                    <div className="grid grid-cols-8 gap-1 mb-3 max-h-32 overflow-y-auto">
+                      {Object.entries(iconCategories).map(([category, icons]) => (
+                        <React.Fragment key={category}>
+                          {icons.slice(0, 8).map(icon => (
+                            <Button
+                              key={icon}
+                              variant={newTabIcon === icon ? "default" : "outline"}
+                              size="sm"
+                              className="w-8 h-8 p-0 text-xs icon-monochrome hover:scale-110 transition-transform"
+                              onClick={() => setNewTabIcon(icon)}
+                              title={`${category}: ${icon}`}
+                            >
+                              {icon}
+                            </Button>
+                          ))}
+                        </React.Fragment>
                       ))}
                     </div>
                     <Input
                       value={newTabIcon}
                       onChange={(e) => setNewTabIcon(e.target.value)}
+                      placeholder="Or type custom icon..."
                       className="font-mono bg-background/50 border-border text-center h-10 md:h-9"
                       maxLength={2}
                     />

@@ -29,8 +29,8 @@ export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({
     layout: 'card',
     borderStyle: 'solid',
     borderColor: 'border',
-    isMonochrome: false,
-    monochromeColor: '#000000'
+    isMonochrome: true,
+    monochromeColor: 'hsl(var(--primary))'
   }];
 
   const getBorderClasses = (container: any) => {
@@ -76,7 +76,9 @@ export const ImageDisplayWidget: React.FC<ImageDisplayWidgetProps> = ({
         <img
           src={container.imageUrl}
           alt={container.title}
-          className="w-full h-auto max-h-64 object-cover rounded transition-transform group-hover:scale-105"
+          className={`w-full h-auto max-h-64 object-cover rounded transition-transform group-hover:scale-105 ${
+            container.isMonochrome ? 'image-monochrome' : ''
+          }`}
           onLoad={() => console.log('Widget image loaded successfully:', container.imageUrl)}
           onError={(e) => {
             console.error('Widget image failed to load:', container.imageUrl);
