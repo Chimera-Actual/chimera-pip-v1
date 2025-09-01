@@ -44,6 +44,9 @@ export const BaseWidgetSettings: React.FC<BaseWidgetSettingsProps> = ({
     <BaseWidgetSettingsTemplate
       widgetIcon={<Cpu className="w-4 h-4" />}
       widgetName="Base Widget"
+      widgetInstanceId={widgetInstanceId}
+      initialWidgetName={localSettings.title}
+      onWidgetNameChange={(name) => updateSetting('title', name)}
       onSave={handleSave}
       onCancel={onClose}
     >
