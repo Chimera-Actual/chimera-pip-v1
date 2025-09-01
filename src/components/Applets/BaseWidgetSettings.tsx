@@ -51,20 +51,6 @@ export const BaseWidgetSettings: React.FC<BaseWidgetSettingsProps> = ({
       onCancel={onClose}
     >
       <div className="space-y-6">
-        {/* Widget Title */}
-        <div className="space-y-2">
-          <Label htmlFor="title" className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
-            Widget Title
-          </Label>
-          <Input
-            id="title"
-            value={localSettings.title}
-            onChange={(e) => updateSetting('title', e.target.value)}
-            className="font-mono"
-            placeholder="Enter widget title"
-          />
-        </div>
-
         {/* Message */}
         <div className="space-y-2">
           <Label htmlFor="message" className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
