@@ -200,28 +200,30 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-card">
-      {/* Header - Widget title and volume control */}
-      <div className="flex-shrink-0 h-16 bg-background/50 border-b border-border px-4 flex items-center justify-between">
-        <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
-          🎵 AUDIO PLAYER
-        </span>
-        <div className="flex items-center gap-2">
-          <Volume2 size={16} className="text-muted-foreground" />
-          <Slider
-            value={volume}
-            onValueChange={(newValue) => {
-              console.log('Volume slider moved to:', newValue);
-              setVolume(newValue);
-            }}
-            max={100}
-            step={1}
-            className="w-20"
-          />
+    <div className="w-full h-full flex flex-col bg-background">
+      {/* Header - Widget Title & Volume Control (TOP) */}
+      <div className="flex-shrink-0 bg-background/50 border-b border-border p-4">
+        <div className="flex items-center justify-between">
+          <Label className="text-lg font-mono text-primary font-bold uppercase tracking-wider">
+            🎵 AUDIO PLAYER
+          </Label>
+          <div className="flex items-center gap-2">
+            <Volume2 size={16} className="text-muted-foreground" />
+            <Slider
+              value={volume}
+              onValueChange={setVolume}
+              max={100}
+              step={1}
+              className="w-20"
+            />
+            <span className="text-xs font-mono text-muted-foreground w-8">
+              {Math.round(volume[0] || 0)}%
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Waveform component */}
+      {/* Waveform Section (SECOND) */}
       {settings?.showWaveform !== false && (
         <div className={`flex-shrink-0 bg-background/20 border-b border-border relative ${
           currentWaveformSize === 'small' ? 'h-20' :
@@ -268,7 +270,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
         </div>
       )}
 
-      {/* Current Track & Controls - Consolidated */}
+      {/* Current Track & Controls */}
       <div className="flex-shrink-0 bg-background/30 border-b border-border p-3">
         <div className="text-center space-y-3">
           {/* Track Info */}
@@ -338,7 +340,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
         </div>
       </div>
 
-      {/* Playlist with scroll bar */}
+      {/* Playlist Section (THIRD) */}
       <div className="flex-1 overflow-hidden">
         <div className="p-4 pb-2">
           <Label className="text-sm font-mono text-primary uppercase">
@@ -380,7 +382,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
         </ScrollArea>
       </div>
 
-      {/* Upload Audio Files section at bottom */}
+      {/* Upload Section (BOTTOM) */}
       <div className="flex-shrink-0 bg-background/20 border-t border-border p-4">
         <div className="space-y-2">
           <Label className="text-xs font-mono text-primary uppercase">Upload Audio Files</Label>
