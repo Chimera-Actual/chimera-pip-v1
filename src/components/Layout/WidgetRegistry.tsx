@@ -7,8 +7,6 @@ const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget').then
 const WeatherWidget = React.lazy(() => import('@/components/Applets/WeatherWidget').then(m => ({ default: m.WeatherWidget })));
 const ClockWidget = React.lazy(() => import('@/components/Applets/ClockWidget'));
 const UserInfoWidget = React.lazy(() => import('@/components/Applets/UserInfoWidget').then(m => ({ default: m.UserInfoWidget })));
-const EmailWidget = React.lazy(() => import('@/components/Applets/EmailWidget').then(m => ({ default: m.EmailWidget })));
-const CalendarWidget = React.lazy(() => import('@/components/Applets/CalendarWidget').then(m => ({ default: m.CalendarWidget })));
 const BrowserWidget = React.lazy(() => import('@/components/Applets/BrowserWidget').then(m => ({ default: m.BrowserWidget })));
 const SystemSettingsWidget = React.lazy(() => import('@/components/Applets/SystemSettingsWidget').then(m => ({ default: m.SystemSettingsWidget })));
 const CustomAssistantWidget = React.lazy(() => import('@/components/Applets/CustomAssistantWidget').then(m => ({ default: m.CustomAssistantWidget })));
@@ -34,8 +32,6 @@ export const WIDGET_COMPONENTS = {
   WeatherWidget: createLazyWidget(WeatherWidget, 'chart'),
   ClockWidget: createLazyWidget(ClockWidget, 'minimal'),
   UserInfoWidget: createLazyWidget(UserInfoWidget, 'card'),
-  EmailWidget: createLazyWidget(EmailWidget, 'list'),
-  CalendarWidget: createLazyWidget(CalendarWidget, 'list'),
   BrowserWidget: createLazyWidget(BrowserWidget, 'card'),
   SystemSettingsWidget: createLazyWidget(SystemSettingsWidget, 'list'),
   CustomAssistantWidget: createLazyWidget(CustomAssistantWidget, 'card'),
