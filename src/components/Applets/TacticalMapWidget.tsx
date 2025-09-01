@@ -5,10 +5,11 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { useLocation } from '@/contexts/LocationContext';
 import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
 import { LocationStatusBar } from '@/components/ui/location-status-bar';
+import { useMapState } from '@/hooks/useMapState';
 import { MapWidgetSettings } from './Settings/MapWidgetSettings';
 
-// Temporarily disable Leaflet imports to debug
-// import { MapRenderer } from './MapComponents/MapRenderer';
+// Gradually re-enable components to debug
+import { MapRenderer } from './MapComponents/MapRenderer';
 // import { MapControls } from './MapComponents/MapControls';
 // import { LocationSearch } from './MapComponents/LocationSearch';
 // import { CoordinateDisplay } from './MapComponents/CoordinateDisplay';
@@ -28,6 +29,23 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
   
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Initialize map state
+  const {
+    mapState,
+    updateCenter,
+    updateZoom,
+    updateLayer,
+    addPlacemark,
+    removePlacemark,
+    togglePlacemarkVisibility,
+    updatePlacemark,
+    searchLocations,
+    clearSearch,
+    navigateToLocation,
+    toggleFollowUser,
+    centerOnUser
+  } = useMapState(settings);
 
   console.log('TacticalMapWidget: Rendering with settings:', settings);
   console.log('TacticalMapWidget: Location data:', location);
@@ -117,23 +135,19 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
           </div>
         )}
 
-        {/* Temporary Map Placeholder */}
+        {/* Map Renderer - Testing Phase 1 */}
         <div className="flex-1 bg-background relative">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <Map size={64} className="mx-auto text-primary" />
-              <div className="font-mono text-primary">
-                ◈ TACTICAL MAP SYSTEM INITIALIZING...
-              </div>
-              <div className="text-sm text-muted-foreground font-mono">
-                Map components temporarily disabled for debugging
-                <br />
-                Location: {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'No location'}
-                <br />
-                Status: {status}
-              </div>
-            </div>
-          </div>
+          <MapRenderer
+            center={mapState.center}
+            zoom={mapState.zoom}
+            layer={mapState.layer}
+            placemarks={mapState.placemarks}
+            userLocation={location}
+            followUser={mapState.followUser}
+            showCenterpoint={mapState.showCenterpoint}
+            onCenterChange={updateCenter}
+            onZoomChange={updateZoom}
+          />
         </div>
       </div>
     </StandardWidgetTemplate>
