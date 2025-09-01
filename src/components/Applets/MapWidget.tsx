@@ -75,12 +75,28 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
 
   const handleManualTokenSubmit = () => {
     if (manualToken.trim()) {
+      // Validate token format
+      if (!manualToken.trim().startsWith('pk.')) {
+        alert('Invalid token! Please use a PUBLIC token that starts with "pk." not a secret token that starts with "sk."');
+        return;
+      }
       setMapboxToken(manualToken.trim());
       localStorage.setItem('mapbox_token', manualToken.trim());
       setTokenInputMode(false);
       setManualToken('');
     }
   };
+
+  // Add token validation for any existing token
+  useEffect(() => {
+    if (mapboxToken && !mapboxToken.startsWith('pk.')) {
+      console.error('Invalid token detected! Token must start with "pk." not "sk."');
+      // Clear invalid token and show input mode
+      setMapboxToken('');
+      localStorage.removeItem('mapbox_token');
+      setTokenInputMode(true);
+    }
+  }, [mapboxToken]);
 
   // Initialize map
   useEffect(() => {
@@ -214,20 +230,24 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
             <div className="text-4xl opacity-50">🗺️</div>
             {tokenInputMode ? (
               <div className="space-y-4">
-                <div className="text-sm text-muted-foreground font-mono">
-                  Please enter your Mapbox public token:
+                <div className="text-sm text-red-400 font-mono mb-2">
+                  ❌ Invalid Token Detected!
+                </div>
+                <div className="text-xs text-muted-foreground font-mono mb-4">
+                  You need a <strong>PUBLIC</strong> token that starts with <code>pk.</code><br/>
+                  NOT a secret token that starts with <code>sk.</code>
                 </div>
                 <div className="space-y-2">
                   <Input
                     value={manualToken}
                     onChange={(e) => setManualToken(e.target.value)}
-                    placeholder="pk.eyJ1Ijoi..."
+                    placeholder="pk.eyJ1Ijoi... (must start with pk.)"
                     className="font-mono text-xs"
                   />
                   <div className="flex gap-2">
                     <Button 
                       onClick={handleManualTokenSubmit}
-                      disabled={!manualToken.trim()}
+                      disabled={!manualToken.trim() || !manualToken.startsWith('pk.')}
                       className="font-mono text-xs"
                       size="sm"
                     >
@@ -239,12 +259,12 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
                       className="font-mono text-xs"
                       size="sm"
                     >
-                      Get Token
+                      Get Public Token
                     </Button>
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground/70 font-mono">
-                  Get your free public token from mapbox.com
+                <div className="text-xs text-amber-400 font-mono border border-amber-400/20 p-2 rounded">
+                  <strong>Important:</strong> Use the "Default public token" or create a new PUBLIC token (not secret)
                 </div>
               </div>
             ) : (
