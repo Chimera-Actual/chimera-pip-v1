@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Map, Settings, Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
-import { LocationStatusInline } from '@/components/ui/location-status-inline';
 import { useMapboxState } from '@/hooks/useMapboxState';
 import { useLocation } from '@/contexts/LocationContext';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -11,6 +10,7 @@ import { MapboxRenderer } from './MapComponents/MapboxRenderer';
 import { MapboxControls } from './MapComponents/MapboxControls';
 import { MapboxLocationSearch } from './MapComponents/MapboxLocationSearch';
 import { MapboxLayerSelector } from './MapComponents/MapboxLayerSelector';
+import { TacticalMapControls } from './MapComponents/TacticalMapControls';
 import { MapWidgetSettings } from './Settings/MapWidgetSettings';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,7 +39,9 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
     navigateToLocation,
     searchLocations,
     clearSearch,
-    getMapStyle
+    getMapStyle,
+    toggleFollowUser,
+    centerOnUser
   } = useMapboxState(settings);
 
   // Fetch Mapbox token
@@ -82,24 +84,36 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
     <StandardWidgetTemplate
       icon={<Map size={16} />}
       title="TACTICAL MAP"
-      statusDisplay={
-        <LocationStatusInline
+      controls={
+        <TacticalMapControls
           location={location}
           status={locationStatus}
+          followUser={mapState.followUser}
+          onSettingsClick={() => setShowSettings(true)}
+          onToggleFollow={toggleFollowUser}
+          onCenterOnUser={centerOnUser}
+          onRefreshLocation={getCurrentLocation}
+          loading={mapState.isSearching}
         />
-      }
-      controls={
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowSettings(true)}
-          className="retro-button w-8 h-8 p-0"
-        >
-          <Settings size={14} />
-        </Button>
       }
     >
       <div className="relative flex flex-col h-full overflow-hidden">
+        {/* Mobile Location Status - Show on mobile below header */}
+        {isMobile && (
+          <div className="flex-shrink-0 bg-card/30 border-b border-border p-2">
+            <div className="text-xs font-mono text-muted-foreground">
+              {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'NO POSITION'}
+              <span className={`ml-2 ${
+                locationStatus === 'active' ? 'text-accent' : 
+                locationStatus === 'loading' ? 'text-yellow-400' :
+                locationStatus === 'error' ? 'text-destructive' : 'text-muted-foreground'
+              }`}>
+                {locationStatus === 'active' ? 'LOCK' : locationStatus.toUpperCase()}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="absolute top-2 left-2 right-16 z-20">
           <MapboxLocationSearch
             value={mapState.activeSearch}
