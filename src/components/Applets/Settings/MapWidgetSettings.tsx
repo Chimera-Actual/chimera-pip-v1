@@ -1,40 +1,33 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Map, Satellite, Mountain, Navigation } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Trash2, Plus, MapPin, Eye, EyeOff } from 'lucide-react';
 import { StandardSettingsTemplate } from '@/components/Layout/StandardSettingsTemplate';
-import { MapLayer } from '@/hooks/useMapState';
-
-interface Placemark {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  description?: string;
-  visible: boolean;
-}
+import { MapboxPlacemarksManager } from '@/components/Applets/MapComponents/MapboxPlacemarksManager';
+import { Placemark } from '@/hooks/useMapboxState';
 
 interface MapWidgetSettingsProps {
   settings: {
-    defaultLayer?: MapLayer;
+    defaultLayer?: string;
+    defaultZoom?: number;
     placemarks?: Placemark[];
     showCenterpoint?: boolean;
     autoZoom?: boolean;
     followUser?: boolean;
+    enableTerrain?: boolean;
+    enableFog?: boolean;
   };
   onSettingsChange: (settings: any) => void;
   onClose: () => void;
 }
 
 const mapLayerOptions = [
-  { value: 'standard', label: 'STANDARD', icon: '🗺️' },
-  { value: 'satellite', label: 'SATELLITE', icon: '🛰️' },
-  { value: 'terrain', label: 'TERRAIN', icon: '🏔️' },
-  { value: 'transport', label: 'TRANSPORT', icon: '🚌' }
+  { value: 'standard', label: 'STANDARD', icon: Map },
+  { value: 'satellite', label: 'SATELLITE', icon: Satellite },
+  { value: 'terrain', label: 'TERRAIN', icon: Mountain },
+  { value: 'transport', label: 'TRANSPORT', icon: Navigation }
 ];
 
 export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
@@ -42,65 +35,54 @@ export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
   onSettingsChange,
   onClose
 }) => {
-  const [defaultLayer, setDefaultLayer] = useState<MapLayer>(
-    settings.defaultLayer || 'standard'
-  );
-  const [placemarks, setPlacemarks] = useState<Placemark[]>(
-    settings.placemarks || []
-  );
-  const [showCenterpoint, setShowCenterpoint] = useState(
-    settings.showCenterpoint ?? true
-  );
-  const [autoZoom, setAutoZoom] = useState(
-    settings.autoZoom ?? true
-  );
-  const [followUser, setFollowUser] = useState(
-    settings.followUser ?? false
-  );
-
-  const addPlacemark = () => {
-    const newPlacemark: Placemark = {
-      id: `placemark-${Date.now()}`,
-      name: 'New Placemark',
-      latitude: 37.7749,
-      longitude: -122.4194,
-      description: '',
-      visible: true
-    };
-    setPlacemarks([...placemarks, newPlacemark]);
-  };
+  const [defaultLayer, setDefaultLayer] = useState(settings.defaultLayer || 'standard');
+  const [defaultZoom, setDefaultZoom] = useState(settings.defaultZoom || 10);
+  const [placemarks, setPlacemarks] = useState<Placemark[]>(settings.placemarks || []);
+  const [showCenterpoint, setShowCenterpoint] = useState(settings.showCenterpoint ?? true);
+  const [autoZoom, setAutoZoom] = useState(settings.autoZoom ?? false);
+  const [followUser, setFollowUser] = useState(settings.followUser ?? false);
+  const [enableTerrain, setEnableTerrain] = useState(settings.enableTerrain ?? true);
+  const [enableFog, setEnableFog] = useState(settings.enableFog ?? false);
 
   const togglePlacemarkVisibility = (id: string) => {
-    setPlacemarks(placemarks.map(p => 
+    setPlacemarks(prev => prev.map(p => 
       p.id === id ? { ...p, visible: !p.visible } : p
     ));
   };
 
   const removePlacemark = (id: string) => {
-    setPlacemarks(placemarks.filter(p => p.id !== id));
+    setPlacemarks(prev => prev.filter(p => p.id !== id));
   };
 
-  const updatePlacemark = (id: string, field: keyof Placemark, value: string | number) => {
-    setPlacemarks(placemarks.map(p => 
-      p.id === id ? { ...p, [field]: value } : p
+  const updatePlacemark = (id: string, updates: Partial<Placemark>) => {
+    setPlacemarks(prev => prev.map(p => 
+      p.id === id ? { ...p, ...updates } : p
     ));
+  };
+
+  const handleNavigateToPlacemark = (placemark: Placemark) => {
+    // This would trigger navigation in the parent component
+    console.log('Navigate to:', placemark);
   };
 
   const handleSave = () => {
     onSettingsChange({
       defaultLayer,
+      defaultZoom,
       placemarks,
       showCenterpoint,
       autoZoom,
-      followUser
+      followUser,
+      enableTerrain,
+      enableFog
     });
     onClose();
   };
 
   return (
     <StandardSettingsTemplate
-      widgetIcon={<MapPin />}
-      widgetName="MAP"
+      widgetIcon={<Map />}
+      widgetName="TACTICAL MAP"
       onSave={handleSave}
       onCancel={onClose}
     >
@@ -111,21 +93,50 @@ export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
             <Label className="text-sm font-mono text-primary uppercase tracking-wider">
               ◈ Default Map Layer
             </Label>
-            <Select value={defaultLayer} onValueChange={(value: string) => setDefaultLayer(value as MapLayer)}>
+            <Select value={defaultLayer} onValueChange={setDefaultLayer}>
               <SelectTrigger className="w-full bg-background/50 border-border font-mono">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-background border-border">
-                {mapLayerOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="font-mono">
-                    <span className="flex items-center gap-2">
-                      <span>{option.icon}</span>
-                      <span>{option.label}</span>
-                    </span>
-                  </SelectItem>
-                ))}
+                {mapLayerOptions.map((option) => {
+                  const Icon = option.icon;
+                  return (
+                    <SelectItem key={option.value} value={option.value} className="font-mono">
+                      <span className="flex items-center gap-2">
+                        <Icon size={14} />
+                        <span>{option.label}</span>
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Map Settings */}
+          <div className="space-y-4">
+            <Label className="text-sm font-mono text-primary uppercase tracking-wider">
+              ◈ Map Settings
+            </Label>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-card/50 border border-border rounded-lg">
+                <div>
+                  <Label className="text-xs font-mono text-foreground">Default Zoom Level</Label>
+                  <p className="text-xs text-muted-foreground">Initial zoom when widget loads</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="1"
+                    max="20"
+                    value={defaultZoom}
+                    onChange={(e) => setDefaultZoom(parseInt(e.target.value))}
+                    className="w-20"
+                  />
+                  <span className="text-xs font-mono text-muted-foreground w-8">{defaultZoom}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Display Options */}
@@ -167,117 +178,46 @@ export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
                   onCheckedChange={setFollowUser}
                 />
               </div>
+
+              <div className="flex items-center justify-between p-3 bg-card/50 border border-border rounded-lg">
+                <div>
+                  <Label className="text-xs font-mono text-foreground">Enable 3D Terrain</Label>
+                  <p className="text-xs text-muted-foreground">Show topographic elevation data</p>
+                </div>
+                <Switch
+                  checked={enableTerrain}
+                  onCheckedChange={setEnableTerrain}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-card/50 border border-border rounded-lg">
+                <div>
+                  <Label className="text-xs font-mono text-foreground">Atmospheric Fog</Label>
+                  <p className="text-xs text-muted-foreground">Add atmospheric effects for realism</p>
+                </div>
+                <Switch
+                  checked={enableFog}
+                  onCheckedChange={setEnableFog}
+                />
+              </div>
             </div>
           </div>
 
           {/* Custom Placemarks */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-mono text-primary uppercase tracking-wider">
-                ◈ Custom Placemarks
-              </Label>
-              <Button
-                onClick={addPlacemark}
-                size="sm"
-                className="h-8 px-3 text-xs font-mono retro-button"
-              >
-                <Plus size={14} className="mr-1" />
-                ADD MARK
-              </Button>
+            <Label className="text-sm font-mono text-primary uppercase tracking-wider">
+              ◈ Custom Placemarks
+            </Label>
+            
+            <div className="h-64 border border-border rounded-lg bg-card/30">
+              <MapboxPlacemarksManager
+                placemarks={placemarks}
+                onToggleVisibility={togglePlacemarkVisibility}
+                onRemove={removePlacemark}
+                onUpdate={updatePlacemark}
+                onNavigate={handleNavigateToPlacemark}
+              />
             </div>
-
-            <ScrollArea className="max-h-80">
-              <div className="space-y-3">
-                {placemarks.map((placemark) => (
-                  <div
-                    key={placemark.id}
-                    className="p-4 bg-card/50 border border-border rounded-lg space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs font-mono text-muted-foreground uppercase">
-                          PLACEMARK #{placemark.id.split('-')[1]?.slice(-4) || '0000'}
-                        </Label>
-                        <Button
-                          onClick={() => togglePlacemarkVisibility(placemark.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 retro-button"
-                        >
-                          {placemark.visible ? (
-                            <Eye size={12} className="text-accent" />
-                          ) : (
-                            <EyeOff size={12} className="text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                      <Button
-                        onClick={() => removePlacemark(placemark.id)}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 text-destructive hover:bg-destructive/20 retro-button"
-                      >
-                        <Trash2 size={12} />
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-mono text-muted-foreground">NAME</Label>
-                        <Input
-                          value={placemark.name}
-                          onChange={(e) => updatePlacemark(placemark.id, 'name', e.target.value)}
-                          className="h-8 text-xs font-mono bg-background/50"
-                          placeholder="Placemark name"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-mono text-muted-foreground">DESCRIPTION</Label>
-                        <Input
-                          value={placemark.description || ''}
-                          onChange={(e) => updatePlacemark(placemark.id, 'description', e.target.value)}
-                          className="h-8 text-xs font-mono bg-background/50"
-                          placeholder="Optional description"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-mono text-muted-foreground">LATITUDE</Label>
-                        <Input
-                          type="number"
-                          step="any"
-                          value={placemark.latitude}
-                          onChange={(e) => updatePlacemark(placemark.id, 'latitude', parseFloat(e.target.value) || 0)}
-                          className="h-8 text-xs font-mono bg-background/50"
-                          placeholder="0.000000"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-mono text-muted-foreground">LONGITUDE</Label>
-                        <Input
-                          type="number"
-                          step="any"
-                          value={placemark.longitude}
-                          onChange={(e) => updatePlacemark(placemark.id, 'longitude', parseFloat(e.target.value) || 0)}
-                          className="h-8 text-xs font-mono bg-background/50"
-                          placeholder="0.000000"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {placemarks.length === 0 && (
-                  <div className="p-6 text-center text-muted-foreground text-sm font-mono">
-                    NO PLACEMARKS CONFIGURED
-                    <br />
-                    <span className="text-xs">Click "ADD MARK" to create custom waypoints</span>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
           </div>
         </div>
       </ScrollArea>

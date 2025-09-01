@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Map, Settings, Target, Navigation, MapPin } from 'lucide-react';
+import { Map, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useResponsive } from '@/hooks/useResponsive';
-import { useLocation } from '@/contexts/LocationContext';
 import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
 import { LocationStatusBar } from '@/components/ui/location-status-bar';
-import { useMapState } from '@/hooks/useMapState';
+import { useMapboxState } from '@/hooks/useMapboxState';
+import { useLocation } from '@/contexts/LocationContext';
+import { useResponsive } from '@/hooks/useResponsive';
+import { MapboxRenderer } from './MapComponents/MapboxRenderer';
+import { MapboxControls } from './MapComponents/MapboxControls';
+import { MapboxLocationSearch } from './MapComponents/MapboxLocationSearch';
+import { MapboxCoordinateDisplay } from './MapComponents/MapboxCoordinateDisplay';
+import { MapboxLayerSelector } from './MapComponents/MapboxLayerSelector';
 import { MapWidgetSettings } from './Settings/MapWidgetSettings';
-
-// Gradually re-enable components to debug
-import { MapRenderer } from './MapComponents/MapRenderer';
-// import { MapControls } from './MapComponents/MapControls';
-// import { LocationSearch } from './MapComponents/LocationSearch';
-// import { CoordinateDisplay } from './MapComponents/CoordinateDisplay';
-// import { PlacemarksManager } from './MapComponents/PlacemarksManager';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TacticalMapWidgetProps {
   settings?: any;
@@ -24,130 +23,122 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
   settings = {},
   onSettingsChange
 }) => {
-  const { isMobile } = useResponsive();
-  const { location, status, lastUpdate, refreshLocation } = useLocation();
-  
   const [showSettings, setShowSettings] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const { location } = useLocation();
+  const { isMobile } = useResponsive();
 
-  // Initialize map state
   const {
     mapState,
     updateCenter,
     updateZoom,
     updateLayer,
-    addPlacemark,
-    removePlacemark,
-    togglePlacemarkVisibility,
-    updatePlacemark,
+    updateBearing,
+    navigateToLocation,
     searchLocations,
     clearSearch,
-    navigateToLocation,
-    toggleFollowUser,
-    centerOnUser
-  } = useMapState(settings);
+    getMapStyle
+  } = useMapboxState(settings);
 
-  console.log('TacticalMapWidget: Rendering with settings:', settings);
-  console.log('TacticalMapWidget: Location data:', location);
-
-  // Simplified handlers for debugging
-  const handleRefreshLocation = async () => {
-    console.log('TacticalMapWidget: Refresh location called');
-    setLoading(true);
-    try {
-      await refreshLocation();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSettingsChange = (newSettings: any) => {
-    console.log('TacticalMapWidget: Settings changed:', newSettings);
-    onSettingsChange?.(newSettings);
-    setShowSettings(false);
-  };
-
-  // Settings button
-  const settingsButton = (
-    <Button
-      onClick={() => setShowSettings(true)}
-      variant="ghost"
-      size="sm"
-      className="h-8 w-8 p-0 retro-button"
-    >
-      <Settings size={14} />
-    </Button>
-  );
+  // Fetch Mapbox token
+  useEffect(() => {
+    const fetchMapboxToken = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('get-mapbox-token');
+        setMapboxToken(data?.token || null);
+      } catch (error) {
+        console.error('Failed to fetch Mapbox token:', error);
+      }
+    };
+    fetchMapboxToken();
+  }, []);
 
   if (showSettings) {
-    console.log('TacticalMapWidget: Showing settings');
     return (
       <MapWidgetSettings
-        settings={{
-          defaultLayer: 'standard',
-          placemarks: [],
-          showCenterpoint: settings.showCenterpoint ?? true,
-          autoZoom: settings.autoZoom ?? true,
-          followUser: false
+        settings={settings}
+        onSettingsChange={(newSettings) => {
+          onSettingsChange?.(newSettings);
+          setShowSettings(false);
         }}
-        onSettingsChange={handleSettingsChange}
         onClose={() => setShowSettings(false)}
       />
     );
   }
 
-  console.log('TacticalMapWidget: Rendering main UI');
-
   return (
     <StandardWidgetTemplate
-      icon={<Map size={isMobile ? 16 : 20} />}
-      title="TACTICAL MAP SYSTEM"
+      icon={<Map size={16} />}
+      title="TACTICAL MAP"
       controls={
-        <div className="flex items-center gap-2">
-          {/* Desktop Location Status */}
-          {!isMobile && (
-            <LocationStatusBar
-              location={location}
-              status={status}
-              lastUpdate={lastUpdate || undefined}
-              onRefresh={handleRefreshLocation}
-              compact={true}
-              loading={loading}
-              className="border border-border"
-            />
-          )}
-          {settingsButton}
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowSettings(true)}
+          className="retro-button w-8 h-8 p-0"
+        >
+          <Settings size={14} />
+        </Button>
       }
     >
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Location Status */}
-        {isMobile && (
-          <div className="flex-shrink-0 bg-card/30 border-b border-border p-3">
-            <LocationStatusBar
-              location={location}
-              status={status}
-              lastUpdate={lastUpdate || undefined}
-              onRefresh={handleRefreshLocation}
-              compact={false}
-              loading={loading}
-            />
-          </div>
+      <div className="relative flex flex-col h-full overflow-hidden">
+        {!isMobile && (
+          <LocationStatusBar className="flex-shrink-0 bg-card/50 backdrop-blur-sm" />
         )}
 
-        {/* Map Renderer - Testing Phase 1 */}
-        <div className="flex-1 bg-background relative">
-          <MapRenderer
+        <div className="absolute top-4 left-4 right-20 z-10">
+          <MapboxLocationSearch
+            value={mapState.activeSearch}
+            results={mapState.searchResults}
+            isSearching={mapState.isSearching}
+            onSearchChange={(query) => searchLocations(query, mapboxToken || undefined)}
+            onResultSelect={(result) => navigateToLocation(result.longitude, result.latitude, 15)}
+            onAddPlacemark={(result) => console.log('Add placemark:', result)}
+            onClear={clearSearch}
+          />
+        </div>
+
+        <div className="flex-1 relative">
+          <MapboxRenderer
             center={mapState.center}
             zoom={mapState.zoom}
-            layer={mapState.layer}
+            bearing={mapState.bearing}
+            pitch={mapState.pitch}
+            mapStyle={getMapStyle(mapState.layer)}
             placemarks={mapState.placemarks}
             userLocation={location}
-            followUser={mapState.followUser}
             showCenterpoint={mapState.showCenterpoint}
+            followUser={mapState.followUser}
             onCenterChange={updateCenter}
             onZoomChange={updateZoom}
+            onBearingChange={updateBearing}
+            onPitchChange={() => {}}
           />
+
+          <MapboxControls
+            zoom={mapState.zoom}
+            bearing={mapState.bearing}
+            onZoomIn={() => updateZoom(Math.min(mapState.zoom + 1, 22))}
+            onZoomOut={() => updateZoom(Math.max(mapState.zoom - 1, 0))}
+            onResetBearing={() => updateBearing(0)}
+            onResetView={() => location && navigateToLocation(location.longitude, location.latitude)}
+          />
+
+          <div className="absolute bottom-4 right-4 z-10">
+            <MapboxLayerSelector
+              selectedLayer={mapState.layer}
+              onLayerChange={updateLayer}
+            />
+          </div>
+
+          <div className="absolute bottom-4 left-4 z-10">
+            <MapboxCoordinateDisplay
+              center={mapState.center}
+              userLocation={location}
+              bearing={mapState.bearing}
+              zoom={mapState.zoom}
+            />
+          </div>
         </div>
       </div>
     </StandardWidgetTemplate>
