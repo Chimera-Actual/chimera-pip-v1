@@ -4,7 +4,7 @@ import React, { Suspense } from 'react';
 import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
 
 // Lazy load widget components for better performance - import named exports directly
-const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget'));
+const MapWidget = React.lazy(() => import('@/components/Applets/TacticalMapWidget').then(m => ({ default: m.TacticalMapWidget })));
 const WeatherWidget = React.lazy(() => import('@/components/Applets/WeatherWidget').then(m => ({ default: m.WeatherWidget })));
 const ClockWidget = React.lazy(() => import('@/components/Applets/ClockWidget'));
 const UserInfoWidget = React.lazy(() => import('@/components/Applets/UserInfoWidget').then(m => ({ default: m.UserInfoWidget })));

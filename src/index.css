@@ -498,8 +498,18 @@ All colors MUST be HSL - Monochrome Green Theme
       animation: none;
       opacity: 1;
       transform: scale(1);
-    }
+  /* Retro button styling for consistency */
+  .retro-button {
+    @apply transition-all duration-200 hover:shadow-lg;
+    border: 1px solid hsl(var(--border));
+    background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--background)));
   }
+  
+  .retro-button:hover {
+    background: linear-gradient(180deg, hsl(var(--accent) / 0.2), hsl(var(--card)));
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.3);
+  }
+}
 
   /* High contrast mode optimizations */
   @media (prefers-contrast: high) {

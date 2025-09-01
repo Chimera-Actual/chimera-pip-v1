@@ -1,0 +1,196 @@
+import { useState, useCallback, useRef } from 'react';
+import { useLocation } from '@/contexts/LocationContext';
+
+export interface Placemark {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  description?: string;
+  visible: boolean;
+}
+
+export type MapLayer = 'standard' | 'satellite' | 'terrain' | 'transport';
+
+export interface MapState {
+  center: [number, number];
+  zoom: number;
+  layer: MapLayer;
+  placemarks: Placemark[];
+  activeSearch: string;
+  searchResults: Array<{
+    id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    display_name: string;
+  }>;
+  isSearching: boolean;
+  showCenterpoint: boolean;
+  followUser: boolean;
+}
+
+export const useMapState = (initialSettings?: any) => {
+  const { location, getCurrentLocation, autoFollow, setAutoFollow } = useLocation();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [mapState, setMapState] = useState<MapState>({
+    center: location ? [location.latitude, location.longitude] : [37.7749, -122.4194],
+    zoom: 10,
+    layer: initialSettings?.defaultLayer || 'standard',
+    placemarks: initialSettings?.placemarks || [],
+    activeSearch: '',
+    searchResults: [],
+    isSearching: false,
+    showCenterpoint: true,
+    followUser: autoFollow
+  });
+
+  const updateCenter = useCallback((center: [number, number]) => {
+    setMapState(prev => ({ ...prev, center }));
+  }, []);
+
+  const updateZoom = useCallback((zoom: number) => {
+    setMapState(prev => ({ ...prev, zoom }));
+  }, []);
+
+  const updateLayer = useCallback((layer: MapLayer) => {
+    setMapState(prev => ({ ...prev, layer }));
+  }, []);
+
+  const addPlacemark = useCallback((placemark: Omit<Placemark, 'id' | 'visible'>) => {
+    const newPlacemark: Placemark = {
+      ...placemark,
+      id: `placemark-${Date.now()}`,
+      visible: true
+    };
+    setMapState(prev => ({
+      ...prev,
+      placemarks: [...prev.placemarks, newPlacemark]
+    }));
+    return newPlacemark.id;
+  }, []);
+
+  const removePlacemark = useCallback((id: string) => {
+    setMapState(prev => ({
+      ...prev,
+      placemarks: prev.placemarks.filter(p => p.id !== id)
+    }));
+  }, []);
+
+  const togglePlacemarkVisibility = useCallback((id: string) => {
+    setMapState(prev => ({
+      ...prev,
+      placemarks: prev.placemarks.map(p => 
+        p.id === id ? { ...p, visible: !p.visible } : p
+      )
+    }));
+  }, []);
+
+  const updatePlacemark = useCallback((id: string, updates: Partial<Placemark>) => {
+    setMapState(prev => ({
+      ...prev,
+      placemarks: prev.placemarks.map(p => 
+        p.id === id ? { ...p, ...updates } : p
+      )
+    }));
+  }, []);
+
+  const searchLocations = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setMapState(prev => ({ ...prev, activeSearch: '', searchResults: [], isSearching: false }));
+      return;
+    }
+
+    setMapState(prev => ({ ...prev, activeSearch: query, isSearching: true }));
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounce search
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+        );
+        const results = await response.json();
+        
+        const formattedResults = results.map((result: any) => ({
+          id: result.place_id.toString(),
+          name: result.display_name.split(',')[0],
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon),
+          display_name: result.display_name
+        }));
+
+        setMapState(prev => ({
+          ...prev,
+          searchResults: formattedResults,
+          isSearching: false
+        }));
+      } catch (error) {
+        console.error('Search error:', error);
+        setMapState(prev => ({
+          ...prev,
+          searchResults: [],
+          isSearching: false
+        }));
+      }
+    }, 300);
+  }, []);
+
+  const clearSearch = useCallback(() => {
+    setMapState(prev => ({
+      ...prev,
+      activeSearch: '',
+      searchResults: [],
+      isSearching: false
+    }));
+  }, []);
+
+  const navigateToLocation = useCallback((lat: number, lng: number, zoom?: number) => {
+    setMapState(prev => ({
+      ...prev,
+      center: [lat, lng],
+      zoom: zoom || prev.zoom
+    }));
+  }, []);
+
+  const toggleFollowUser = useCallback(() => {
+    const newValue = !mapState.followUser;
+    setMapState(prev => ({ ...prev, followUser: newValue }));
+    setAutoFollow(newValue);
+    if (newValue && location) {
+      navigateToLocation(location.latitude, location.longitude);
+    }
+  }, [mapState.followUser, setAutoFollow, location, navigateToLocation]);
+
+  const centerOnUser = useCallback(async () => {
+    try {
+      await getCurrentLocation();
+      if (location) {
+        navigateToLocation(location.latitude, location.longitude);
+      }
+    } catch (error) {
+      console.error('Failed to center on user:', error);
+    }
+  }, [getCurrentLocation, location, navigateToLocation]);
+
+  return {
+    mapState,
+    updateCenter,
+    updateZoom,
+    updateLayer,
+    addPlacemark,
+    removePlacemark,
+    togglePlacemarkVisibility,
+    updatePlacemark,
+    searchLocations,
+    clearSearch,
+    navigateToLocation,
+    toggleFollowUser,
+    centerOnUser
+  };
+};
