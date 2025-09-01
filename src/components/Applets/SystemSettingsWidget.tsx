@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, RefreshCw, Save, AlertCircle, Monitor, Volume2, Bell, Database, Palette, Zap } from 'lucide-react';
+import { MapPin, RefreshCw, Save, AlertCircle, Monitor, Volume2, Bell, Database, Palette, Zap, Settings as SettingsIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +13,7 @@ import { useTheme, THEME_CONFIGS, type ColorScheme } from '@/hooks/useTheme';
 import { useLocation } from '@/contexts/LocationContext';
 import { locationService } from '@/lib/locationService';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
 
 interface UserSettings {
   location_enabled: boolean;
@@ -28,7 +29,7 @@ interface UserSettings {
   data_backup_enabled: boolean;
 }
 
-export const SystemSettingsWidget: React.FC = () => {
+const SystemSettingsWidget: React.FC = () => {
   const { location, getCurrentLocation } = useLocation();
   const isMobile = useIsMobile();
   const [settings, setSettings] = useState<UserSettings>({
@@ -63,7 +64,7 @@ export const SystemSettingsWidget: React.FC = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
@@ -175,50 +176,44 @@ export const SystemSettingsWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <div className="text-sm font-mono text-muted-foreground">Loading settings...</div>
+      <StandardWidgetTemplate
+        icon={<SettingsIcon size={isMobile ? 16 : 20} />}
+        title="SYSTEM CONFIGURATION"
+      >
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-2">
+            <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto" />
+            <div className="text-sm font-mono text-muted-foreground">Loading settings...</div>
+          </div>
         </div>
-      </div>
+      </StandardWidgetTemplate>
     );
   }
 
+  const saveButton = (
+    <Button 
+      onClick={saveSettings} 
+      disabled={saving}
+      variant="ghost"
+      size="sm"
+      className={`font-mono bg-background/50 hover:bg-primary/20 ${isMobile ? 'h-8 px-3 text-xs' : 'h-10 px-4 text-sm'}`}
+    >
+      {saving ? <RefreshCw className={`animate-spin mr-2 ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} /> : <Save className={`mr-2 ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />}
+      {saving ? 'SAVING...' : 'SAVE'}
+    </Button>
+  );
+
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className={`flex-shrink-0 bg-card border-b border-border px-3 md:px-4 flex items-center justify-between ${
-        isMobile ? 'h-14 flex-col gap-2 py-2' : 'h-16'
-      }`}>
-        <span className={`font-mono text-primary uppercase tracking-wider crt-glow ${
-          isMobile ? 'text-sm' : 'text-lg'
-        }`}>
-          ⚙ SYSTEM CONFIGURATION
-        </span>
-        <Button 
-          onClick={saveSettings} 
-          disabled={saving}
-          variant="ghost"
-          size={isMobile ? "sm" : "sm"}
-          className={`font-mono bg-background/50 hover:bg-primary/20 touch-target ${
-            isMobile ? 'h-8 px-3 text-xs' : 'h-10 px-4 text-sm'
-          }`}
-        >
-          {saving ? <RefreshCw className={`animate-spin mr-2 ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} /> : <Save className={`mr-2 ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />}
-          {saving ? 'SAVING...' : 'SAVE'}
-        </Button>
-      </div>
-      
-      {/* Main Content */}
-      <div className={`flex-1 overflow-y-auto space-y-3 md:space-y-4 ${
-        isMobile ? 'p-3' : 'p-4'
-      }`}>
-        {/* Location Settings */}
+    <StandardWidgetTemplate
+      icon={<SettingsIcon size={isMobile ? 16 : 20} />}
+      title="SYSTEM CONFIGURATION"
+      controls={saveButton}
+    >
+      <div className={`flex-1 overflow-y-auto space-y-3 md:space-y-4 ${isMobile ? 'p-3' : 'p-4'}`}>
+        {/* Location Settings Card */}
         <Card className="bg-card/50 border-border">
           <CardHeader className={isMobile ? 'pb-3 px-4 py-3' : ''}>
-            <CardTitle className={`font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2 ${
-              isMobile ? 'text-base' : 'text-xl'
-            }`}>
+            <CardTitle className={`font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2 ${isMobile ? 'text-base' : 'text-xl'}`}>
               <MapPin className={`icon-primary icon-glow ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
               LOCATION SERVICES
             </CardTitle>
@@ -230,16 +225,15 @@ export const SystemSettingsWidget: React.FC = () => {
                 <Label className={`font-mono text-foreground ${isMobile ? 'text-sm' : 'text-sm'}`}>
                   Enable Persistent Location
                 </Label>
-                 <p className={`text-muted-foreground font-mono ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                   Automatically update location every 15 seconds for weather, maps, and other services
-                 </p>
+                <p className={`text-muted-foreground font-mono ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                  Automatically update location every 15 seconds for weather, maps, and other services
+                </p>
               </div>
               <Switch
                 checked={settings.location_enabled}
                 onCheckedChange={(checked) => 
                   setSettings(prev => ({ ...prev, location_enabled: checked }))
                 }
-                className="touch-target"
               />
             </div>
 
@@ -259,7 +253,7 @@ export const SystemSettingsWidget: React.FC = () => {
                           <Input
                             value={settings.location_latitude.toFixed(6)}
                             readOnly
-                            className={`font-mono bg-background/30 touch-target ${isMobile ? 'text-xs h-9' : 'text-xs'}`}
+                            className={`font-mono bg-background/30 ${isMobile ? 'text-xs h-9' : 'text-xs'}`}
                           />
                         </div>
                         <div>
@@ -267,7 +261,7 @@ export const SystemSettingsWidget: React.FC = () => {
                           <Input
                             value={settings.location_longitude.toFixed(6)}
                             readOnly
-                            className={`font-mono bg-background/30 touch-target ${isMobile ? 'text-xs h-9' : 'text-xs'}`}
+                            className={`font-mono bg-background/30 ${isMobile ? 'text-xs h-9' : 'text-xs'}`}
                           />
                         </div>
                       </div>
@@ -278,7 +272,7 @@ export const SystemSettingsWidget: React.FC = () => {
                           disabled={gettingLocation}
                           variant="outline"
                           size="sm"
-                          className={`font-mono text-xs touch-target ${isMobile ? 'w-full h-9' : ''}`}
+                          className={`font-mono text-xs ${isMobile ? 'w-full h-9' : ''}`}
                         >
                           {gettingLocation ? <RefreshCw className="w-3 h-3 animate-spin mr-1" /> : <MapPin className="w-3 h-3 mr-1" />}
                           UPDATE
@@ -287,7 +281,7 @@ export const SystemSettingsWidget: React.FC = () => {
                           onClick={clearLocation}
                           variant="outline"
                           size="sm"
-                          className={`font-mono text-xs touch-target ${isMobile ? 'w-full h-9' : ''}`}
+                          className={`font-mono text-xs ${isMobile ? 'w-full h-9' : ''}`}
                         >
                           CLEAR
                         </Button>
@@ -295,9 +289,7 @@ export const SystemSettingsWidget: React.FC = () => {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3">
-                      <div className={`flex items-center gap-2 font-mono text-muted-foreground p-3 bg-background/20 border border-border rounded ${
-                        isMobile ? 'text-xs' : 'text-xs'
-                      }`}>
+                      <div className={`flex items-center gap-2 font-mono text-muted-foreground p-3 bg-background/20 border border-border rounded ${isMobile ? 'text-xs' : 'text-xs'}`}>
                         <AlertCircle className="w-4 h-4 flex-shrink-0" />
                         No location configured. Click below to set your current location.
                       </div>
@@ -305,7 +297,7 @@ export const SystemSettingsWidget: React.FC = () => {
                         onClick={handleGetCurrentLocation}
                         disabled={gettingLocation}
                         variant="outline"
-                        className={`w-fit font-mono touch-target ${isMobile ? 'text-xs h-9' : 'text-sm'}`}
+                        className={`w-fit font-mono ${isMobile ? 'text-xs h-9' : 'text-sm'}`}
                       >
                         {gettingLocation ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <MapPin className="w-4 h-4 mr-2" />}
                         {gettingLocation ? 'GETTING LOCATION...' : 'GET CURRENT LOCATION'}
@@ -337,12 +329,10 @@ export const SystemSettingsWidget: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Display & Interface Settings */}
+        {/* Display & Interface Settings Card */}
         <Card className="bg-card/50 border-border">
           <CardHeader className={isMobile ? 'pb-3 px-4 py-3' : ''}>
-            <CardTitle className={`font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2 ${
-              isMobile ? 'text-base' : 'text-xl'
-            }`}>
+            <CardTitle className={`font-mono text-primary uppercase tracking-wider crt-glow flex items-center gap-2 ${isMobile ? 'text-base' : 'text-xl'}`}>
               <Monitor className={`icon-primary icon-glow ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
               DISPLAY & INTERFACE
             </CardTitle>
@@ -364,15 +354,13 @@ export const SystemSettingsWidget: React.FC = () => {
                   setSettings(prev => ({ ...prev, theme_mode: value }))
                 }
               >
-                <SelectTrigger className={`font-mono bg-background/50 border-border touch-target ${
-                  isMobile ? 'w-full h-9' : 'w-32'
-                }`}>
+                <SelectTrigger className={`font-mono bg-background/50 border-border ${isMobile ? 'w-full h-9' : 'w-32'}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-background border-border">
-                  <SelectItem value="auto" className="font-mono touch-target">AUTO</SelectItem>
-                  <SelectItem value="dark" className="font-mono touch-target">DARK</SelectItem>
-                  <SelectItem value="light" className="font-mono touch-target">LIGHT</SelectItem>
+                  <SelectItem value="auto" className="font-mono">AUTO</SelectItem>
+                  <SelectItem value="dark" className="font-mono">DARK</SelectItem>
+                  <SelectItem value="light" className="font-mono">LIGHT</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -394,9 +382,7 @@ export const SystemSettingsWidget: React.FC = () => {
                   await setColorScheme(value);
                 }}
               >
-                <SelectTrigger className={`font-mono bg-background/50 border-border touch-target ${
-                  isMobile ? 'w-full h-9' : 'w-40'
-                }`}>
+                <SelectTrigger className={`font-mono bg-background/50 border-border ${isMobile ? 'w-full h-9' : 'w-40'}`}>
                   <SelectValue>
                     <div className="flex items-center gap-2">
                       <div 
@@ -409,7 +395,7 @@ export const SystemSettingsWidget: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-background border-border">
                   {Object.entries(THEME_CONFIGS).map(([key, config]) => (
-                    <SelectItem key={key} value={key} className="font-mono touch-target">
+                    <SelectItem key={key} value={key} className="font-mono">
                       <div className="flex items-center gap-2">
                         <div 
                           className="w-3 h-3 rounded border border-border"
@@ -438,7 +424,6 @@ export const SystemSettingsWidget: React.FC = () => {
                 onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, crt_effects_enabled: checked }))
                 }
-                className="touch-target"
               />
             </div>
           </CardContent>
@@ -470,7 +455,6 @@ export const SystemSettingsWidget: React.FC = () => {
                 onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, sound_enabled: checked }))
                 }
-                className="touch-target"
               />
             </div>
 
@@ -489,7 +473,6 @@ export const SystemSettingsWidget: React.FC = () => {
                 onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, notifications_enabled: checked }))
                 }
-                className="touch-target"
               />
             </div>
           </CardContent>
@@ -553,6 +536,8 @@ export const SystemSettingsWidget: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </StandardWidgetTemplate>
   );
 };
+
+export default SystemSettingsWidget;

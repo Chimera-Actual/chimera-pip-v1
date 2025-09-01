@@ -362,17 +362,6 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleOpenWidgetSettings(widget);
-                    }}
-                    className={`opacity-70 hover:opacity-100 ${isMobile ? 'p-2 h-8 w-8 touch-target' : 'p-1 h-6 w-6'}`}
-                  >
-                    <Settings className={`${isMobile ? 'h-4 w-4' : 'h-3 w-3'}`} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
                       handleRemoveWidget(widget.id, widget.widget_id);
                     }}
                     className={`opacity-70 hover:opacity-100 hover:text-destructive ${isMobile ? 'p-2 h-8 w-8 touch-target' : 'p-1 h-6 w-6'}`}

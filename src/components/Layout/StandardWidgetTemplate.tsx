@@ -8,6 +8,7 @@ interface StandardWidgetTemplateProps {
   children: React.ReactNode;
   className?: string;
   contentLayout?: 'default' | 'split' | 'stack';
+  widgetIcon?: React.ReactNode; // New: optional widget-specific icon
 }
 
 export const StandardWidgetTemplate: React.FC<StandardWidgetTemplateProps> = ({
@@ -16,7 +17,8 @@ export const StandardWidgetTemplate: React.FC<StandardWidgetTemplateProps> = ({
   controls,
   children,
   className = "",
-  contentLayout = 'default'
+  contentLayout = 'default',
+  widgetIcon
 }) => {
   const { isMobile, isTablet } = useResponsive();
   const headerHeight = useResponsiveHeaderHeight();
@@ -28,6 +30,11 @@ export const StandardWidgetTemplate: React.FC<StandardWidgetTemplateProps> = ({
       {/* Enhanced Responsive Header */}
       <div className={`flex-shrink-0 bg-card border-b border-border ${padding} flex items-center justify-between ${headerHeight}`}>
         <div className="flex items-center gap-2">
+          {widgetIcon && (
+            <span className="icon-primary crt-glow">
+              {widgetIcon}
+            </span>
+          )}
           <span className="icon-primary crt-glow">
             {icon}
           </span>

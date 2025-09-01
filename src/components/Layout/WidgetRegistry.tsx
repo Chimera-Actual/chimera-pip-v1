@@ -4,17 +4,17 @@ import React, { Suspense } from 'react';
 import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
 
 // Lazy load widget components for better performance - import named exports directly
-const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget').then(m => ({ default: m.MapWidget })));
+const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget'));
 const WeatherWidget = React.lazy(() => import('@/components/Applets/WeatherWidget').then(m => ({ default: m.WeatherWidget })));
 const ClockWidget = React.lazy(() => import('@/components/Applets/ClockWidget'));
 const UserInfoWidget = React.lazy(() => import('@/components/Applets/UserInfoWidget').then(m => ({ default: m.UserInfoWidget })));
 const BrowserWidget = React.lazy(() => import('@/components/Applets/BrowserWidget').then(m => ({ default: m.BrowserWidget })));
-const SystemSettingsWidget = React.lazy(() => import('@/components/Applets/SystemSettingsWidget').then(m => ({ default: m.SystemSettingsWidget })));
+const SystemSettingsWidget = React.lazy(() => import('@/components/Applets/SystemSettingsWidget'));
 const CustomAssistantWidget = React.lazy(() => import('@/components/Applets/CustomAssistantWidget').then(m => ({ default: m.CustomAssistantWidget })));
 const TextDisplayWidget = React.lazy(() => import('@/components/Applets/TextDisplayWidget').then(m => ({ default: m.TextDisplayWidget })));
 const ImageDisplayWidget = React.lazy(() => import('@/components/Applets/ImageDisplayWidget'));
 const AudioPlayerWidget = React.lazy(() => import('@/components/Applets/AudioPlayerWidget').then(m => ({ default: m.AudioPlayerWidget })));
-const VoiceAgentWidget = React.lazy(() => import('@/components/Applets/VoiceAgentWidget').then(m => ({ default: m.VoiceAgentWidget })));
+const VoiceAgentWidget = React.lazy(() => import('@/components/Applets/VoiceAgentWidget'));
 
 // Create wrapped components with suspense and optimized skeletons
 const createLazyWidget = (

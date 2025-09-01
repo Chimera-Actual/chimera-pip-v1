@@ -6,6 +6,9 @@ import { LocationStatusBar } from '@/components/ui/location-status-bar';
 import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
+import { Map, Settings } from 'lucide-react';
+import { MapWidgetSettings } from '@/components/Applets/Settings/MapWidgetSettings';
 
 interface SearchResult {
   lat: number;
@@ -44,7 +47,7 @@ interface MapWidgetProps {
   onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
-export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
+const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const { location: contextLocation, autoFollow, setAutoFollow, getCurrentLocation, status, lastUpdate, refreshLocation, searchLocations } = useLocation();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -57,6 +60,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Search function using the location service
@@ -84,7 +88,6 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     }
   }, [searchLocations, toast]);
 
-  // Debounced search
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -101,7 +104,6 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     };
   }, [searchQuery, performSearch]);
 
-  // Update display location when context location changes and auto-follow is enabled
   useEffect(() => {
     if (contextLocation && autoFollow) {
       setDisplayLocation({
@@ -111,7 +113,6 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     }
   }, [contextLocation, autoFollow]);
 
-  // Initialize display location from context on mount
   useEffect(() => {
     if (contextLocation) {
       setDisplayLocation({
@@ -129,7 +130,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
         latitude: currentLocation.latitude,
         longitude: currentLocation.longitude,
       });
-      setAutoFollow(true); // Enable auto-follow when manually getting location
+      setAutoFollow(true);
     } catch (error) {
       console.error('Failed to get current location:', error);
       toast({
@@ -149,7 +150,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
   const handleSearchResultSelect = (result: SearchResult) => {
     const newLocation = { latitude: result.lat, longitude: result.lon };
     setDisplayLocation(newLocation);
-    setAutoFollow(false); // Disable auto-follow when manually selecting location
+    setAutoFollow(false);
     setShowSearchResults(false);
     setSearchQuery('');
     
@@ -161,216 +162,183 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
 
   const mapUrl = mapLayers[activeLayer].url(displayLocation.latitude, displayLocation.longitude);
 
+  const settingsGear = (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => setShowSettings(true)}
+      className={`opacity-70 hover:opacity-100 ${isMobile ? 'p-2 h-8 w-8' : 'p-1 h-6 w-6'}`}
+    >
+      <Settings className={isMobile ? 'h-4 w-4' : 'h-3 w-3'} />
+    </Button>
+  );
+
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
-      {/* Header Controls */}
-      <div className={`flex-shrink-0 bg-card border-b border-border px-3 md:px-4 py-2 relative ${
-        isMobile ? 'h-auto min-h-24' : 'h-20'
-      }`}>
-        {/* Location Status Bar - Top Right */}
-        <div className={`absolute z-20 ${isMobile ? 'top-2 right-2' : 'top-2 right-4'}`}>
-          <LocationStatusBar
-            location={contextLocation}
-            status={status}
-            lastUpdate={lastUpdate || undefined}
-            onRefresh={refreshLocation}
-            compact={!isMobile}
-            loading={loading}
-          />
-        </div>
-        
-        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
-          <span className={`font-mono text-primary uppercase tracking-wider crt-glow ${
-            isMobile ? 'text-sm' : 'text-lg'
-          }`}>
-            ◈ TACTICAL MAP SYSTEM
-          </span>
-          
-          {/* Search Bar - Mobile Priority */}
-          {isMobile && (
-            <div className="relative w-full">
-              <Input
-                placeholder="Search location..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9 text-sm font-mono bg-background/50 border-border placeholder:text-muted-foreground/70"
-                disabled={searchLoading}
+    <>
+      <StandardWidgetTemplate
+        icon={<Map size={isMobile ? 16 : 20} />}
+        title="TACTICAL MAP SYSTEM"
+        controls={settingsGear}
+      >
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Controls Bar */}
+          <div className={`flex-shrink-0 bg-card/50 border-b border-border ${isMobile ? 'p-3' : 'p-4'}`}>
+            {/* Location Status Bar - Top Right */}
+            <div className={`absolute z-20 ${isMobile ? 'top-2 right-2' : 'top-2 right-4'}`}>
+              <LocationStatusBar
+                location={contextLocation}
+                status={status}
+                lastUpdate={lastUpdate || undefined}
+                onRefresh={refreshLocation}
+                compact={!isMobile}
+                loading={loading}
               />
-              {searchLoading && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              )}
+            </div>
+            
+            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
+              {/* Search Bar */}
+              <div className="relative flex-1 max-w-md">
+                <Input
+                  placeholder="Search location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-9 text-sm font-mono bg-background/50 border-border placeholder:text-muted-foreground/70"
+                  disabled={searchLoading}
+                />
+                {searchLoading && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+                
+                {/* Search Results */}
+                {showSearchResults && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-50 max-h-32 overflow-y-auto">
+                    {searchResults.map((result, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSearchResultSelect(result)}
+                        className="w-full px-3 py-2 text-left text-sm font-mono hover:bg-accent/10 border-b border-border/50 last:border-b-0"
+                      >
+                        <div className="truncate">{result.formatted_name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {result.lat.toFixed(4)}, {result.lon.toFixed(4)}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               
-              {/* Mobile Search Results */}
-              {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-50 max-h-32 overflow-y-auto">
-                  {searchResults.map((result, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSearchResultSelect(result)}
-                      className="w-full px-3 py-2 text-left text-sm font-mono hover:bg-accent/10 border-b border-border/50 last:border-b-0 touch-target"
-                    >
-                      <div className="truncate">{result.formatted_name}</div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {result.lat.toFixed(4)}, {result.lon.toFixed(4)}
-                      </div>
-                    </button>
-                  ))}
+              <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-between' : ''}`}>
+                <Button
+                  onClick={toggleAutoFollow}
+                  variant={autoFollow ? "default" : "outline"}
+                  size="sm"
+                  className={`font-mono ${isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'}`}
+                >
+                  {autoFollow ? '🎯 FOLLOW' : '📍 MANUAL'}
+                </Button>
+                <Button 
+                  onClick={handleGetCurrentLocation} 
+                  disabled={loading}
+                  variant="ghost"
+                  size="sm"
+                  className={`font-mono bg-background/50 hover:bg-primary/20 ${isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'}`}
+                >
+                  {loading ? 'GPS...' : '📍 LOCATE'}
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Map Area */}
+          <div className="flex-1 relative w-full overflow-hidden">
+            <iframe
+              key={`${activeLayer}-${displayLocation.latitude}-${displayLocation.longitude}`}
+              src={mapUrl}
+              className="absolute inset-0 w-full h-full border-0"
+              style={{ 
+                filter: 'sepia(1) hue-rotate(85deg) saturate(0.8) brightness(0.7) contrast(1.3)',
+                background: 'hsl(var(--background))'
+              }}
+              title="Tactical Map"
+              allowFullScreen
+            />
+            
+            {/* Overlay UI Elements */}
+            <div className="absolute inset-0 pointer-events-none z-10">
+              {/* Layer Selector - Bottom Right */}
+              <div className={`absolute pointer-events-auto ${isMobile ? 'bottom-2 right-2' : 'bottom-3 right-3'}`}>
+                <div className="bg-background/95 border border-border rounded px-2 md:px-3 py-2 backdrop-blur-sm">
+                  <div className="text-xs font-mono text-muted-foreground mb-2">
+                    {isMobile ? 'LAYER' : 'MAP LAYER'}
+                  </div>
+                  <Select value={activeLayer} onValueChange={(value: MapLayer) => setActiveLayer(value)}>
+                    <SelectTrigger className={`bg-background/50 border-border text-xs font-mono ${isMobile ? 'w-24 h-9' : 'w-32 h-8'}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border-border">
+                      {Object.entries(mapLayers).map(([key, layer]) => (
+                        <SelectItem key={key} value={key} className="font-mono text-xs">
+                          {layer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {/* Bottom Status Bar */}
+              <div className={`absolute ${isMobile ? 'bottom-2 left-2' : 'bottom-3 left-3'}`}>
+                <div className="bg-background/95 border border-border rounded px-2 md:px-3 py-2 backdrop-blur-sm">
+                  <div className={`font-mono text-primary space-y-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                    <div>LAT: {displayLocation.latitude.toFixed(isMobile ? 4 : 6)}</div>
+                    <div>LON: {displayLocation.longitude.toFixed(isMobile ? 4 : 6)}</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Mode Status - Bottom Center (Desktop Only) */}
+              {contextLocation && !isMobile && (
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2">
+                  <div className={`border rounded px-3 py-2 backdrop-blur-sm ${
+                    autoFollow 
+                      ? 'bg-primary/20 border-primary text-primary animate-pulse' 
+                      : 'bg-background/95 border-border text-muted-foreground'
+                  }`}>
+                    <div className="text-xs font-mono font-bold text-center">
+                      {autoFollow ? 'AUTO-TRACKING ACTIVE' : 'MANUAL MODE'}
+                    </div>
+                  </div>
                 </div>
               )}
+
+              {/* Crosshairs */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative">
+                  <div className={`bg-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${isMobile ? 'w-6 h-0.5' : 'w-8 h-0.5'}`}></div>
+                  <div className={`bg-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${isMobile ? 'h-6 w-0.5' : 'h-8 w-0.5'}`}></div>
+                  <div className={`border-2 border-primary rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${isMobile ? 'w-5 h-5' : 'w-6 h-6'} ${autoFollow ? 'animate-pulse' : ''}`}></div>
+                </div>
+              </div>
             </div>
-          )}
-          
-          <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-between' : 'gap-3 mt-6'}`}>
-            <Button
-              onClick={toggleAutoFollow}
-              variant={autoFollow ? "default" : "outline"}
-              size={isMobile ? "default" : "sm"}
-              className={`font-mono touch-target ${
-                isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'
-              }`}
-            >
-              {autoFollow ? '🎯 FOLLOW' : '📍 MANUAL'}
-            </Button>
-            <Button 
-              onClick={handleGetCurrentLocation} 
-              disabled={loading}
-              variant="ghost"
-              size={isMobile ? "default" : "sm"}
-              className={`font-mono bg-background/50 hover:bg-primary/20 touch-target ${
-                isMobile ? 'flex-1 h-9 text-xs' : 'h-8 px-3 text-xs'
-              }`}
-            >
-              {loading ? 'GPS...' : '📍 LOCATE'}
-            </Button>
           </div>
         </div>
-        
-      </div>
+      </StandardWidgetTemplate>
       
-      {/* Main Map Area - Fill all remaining space */}
-      <div className="flex-1 relative w-full overflow-hidden">
-        <iframe
-          key={`${activeLayer}-${displayLocation.latitude}-${displayLocation.longitude}`}
-          src={mapUrl}
-          className="absolute inset-0 w-full h-full border-0"
-          style={{ 
-            filter: 'sepia(1) hue-rotate(85deg) saturate(0.8) brightness(0.7) contrast(1.3)',
-            background: 'hsl(var(--background))'
+      {showSettings && (
+        <MapWidgetSettings
+          settings={settings || {}}
+          onSettingsChange={(newSettings) => {
+            onSettingsUpdate?.(newSettings);
+            setShowSettings(false);
           }}
-          title="Tactical Map"
-          allowFullScreen
+          onClose={() => setShowSettings(false)}
         />
-        
-        {/* Overlay UI Elements */}
-        <div className="absolute inset-0 pointer-events-none z-10">
-          {/* Layer Selector - Bottom Right */}
-          <div className={`absolute pointer-events-auto ${
-            isMobile ? 'bottom-2 right-2' : 'bottom-3 right-3'
-          }`}>
-            <div className="bg-background/95 border border-border rounded px-2 md:px-3 py-2 backdrop-blur-sm">
-              <div className="text-xs font-mono text-muted-foreground mb-2">
-                {isMobile ? 'LAYER' : 'MAP LAYER'}
-              </div>
-              <Select value={activeLayer} onValueChange={(value: MapLayer) => setActiveLayer(value)}>
-                <SelectTrigger className={`bg-background/50 border-border text-xs font-mono touch-target ${
-                  isMobile ? 'w-24 h-9' : 'w-32 h-8'
-                }`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background border-border">
-                  {Object.entries(mapLayers).map(([key, layer]) => (
-                    <SelectItem key={key} value={key} className="font-mono text-xs touch-target">
-                      {layer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Bottom Status Bar */}
-          <div className={`absolute ${
-            isMobile ? 'bottom-2 left-2' : 'bottom-3 left-3'
-          }`}>
-            <div className="bg-background/95 border border-border rounded px-2 md:px-3 py-2 backdrop-blur-sm">
-              <div className={`font-mono text-primary space-y-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                <div>LAT: {displayLocation.latitude.toFixed(isMobile ? 4 : 6)}</div>
-                <div>LON: {displayLocation.longitude.toFixed(isMobile ? 4 : 6)}</div>
-                {contextLocation?.name && !isMobile && (
-                  <div className="text-xs text-muted-foreground">
-                    📍 {contextLocation.name}
-                  </div>
-                )}
-                {contextLocation && !isMobile && (
-                  <div className="text-xs text-muted-foreground border-t border-border/50 pt-1 mt-1">
-                    GPS: {contextLocation.latitude.toFixed(4)}, {contextLocation.longitude.toFixed(4)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Mode Status - Bottom Center (Desktop Only) */}
-          {contextLocation && !isMobile && (
-            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2">
-              <div className={`border rounded px-3 py-2 backdrop-blur-sm ${
-                autoFollow 
-                  ? 'bg-primary/20 border-primary text-primary animate-pulse' 
-                  : 'bg-background/95 border-border text-muted-foreground'
-              }`}>
-                <div className="text-xs font-mono font-bold text-center">
-                  {autoFollow ? 'AUTO-TRACKING ACTIVE' : 'MANUAL MODE'}
-                </div>
-                <div className="text-xs font-mono text-center">
-                  Status: {status.toUpperCase()}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Crosshairs */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative">
-              <div className={`bg-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${
-                isMobile ? 'w-6 h-0.5' : 'w-8 h-0.5'
-              }`}></div>
-              <div className={`bg-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${
-                isMobile ? 'h-6 w-0.5' : 'h-8 w-0.5'
-              }`}></div>
-              <div className={`border-2 border-primary rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${
-                isMobile ? 'w-5 h-5' : 'w-6 h-6'
-              } ${autoFollow ? 'animate-pulse' : ''}`}></div>
-            </div>
-          </div>
-
-          {/* Grid Overlay - Reduced on Mobile */}
-          {!isMobile && (
-            <div className="absolute inset-0 opacity-[0.03]">
-              <div className="grid grid-cols-20 grid-rows-15 h-full">
-                {Array.from({ length: 300 }, (_, i) => (
-                  <div key={i} className="border border-primary"></div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Radar Sweep */}
-          <div className={`absolute ${
-            isMobile ? 'top-2 right-2 w-12 h-12' : 'top-4 right-4 w-16 h-16'
-          }`}>
-            <div className="relative w-full h-full border border-primary/40 rounded-full bg-background/20 backdrop-blur-sm">
-              <div className="absolute inset-1 border border-primary/20 rounded-full"></div>
-              <div className={`absolute top-1/2 left-1/2 bg-gradient-to-r from-primary to-transparent transform -translate-y-0.5 origin-left animate-spin ${
-                isMobile ? 'w-4 h-0.5' : 'w-6 h-0.5'
-              }`} style={{ animationDuration: '3s' }}></div>
-              <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-primary rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
+
+export default MapWidget;
