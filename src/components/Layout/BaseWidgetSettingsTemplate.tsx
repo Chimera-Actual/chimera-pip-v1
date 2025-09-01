@@ -58,7 +58,7 @@ export const BaseWidgetSettingsTemplate: React.FC<BaseWidgetSettingsTemplateProp
         <div className="flex items-center gap-3 p-4 border-b border-border bg-muted/30">
           <Button
             variant="outline"
-            className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-500 font-mono uppercase tracking-wider"
+            className="border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary font-mono uppercase tracking-wider"
             size={isMobile ? "sm" : "default"}
           >
             <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export const BaseWidgetSettingsTemplate: React.FC<BaseWidgetSettingsTemplateProp
           </h2>
           <Button
             onClick={handleSave}
-            className={`bg-yellow-400 hover:bg-yellow-500 text-black font-mono uppercase tracking-wider border-yellow-500 ${isMobile ? 'text-xs px-3 py-2 h-8' : 'text-sm px-4 py-2'}`}
+            className={`bg-primary hover:bg-primary/90 text-primary-foreground font-mono uppercase tracking-wider ${isMobile ? 'text-xs px-3 py-2 h-8' : 'text-sm px-4 py-2'}`}
           >
             Save Changes
           </Button>
