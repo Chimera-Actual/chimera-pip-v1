@@ -1,0 +1,30 @@
+// Base widget type definitions for standardized widget architecture
+
+export interface BaseWidgetProps {
+  /** Unique identifier for this widget instance */
+  widgetInstanceId: string;
+  /** Widget settings object */
+  settings?: Record<string, any>;
+  /** Callback to handle settings changes */
+  onSettingsChange?: (settings: Record<string, any>) => void;
+  /** Optional custom name for the widget instance */
+  widgetName?: string;
+}
+
+export interface BaseWidgetSettings {
+  /** Custom title for the widget */
+  title?: string;
+  /** Whether to show the widget title */
+  showTitle?: boolean;
+  /** Theme variant for the widget */
+  variant?: 'default' | 'minimal' | 'compact';
+}
+
+export interface WidgetControlConfig {
+  /** Primary action controls (follow user, refresh, etc.) */
+  primaryControls?: React.ReactNode;
+  /** Secondary controls (settings, etc.) */
+  secondaryControls?: React.ReactNode;
+  /** Status display in header */
+  statusDisplay?: React.ReactNode;
+}
