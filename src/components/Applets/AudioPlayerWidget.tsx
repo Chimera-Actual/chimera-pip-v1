@@ -109,10 +109,9 @@ export function AudioPlayerWidget({ widgetInstanceId, onSettingsUpdate, settings
     if (!user || !widgetInstanceId) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error }: { data: any[] | null; error: any } = await supabase
         .from('widget_instance_audio')
         .select('*')
-        .eq('user_id', user.id)
         .eq('widget_instance_id', widgetInstanceId)
         .order('created_at', { ascending: true });
 
