@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
+import { RectangularSwitch } from '@/components/ui/rectangular-switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { MapPin, RefreshCw, Save, AlertCircle, Monitor, Volume2, Bell, Database, Palette, Zap, Settings as SettingsIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -196,7 +197,7 @@ const SystemSettingsWidget: React.FC = () => {
       disabled={saving}
       variant="ghost"
       size="sm"
-      className={`font-mono bg-background/50 hover:bg-primary/20 ${isMobile ? 'h-8 px-3 text-xs' : 'h-10 px-4 text-sm'}`}
+      className={`font-mono bg-background/50 hover:bg-primary/20 retro-button ${isMobile ? 'h-8 px-3 text-xs' : 'h-10 px-4 text-sm'}`}
     >
       {saving ? <RefreshCw className={`animate-spin mr-2 ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} /> : <Save className={`mr-2 ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />}
       {saving ? 'SAVING...' : 'SAVE'}
@@ -209,7 +210,8 @@ const SystemSettingsWidget: React.FC = () => {
       title="SYSTEM CONFIGURATION"
       controls={saveButton}
     >
-      <div className={`flex-1 overflow-y-auto space-y-3 md:space-y-4 ${isMobile ? 'p-3' : 'p-4'}`}>
+      <ScrollArea className="flex-1">
+        <div className={`space-y-3 md:space-y-4 ${isMobile ? 'p-3' : 'p-4'}`}>
         {/* Location Settings Card */}
         <Card className="bg-card/50 border-border">
           <CardHeader className={isMobile ? 'pb-3 px-4 py-3' : ''}>
@@ -229,7 +231,7 @@ const SystemSettingsWidget: React.FC = () => {
                   Automatically update location every 15 seconds for weather, maps, and other services
                 </p>
               </div>
-              <Switch
+              <RectangularSwitch
                 checked={settings.location_enabled}
                 onCheckedChange={(checked) => 
                   setSettings(prev => ({ ...prev, location_enabled: checked }))
@@ -272,7 +274,7 @@ const SystemSettingsWidget: React.FC = () => {
                           disabled={gettingLocation}
                           variant="outline"
                           size="sm"
-                          className={`font-mono text-xs ${isMobile ? 'w-full h-9' : ''}`}
+                          className={`font-mono text-xs retro-button ${isMobile ? 'w-full h-9' : ''}`}
                         >
                           {gettingLocation ? <RefreshCw className="w-3 h-3 animate-spin mr-1" /> : <MapPin className="w-3 h-3 mr-1" />}
                           UPDATE
@@ -281,7 +283,7 @@ const SystemSettingsWidget: React.FC = () => {
                           onClick={clearLocation}
                           variant="outline"
                           size="sm"
-                          className={`font-mono text-xs ${isMobile ? 'w-full h-9' : ''}`}
+                          className={`font-mono text-xs retro-button ${isMobile ? 'w-full h-9' : ''}`}
                         >
                           CLEAR
                         </Button>
@@ -297,7 +299,7 @@ const SystemSettingsWidget: React.FC = () => {
                         onClick={handleGetCurrentLocation}
                         disabled={gettingLocation}
                         variant="outline"
-                        className={`w-fit font-mono ${isMobile ? 'text-xs h-9' : 'text-sm'}`}
+                        className={`w-fit font-mono retro-button ${isMobile ? 'text-xs h-9' : 'text-sm'}`}
                       >
                         {gettingLocation ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <MapPin className="w-4 h-4 mr-2" />}
                         {gettingLocation ? 'GETTING LOCATION...' : 'GET CURRENT LOCATION'}
@@ -419,7 +421,7 @@ const SystemSettingsWidget: React.FC = () => {
                   Enable retro CRT scanlines and glow effects
                 </p>
               </div>
-              <Switch
+              <RectangularSwitch
                 checked={settings.crt_effects_enabled}
                 onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, crt_effects_enabled: checked }))
@@ -450,7 +452,7 @@ const SystemSettingsWidget: React.FC = () => {
                   Enable audio feedback for interactions
                 </p>
               </div>
-              <Switch
+              <RectangularSwitch
                 checked={settings.sound_enabled}
                 onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, sound_enabled: checked }))
@@ -468,7 +470,7 @@ const SystemSettingsWidget: React.FC = () => {
                   Show browser notifications for important events
                 </p>
               </div>
-              <Switch
+              <RectangularSwitch
                 checked={settings.notifications_enabled}
                 onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, notifications_enabled: checked }))
@@ -535,7 +537,8 @@ const SystemSettingsWidget: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      </ScrollArea>
     </StandardWidgetTemplate>
   );
 };

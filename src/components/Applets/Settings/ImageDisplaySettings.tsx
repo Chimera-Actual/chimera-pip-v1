@@ -4,10 +4,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Save, Plus, Upload, Palette, RotateCcw, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Save, Plus, Upload, Palette, RotateCcw, Trash2, ChevronUp, ChevronDown, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { StandardSettingsTemplate } from '@/components/Layout/StandardSettingsTemplate';
 
 interface ImageContainer {
   id: string;
@@ -252,11 +253,11 @@ export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({
     }
   };
 
-  const convertToMonochrome = async (index: number, originalImageUrl: string, color: string) => {
+  const convertToMonochrome = async (index: number, originalImageUrl: string, color: string): Promise<string> => {
     return new Promise<string>((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const img = new Image();
+      const img = document.createElement('img') as HTMLImageElement;
       
       img.onload = () => {
         canvas.width = img.width;
@@ -341,288 +342,284 @@ export const ImageDisplaySettings: React.FC<ImageDisplaySettingsProps> = ({
   const availableLayouts = LAYOUT_CONFIGURATIONS[containerCount as keyof typeof LAYOUT_CONFIGURATIONS] || [];
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Container Configuration */}
-      <div className="space-y-4">
-        <Label className="text-sm font-mono text-primary flex items-center gap-2">
-          <Upload className="w-4 h-4" />
-          IMAGE CONTAINER CONFIGURATION
-        </Label>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-xs text-muted-foreground font-mono">NUMBER OF CONTAINERS</Label>
-            <Select value={containerCount.toString()} onValueChange={handleContainerCountChange}>
-              <SelectTrigger className="font-mono bg-background/50 border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                {[1, 2, 3, 4, 5, 6].map(num => (
-                  <SelectItem key={num} value={num.toString()} className="font-mono">
-                    {num} Container{num > 1 ? 's' : ''}
-                  </SelectItem>
-                ))
-                }
-              </SelectContent>
-            </Select>
+    <StandardSettingsTemplate
+      widgetIcon={<Image />}
+      widgetName="IMAGE DISPLAY"
+      onSave={handleSave}
+      onCancel={onClose}
+    >
+      <div className="space-y-6">
+        {/* Container Configuration */}
+        <div className="space-y-4">
+          <Label className="text-sm font-mono text-primary flex items-center gap-2">
+            <Upload className="w-4 h-4" />
+            IMAGE CONTAINER CONFIGURATION
+          </Label>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs text-muted-foreground font-mono">NUMBER OF CONTAINERS</Label>
+              <Select value={containerCount.toString()} onValueChange={handleContainerCountChange}>
+                <SelectTrigger className="font-mono bg-background/50 border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-border">
+                  {[1, 2, 3, 4, 5, 6].map(num => (
+                    <SelectItem key={num} value={num.toString()} className="font-mono">
+                      {num} Container{num > 1 ? 's' : ''}
+                    </SelectItem>
+                  ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs text-muted-foreground font-mono">LAYOUT PATTERN</Label>
+              <Select value={layoutPattern} onValueChange={setLayoutPattern}>
+                <SelectTrigger className="font-mono bg-background/50 border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-border">
+                  {availableLayouts.map(layout => (
+                    <SelectItem key={layout.name} value={layout.name} className="font-mono">
+                      {layout.name}
+                    </SelectItem>
+                  ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div>
-            <Label className="text-xs text-muted-foreground font-mono">LAYOUT PATTERN</Label>
-            <Select value={layoutPattern} onValueChange={setLayoutPattern}>
-              <SelectTrigger className="font-mono bg-background/50 border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                {availableLayouts.map(layout => (
-                  <SelectItem key={layout.name} value={layout.name} className="font-mono">
-                    {layout.name}
-                  </SelectItem>
-                ))
-                }
-              </SelectContent>
-            </Select>
+          {/* Layout Preview */}
+          <div className="p-3 bg-muted/20 rounded border">
+            <Label className="text-xs text-muted-foreground font-mono mb-2 block">LAYOUT PREVIEW</Label>
+            <div className="space-y-1">
+              {availableLayouts.find(l => l.name === layoutPattern)?.pattern.map((width, rowIndex) => (
+                <div key={rowIndex} className="flex gap-1">
+                  {Array.from({ length: width }, (_, colIndex) => (
+                    <div
+                      key={colIndex}
+                      className="h-6 bg-primary/20 rounded flex-1 flex items-center justify-center text-xs font-mono"
+                    >
+                      {rowIndex * Math.max(...availableLayouts.find(l => l.name === layoutPattern)?.pattern || [1]) + colIndex + 1}
+                    </div>
+                  ))
+                  }
+                </div>
+              ))
+              }
+            </div>
           </div>
         </div>
 
-        {/* Layout Preview */}
-        <div className="p-3 bg-muted/20 rounded border">
-          <Label className="text-xs text-muted-foreground font-mono mb-2 block">LAYOUT PREVIEW</Label>
-          <div className="space-y-1">
-            {availableLayouts.find(l => l.name === layoutPattern)?.pattern.map((width, rowIndex) => (
-              <div key={rowIndex} className="flex gap-1">
-                {Array.from({ length: width }, (_, colIndex) => (
-                  <div
-                    key={colIndex}
-                    className="h-6 bg-primary/20 rounded flex-1 flex items-center justify-center text-xs font-mono"
-                  >
-                    {rowIndex * Math.max(...availableLayouts.find(l => l.name === layoutPattern)?.pattern || [1]) + colIndex + 1}
+        {/* Container Content Settings */}
+        <div className="space-y-4">
+          <Label className="text-sm font-mono text-primary flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            IMAGE CONTAINER CONTENT
+          </Label>
+
+          <div className="space-y-4">
+            {containers.slice(0, containerCount).map((container, index) => (
+              <Card key={container.id} className="border-border">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-mono text-foreground">
+                      Container {index + 1}
+                    </CardTitle>
+                    <div className="flex gap-1">
+                      {/* Move Up Button */}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveContainer(index, 'up')}
+                        disabled={index === 0}
+                        className="p-1 h-6 w-6 retro-button"
+                      >
+                        <ChevronUp className="w-3 h-3" />
+                      </Button>
+                      {/* Move Down Button */}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveContainer(index, 'down')}
+                        disabled={index === containerCount - 1}
+                        className="p-1 h-6 w-6 retro-button"
+                      >
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                      {/* Remove Button */}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeContainer(index)}
+                        disabled={containers.length <= 1}
+                        className="p-1 h-6 w-6 text-destructive hover:text-destructive retro-button"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
-                ))
-                }
-              </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground font-mono">TITLE</Label>
+                      <Input
+                        value={container.title}
+                        onChange={(e) => updateContainer(index, 'title', e.target.value)}
+                        className="font-mono text-xs"
+                        placeholder="Container title..."
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground font-mono">LAYOUT STYLE</Label>
+                      <Select
+                        value={container.layout}
+                        onValueChange={(value) => updateContainer(index, 'layout', value)}
+                      >
+                        <SelectTrigger className="font-mono text-xs bg-background/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="card">Card</SelectItem>
+                          <SelectItem value="minimal">Minimal</SelectItem>
+                          <SelectItem value="banner">Banner</SelectItem>
+                          <SelectItem value="rounded">Rounded</SelectItem>
+                          <SelectItem value="shadow">Shadow</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground font-mono">IMAGE UPLOAD</Label>
+                    <div className="mt-1 space-y-2">
+                      <input
+                        ref={el => fileInputRefs.current[container.id] = el}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(index, file);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRefs.current[container.id]?.click()}
+                        className="w-full font-mono text-xs retro-button"
+                      >
+                        <Upload className="w-3 h-3 mr-2" />
+                        {container.imageUrl ? 'Replace Image' : 'Upload Image'}
+                      </Button>
+                      
+                      {container.imageUrl && (
+                        <div className="relative">
+                          <img
+                            src={container.imageUrl}
+                            alt={container.title}
+                            className="w-full h-20 object-cover rounded border"
+                            onLoad={() => console.log('Image loaded successfully:', container.imageUrl)}
+                            onError={(e) => {
+                              console.error('Image failed to load:', container.imageUrl);
+                              console.error('Error details:', e);
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {container.imageUrl && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground font-mono">MONOCHROME COLOR</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            type="color"
+                            value={container.monochromeColor}
+                            onChange={(e) => handleColorChange(index, e.target.value)}
+                            className="w-12 h-8 p-1 rounded"
+                          />
+                          <Input
+                            value={container.monochromeColor}
+                            onChange={(e) => handleColorChange(index, e.target.value)}
+                            className="font-mono text-xs"
+                            placeholder="#000000"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <Label className="text-xs text-muted-foreground font-mono">ACTIONS</Label>
+                        <Button
+                          type="button"
+                          onClick={() => handleMonochromeToggle(index)}
+                          variant={container.isMonochrome ? "default" : "outline"}
+                          className="font-mono text-xs retro-button"
+                          disabled={!container.imageUrl}
+                        >
+                          <Palette className="w-3 h-3 mr-1" />
+                          Apply Monochrome
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground font-mono">BORDER STYLE</Label>
+                      <Select
+                        value={container.borderStyle}
+                        onValueChange={(value) => updateContainer(index, 'borderStyle', value)}
+                      >
+                        <SelectTrigger className="font-mono text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="solid">Solid</SelectItem>
+                          <SelectItem value="dashed">Dashed</SelectItem>
+                          <SelectItem value="dotted">Dotted</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-muted-foreground font-mono">BORDER COLOR</Label>
+                      <Select
+                        value={container.borderColor}
+                        onValueChange={(value) => updateContainer(index, 'borderColor', value)}
+                      >
+                        <SelectTrigger className="font-mono text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="border">Default</SelectItem>
+                          <SelectItem value="border-primary">Primary</SelectItem>
+                          <SelectItem value="border-accent">Accent</SelectItem>
+                          <SelectItem value="border-muted">Muted</SelectItem>
+                          <SelectItem value="border-destructive">Red</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))
             }
           </div>
         </div>
       </div>
-
-      {/* Container Content Settings */}
-      <div className="space-y-4">
-        <Label className="text-sm font-mono text-primary flex items-center gap-2">
-          <Palette className="w-4 h-4" />
-          IMAGE CONTAINER CONTENT
-        </Label>
-
-        <div className="space-y-4">
-          {containers.slice(0, containerCount).map((container, index) => (
-            <Card key={container.id} className="border-border">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-mono text-foreground">
-                    Container {index + 1}
-                  </CardTitle>
-                  <div className="flex gap-1">
-                    {/* Move Up Button */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveContainer(index, 'up')}
-                      disabled={index === 0}
-                      className="p-1 h-6 w-6"
-                    >
-                      <ChevronUp className="w-3 h-3" />
-                    </Button>
-                    {/* Move Down Button */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveContainer(index, 'down')}
-                      disabled={index === containerCount - 1}
-                      className="p-1 h-6 w-6"
-                    >
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
-                    {/* Remove Button */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeContainer(index)}
-                      disabled={containers.length <= 1}
-                      className="p-1 h-6 w-6 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground font-mono">TITLE</Label>
-                    <Input
-                      value={container.title}
-                      onChange={(e) => updateContainer(index, 'title', e.target.value)}
-                      className="font-mono text-xs"
-                      placeholder="Container title..."
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground font-mono">LAYOUT STYLE</Label>
-                    <Select
-                      value={container.layout}
-                      onValueChange={(value) => updateContainer(index, 'layout', value)}
-                    >
-                      <SelectTrigger className="font-mono text-xs bg-background/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="card">Card</SelectItem>
-                        <SelectItem value="minimal">Minimal</SelectItem>
-                        <SelectItem value="banner">Banner</SelectItem>
-                        <SelectItem value="rounded">Rounded</SelectItem>
-                        <SelectItem value="shadow">Shadow</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-xs text-muted-foreground font-mono">IMAGE UPLOAD</Label>
-                  <div className="mt-1 space-y-2">
-                    <input
-                      ref={el => fileInputRefs.current[container.id] = el}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleImageUpload(index, file);
-                        }
-                      }}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRefs.current[container.id]?.click()}
-                      className="w-full font-mono text-xs"
-                    >
-                      <Upload className="w-3 h-3 mr-2" />
-                      {container.imageUrl ? 'Replace Image' : 'Upload Image'}
-                    </Button>
-                    
-                    {container.imageUrl && (
-                      <div className="relative">
-                        <img
-                          src={container.imageUrl}
-                          alt={container.title}
-                          className="w-full h-20 object-cover rounded border"
-                          onLoad={() => console.log('Image loaded successfully:', container.imageUrl)}
-                          onError={(e) => {
-                            console.error('Image failed to load:', container.imageUrl);
-                            console.error('Error details:', e);
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {container.imageUrl && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground font-mono">MONOCHROME COLOR</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          type="color"
-                          value={container.monochromeColor}
-                          onChange={(e) => handleColorChange(index, e.target.value)}
-                          className="w-12 h-8 p-1 rounded"
-                        />
-                        <Input
-                          value={container.monochromeColor}
-                          onChange={(e) => handleColorChange(index, e.target.value)}
-                          className="font-mono text-xs"
-                          placeholder="#000000"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-xs text-muted-foreground font-mono">ACTIONS</Label>
-                      <Button
-                        type="button"
-                        onClick={() => handleMonochromeToggle(index)}
-                        variant={container.isMonochrome ? "default" : "outline"}
-                        className="font-mono text-xs"
-                        disabled={!container.imageUrl}
-                      >
-                        <Palette className="w-3 h-3 mr-1" />
-                        Apply Monochrome
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground font-mono">BORDER STYLE</Label>
-                    <Select
-                      value={container.borderStyle}
-                      onValueChange={(value) => updateContainer(index, 'borderStyle', value)}
-                    >
-                      <SelectTrigger className="font-mono text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="solid">Solid</SelectItem>
-                        <SelectItem value="dashed">Dashed</SelectItem>
-                        <SelectItem value="dotted">Dotted</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-muted-foreground font-mono">BORDER COLOR</Label>
-                    <Select
-                      value={container.borderColor}
-                      onValueChange={(value) => updateContainer(index, 'borderColor', value)}
-                    >
-                      <SelectTrigger className="font-mono text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="border">Default</SelectItem>
-                        <SelectItem value="border-primary">Primary</SelectItem>
-                        <SelectItem value="border-accent">Accent</SelectItem>
-                        <SelectItem value="border-muted">Muted</SelectItem>
-                        <SelectItem value="border-destructive">Red</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-          }
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-border">
-        <Button variant="outline" onClick={onClose} className="font-mono">
-          CANCEL
-        </Button>
-        <Button onClick={handleSave} className="font-mono">
-          <Save className="w-4 h-4 mr-2" />
-          SAVE SETTINGS
-        </Button>
-      </div>
-    </div>
+    </StandardSettingsTemplate>
   );
 };
