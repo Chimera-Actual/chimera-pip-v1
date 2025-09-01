@@ -9,6 +9,7 @@ interface StandardWidgetTemplateProps {
   className?: string;
   contentLayout?: 'default' | 'split' | 'stack';
   widgetIcon?: React.ReactNode; // New: optional widget-specific icon
+  statusDisplay?: React.ReactNode; // New: optional status display in header
 }
 
 export const StandardWidgetTemplate: React.FC<StandardWidgetTemplateProps> = ({
@@ -18,7 +19,8 @@ export const StandardWidgetTemplate: React.FC<StandardWidgetTemplateProps> = ({
   children,
   className = "",
   contentLayout = 'default',
-  widgetIcon
+  widgetIcon,
+  statusDisplay
 }) => {
   const { isMobile, isTablet } = useResponsive();
   const headerHeight = useResponsiveHeaderHeight();
@@ -29,7 +31,7 @@ export const StandardWidgetTemplate: React.FC<StandardWidgetTemplateProps> = ({
     <div className={`w-full h-full flex flex-col overflow-hidden ${className}`}>
       {/* Enhanced Responsive Header */}
       <div className={`flex-shrink-0 bg-card border-b border-border ${padding} flex items-center justify-between ${headerHeight}`}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           {widgetIcon && (
             <span className="icon-primary crt-glow">
               {widgetIcon}
@@ -41,9 +43,14 @@ export const StandardWidgetTemplate: React.FC<StandardWidgetTemplateProps> = ({
           <span className={`font-mono text-primary uppercase tracking-wider crt-glow ${textSizes.title}`}>
             {title}
           </span>
+          {statusDisplay && (
+            <div className="ml-4 flex-1">
+              {statusDisplay}
+            </div>
+          )}
         </div>
         {controls && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {controls}
           </div>
         )}

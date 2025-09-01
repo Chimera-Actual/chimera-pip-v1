@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Map, Settings } from 'lucide-react';
+import { Map, Settings, Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StandardWidgetTemplate } from '@/components/Layout/StandardWidgetTemplate';
-import { LocationStatusBar } from '@/components/ui/location-status-bar';
+import { LocationStatusInline } from '@/components/ui/location-status-inline';
 import { useMapboxState } from '@/hooks/useMapboxState';
 import { useLocation } from '@/contexts/LocationContext';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -10,7 +10,6 @@ import { useLocationStatus } from '@/hooks/useLocationStatus';
 import { MapboxRenderer } from './MapComponents/MapboxRenderer';
 import { MapboxControls } from './MapComponents/MapboxControls';
 import { MapboxLocationSearch } from './MapComponents/MapboxLocationSearch';
-import { MapboxCoordinateDisplay } from './MapComponents/MapboxCoordinateDisplay';
 import { MapboxLayerSelector } from './MapComponents/MapboxLayerSelector';
 import { MapWidgetSettings } from './Settings/MapWidgetSettings';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,6 +82,12 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
     <StandardWidgetTemplate
       icon={<Map size={16} />}
       title="TACTICAL MAP"
+      statusDisplay={
+        <LocationStatusInline
+          location={location}
+          status={locationStatus}
+        />
+      }
       controls={
         <Button
           variant="ghost"
@@ -95,16 +100,7 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
       }
     >
       <div className="relative flex flex-col h-full overflow-hidden">
-        {!isMobile && (
-          <LocationStatusBar 
-            location={location}
-            status={locationStatus}
-            onRefresh={async () => { await getCurrentLocation(); }}
-            className="flex-shrink-0 bg-card/50 backdrop-blur-sm" 
-          />
-        )}
-
-        <div className="absolute top-4 left-4 right-20 z-10">
+        <div className="absolute top-2 left-2 right-16 z-20">
           <MapboxLocationSearch
             value={mapState.activeSearch}
             results={mapState.searchResults}
@@ -117,21 +113,30 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
         </div>
 
         <div className="flex-1 relative">
-          <MapboxRenderer
-            center={mapState.center}
-            zoom={mapState.zoom}
-            bearing={mapState.bearing}
-            pitch={mapState.pitch}
-            mapStyle={getMapStyle(mapState.layer)}
-            placemarks={mapState.placemarks}
-            userLocation={location}
-            showCenterpoint={mapState.showCenterpoint}
-            followUser={mapState.followUser}
-            onCenterChange={updateCenter}
-            onZoomChange={updateZoom}
-            onBearingChange={updateBearing}
-            onPitchChange={() => {}}
-          />
+          {!mapboxToken ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="text-center">
+                <Crosshair size={48} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-mono">LOADING MAP...</p>
+              </div>
+            </div>
+          ) : (
+            <MapboxRenderer
+              center={mapState.center}
+              zoom={mapState.zoom}
+              bearing={mapState.bearing}
+              pitch={mapState.pitch}
+              mapStyle={getMapStyle(mapState.layer)}
+              placemarks={mapState.placemarks}
+              userLocation={location}
+              showCenterpoint={mapState.showCenterpoint}
+              followUser={mapState.followUser}
+              onCenterChange={updateCenter}
+              onZoomChange={updateZoom}
+              onBearingChange={updateBearing}
+              onPitchChange={() => {}}
+            />
+          )}
 
           <MapboxControls
             zoom={mapState.zoom}
@@ -142,19 +147,10 @@ export const TacticalMapWidget: React.FC<TacticalMapWidgetProps> = ({
             onResetView={() => location && navigateToLocation(location.longitude, location.latitude)}
           />
 
-          <div className="absolute bottom-4 right-4 z-10">
+          <div className="absolute bottom-2 right-2 z-10">
             <MapboxLayerSelector
               selectedLayer={mapState.layer}
               onLayerChange={updateLayer}
-            />
-          </div>
-
-          <div className="absolute bottom-4 left-4 z-10">
-            <MapboxCoordinateDisplay
-              center={mapState.center}
-              userLocation={location}
-              bearing={mapState.bearing}
-              zoom={mapState.zoom}
             />
           </div>
         </div>
