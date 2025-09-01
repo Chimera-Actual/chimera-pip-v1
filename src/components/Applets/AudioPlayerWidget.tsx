@@ -200,8 +200,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-card">
-
-      {/* Header */}
+      {/* Header - Widget title and volume control */}
       <div className="flex-shrink-0 h-16 bg-background/50 border-b border-border px-4 flex items-center justify-between">
         <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
           🎵 AUDIO PLAYER
@@ -221,14 +220,14 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
         </div>
       </div>
 
-      {/* Audio Waveform Visualization - At Top */}
+      {/* Waveform component */}
       {settings?.showWaveform !== false && (
         <div className={`flex-shrink-0 bg-background/20 border-b border-border relative ${
           currentWaveformSize === 'small' ? 'h-20' :
           currentWaveformSize === 'large' ? 'h-60' :
           'h-32'
         }`}>
-          {/* Waveform Size Controls - Positioned absolutely to avoid layout interference */}
+          {/* Waveform Size Controls */}
           <div className="absolute top-2 right-2 z-10 flex gap-1">
             <Button
               onClick={() => handleWaveformSizeChange('small')}
@@ -255,7 +254,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
               L
             </Button>
           </div>
-          {/* Waveform container with proper sizing */}
+          {/* Waveform container */}
           <div className="absolute inset-0 p-4">
             <AudioWaveform 
               audioElement={audioRef.current}
@@ -268,8 +267,50 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
         </div>
       )}
 
+      {/* Playlist with scroll bar */}
+      <div className="flex-1 overflow-hidden">
+        <div className="p-4 pb-2">
+          <Label className="text-sm font-mono text-primary uppercase">
+            PLAYLIST ({playlist.length})
+          </Label>
+        </div>
+        
+        <div className="px-4 pb-4 overflow-y-auto h-full">
+          {playlist.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm font-mono">
+              NO AUDIO FILES IN PLAYLIST
+              <br />
+              <span className="text-xs">Upload audio files to begin listening</span>
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={playlist.map(track => track.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {playlist.map((track) => (
+                    <SortableTrack
+                      key={track.id}
+                      track={track}
+                      isActive={currentTrack?.id === track.id}
+                      onPlay={playTrack}
+                      onRemove={(trackId) => removeTrack(trackId, widgetInstanceId)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
+      </div>
+
       {/* Current Track Display - Song Information */}
-      <div className="flex-shrink-0 bg-background/30 border-b border-border p-4">
+      <div className="flex-shrink-0 bg-background/30 border-b border-t border-border p-4">
         <div className="text-center space-y-2">
           <div className="text-sm font-mono text-primary truncate">
             {currentTrack ? currentTrack.title : 'NO TRACK SELECTED'}
@@ -337,49 +378,7 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
         </div>
       </div>
 
-      {/* Playlist */}
-      <div className="flex-1 overflow-hidden">
-        <div className="p-4">
-          <Label className="text-sm font-mono text-primary uppercase">
-            PLAYLIST ({playlist.length})
-          </Label>
-        </div>
-        
-        <div className="px-4 pb-4 overflow-y-auto max-h-full">
-          {playlist.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm font-mono">
-              NO AUDIO FILES IN PLAYLIST
-              <br />
-              <span className="text-xs">Upload audio files to begin listening</span>
-            </div>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={playlist.map(track => track.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-2">
-                  {playlist.map((track) => (
-                    <SortableTrack
-                      key={track.id}
-                      track={track}
-                      isActive={currentTrack?.id === track.id}
-                      onPlay={playTrack}
-                      onRemove={(trackId) => removeTrack(trackId, widgetInstanceId)}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
-        </div>
-      </div>
-
-      {/* Upload Audio Files - At Bottom */}
+      {/* Upload Audio Files section at bottom */}
       <div className="flex-shrink-0 bg-background/20 border-t border-border p-4">
         <div className="space-y-2">
           <Label className="text-xs font-mono text-primary uppercase">Upload Audio Files</Label>
