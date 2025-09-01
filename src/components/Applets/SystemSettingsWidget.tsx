@@ -210,7 +210,7 @@ const SystemSettingsWidget: React.FC = () => {
       title="SYSTEM CONFIGURATION"
       controls={saveButton}
     >
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 h-full">
         <div className={`space-y-3 md:space-y-4 ${isMobile ? 'p-3' : 'p-4'}`}>
         {/* Location Settings Card */}
         <Card className="bg-card/50 border-border">
