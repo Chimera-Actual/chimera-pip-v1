@@ -8,7 +8,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log('get-mapbox-token function called');
     const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN')
+    console.log('Token exists:', !!mapboxToken);
     
     if (!mapboxToken) {
       console.error('MAPBOX_PUBLIC_TOKEN not found in environment variables')
@@ -21,6 +23,7 @@ serve(async (req) => {
       )
     }
 
+    console.log('Returning token successfully');
     return new Response(
       JSON.stringify({ token: mapboxToken }),
       {

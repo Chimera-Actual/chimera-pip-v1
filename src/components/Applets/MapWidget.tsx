@@ -37,13 +37,19 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
   useEffect(() => {
     const fetchToken = async () => {
       try {
+        console.log('Fetching Mapbox token...');
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        console.log('Token response:', { data, error });
+        
         if (error) {
           console.error('Error fetching Mapbox token:', error);
           return;
         }
         if (data && data.token) {
+          console.log('Token received successfully');
           setMapboxToken(data.token);
+        } else {
+          console.error('No token in response:', data);
         }
       } catch (error) {
         console.error('Failed to fetch Mapbox token:', error);
@@ -159,6 +165,14 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
     </div>
   );
 
+  const primaryControls = (
+    <LocationStatusInline 
+      location={location} 
+      status={status} 
+      className="text-xs"
+    />
+  );
+
   if (!mapboxToken) {
     return (
       <BaseWidgetTemplate
@@ -169,14 +183,22 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
         onSettingsChange={onSettingsChange}
         widgetName={widgetName}
         settingsComponent={MapWidgetSettings}
-        statusDisplay={controls}
+        primaryControls={primaryControls}
       >
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center space-y-4">
             <div className="text-4xl opacity-50">🗺️</div>
             <div className="text-sm text-muted-foreground font-mono">
-              Mapbox token required. Please configure in settings.
+              Loading map...
             </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()}
+              className="font-mono"
+            >
+              Retry
+            </Button>
           </div>
         </div>
       </BaseWidgetTemplate>
@@ -192,7 +214,7 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
       onSettingsChange={onSettingsChange}
       widgetName={widgetName}
       settingsComponent={MapWidgetSettings}
-      statusDisplay={controls}
+      primaryControls={primaryControls}
     >
       <div className="flex-1 relative overflow-hidden">
         {/* Map Container */}
