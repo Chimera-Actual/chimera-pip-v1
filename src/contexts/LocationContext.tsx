@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { locationService, LocationData, LocationStatus } from '@/lib/locationService';
 
+interface LocationSearchResult {
+  display_name: string;
+  lat: number;
+  lon: number;
+  formatted_name: string;
+  type: string;
+  importance: number;
+}
+
 interface LocationContextType {
   location: LocationData | null;
   status: LocationStatus;
@@ -11,7 +20,7 @@ interface LocationContextType {
   setAutoFollow: (enabled: boolean) => void;
   getCurrentLocation: () => Promise<LocationData>;
   refreshLocation: () => Promise<void>;
-  searchLocations: (query: string, limit?: number) => Promise<any[]>;
+  searchLocations: (query: string, limit?: number) => Promise<LocationSearchResult[]>;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);

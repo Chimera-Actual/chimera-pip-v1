@@ -11,8 +11,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading, showingBootSequence } = useAuth();
   const navigate = useNavigate();
 
-  console.log('ProtectedRoute render:', { user: !!user, loading, showingBootSequence });
-
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');

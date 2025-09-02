@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "green" | "amber" | "blue";
+export type Theme = "green" | "amber" | "blue";
 type CRTContextType = { 
   theme: Theme; 
   setTheme: (t: Theme) => void;

@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth event:', event, 'Session:', !!session);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -32,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && session?.user) {
           const hasShownBootSequence = sessionStorage.getItem('boot_sequence_shown');
           if (!hasShownBootSequence) {
-            console.log('Triggering boot sequence for new login');
             setShowingBootSequence(true);
             sessionStorage.setItem('boot_sequence_shown', 'true');
           }
@@ -56,7 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeBootSequence = useCallback(() => {
-    console.log('completeBootSequence called');
     setShowingBootSequence(false);
   }, []);
 

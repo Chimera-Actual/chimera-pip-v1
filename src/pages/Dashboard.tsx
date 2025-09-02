@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { CRTChrome, CRTThemeProvider, useCRT } from "@/lib/CRTTheme";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { CRTChrome, CRTThemeProvider, useCRT, type Theme } from "@/lib/CRTTheme";
 import DashboardGrid, { GridItem } from "@/components/dashboard/DashboardGrid";
 import TabManager from "@/components/dashboard/TabManager";
 import OrphanedWidget from "@/components/dashboard/OrphanedWidget";
@@ -44,7 +44,7 @@ function DashboardSettings() {
               <select
                 className="w-full crt-input px-2 py-1 rounded text-sm"
                 value={theme}
-                onChange={(e) => setTheme(e.target.value as any)}
+                onChange={(e) => setTheme(e.target.value as Theme)}
               >
                 <option value="green">Matrix Green</option>
                 <option value="amber">Fallout Amber</option>
@@ -189,8 +189,8 @@ function DashboardContent() {
 
   const { saveLayout, undo, canUndo, undoCount } = useLayoutHistory(`dashboard:layout:${activeTabId}`);
 
-  // Permanent widgets that appear on every tab
-  const permanentWidgets = [
+  // Permanent widgets that appear on every tab - memoized for performance
+  const permanentWidgets = useMemo(() => [
     {
       id: 'permanent-add-widget',
       widgetType: 'AddWidgetWidget',
@@ -211,9 +211,9 @@ function DashboardContent() {
       minW: 3,
       minH: 4,
     }
-  ];
+  ], []);
   
-  const permanentWidgetIds = new Set(permanentWidgets.map(w => w.id));
+  const permanentWidgetIds = useMemo(() => new Set(permanentWidgets.map(w => w.id)), [permanentWidgets]);
 
   // Show notification about orphaned widgets
   useEffect(() => {
@@ -273,28 +273,28 @@ function DashboardContent() {
     [saveLayout, updateTabLayout, activeTabId]
   );
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     const previousLayout = undo();
     if (previousLayout) {
-      // Force a re-render by updating a timestamp or similar
-      window.location.reload();
+      // Update layout state directly instead of reloading
+      updateTabLayout(activeTabId, previousLayout);
       toast({
         title: "Layout restored",
         description: "Reverted to previous layout state",
       });
     }
-  };
+  }, [undo, updateTabLayout, activeTabId, toast]);
 
   // Permanent widgets that appear on every tab
 
   // Combine permanent widgets with tab widgets, offsetting tab widgets to avoid overlap
-  const allWidgets = [
+  const allWidgets = useMemo(() => [
     ...permanentWidgets,
     ...(activeTab?.widgets.map(widget => ({
       ...widget,
       y: (widget.y || 0) + 7 // Offset regular widgets below permanent ones
     })) || [])
-  ];
+  ], [permanentWidgets, activeTab?.widgets]);
 
   // Handle widget collapse to communicate with grid
   const handleWidgetCollapse = useCallback((widgetId: string, collapsed: boolean) => {

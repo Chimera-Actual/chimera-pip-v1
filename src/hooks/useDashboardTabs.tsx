@@ -1,13 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GridItem } from '@/components/dashboard/DashboardGrid';
 import { LucideIcon, Monitor } from 'lucide-react';
+import { type Layout } from "react-grid-layout";
 
 export interface DashboardTab {
   id: string;
   name: string;
   icon: string; // Store as string identifier instead of component
   widgets: GridItem[];
-  layout?: any[];
+  layout?: Layout[];
   createdAt: number;
 }
 
@@ -125,7 +126,7 @@ export function useDashboardTabs() {
     ));
   }, []);
 
-  const updateTabLayout = useCallback((tabId: string, layout: any[]) => {
+  const updateTabLayout = useCallback((tabId: string, layout: Layout[]) => {
     setTabs(prev => prev.map(tab => 
       tab.id === tabId ? { ...tab, layout } : tab
     ));
