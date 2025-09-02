@@ -495,10 +495,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      widget_performance_stats: {
+        Row: {
+          active_instances: number | null
+          avg_position: number | null
+          category: string | null
+          instance_count: number | null
+          widget_name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      batch_update_widget_positions: {
+        Args: { position_updates: Json; user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,3 +1,4 @@
+// Use the regular supabase client for RPC calls
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 import type { WidgetSettings } from '@/types/widget';
@@ -63,7 +64,7 @@ class BatchOperationManager {
     try {
       logger.time('batch-position-update');
 
-      // Use a transaction for atomic position updates
+      // Use RPC function for batch position updates
       const { error } = await supabase.rpc('batch_update_widget_positions', {
         user_id: userId,
         position_updates: positionUpdates
