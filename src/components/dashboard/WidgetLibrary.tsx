@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Search, Grid3X3, Clock, StickyNote, BarChart3, MessageSquare, Music, Map, Cpu } from 'lucide-react';
+import { Plus, X, Search, Clock, StickyNote, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -21,10 +21,10 @@ interface WidgetDefinition {
 const WIDGET_DEFINITIONS: WidgetDefinition[] = [
   {
     id: 'SampleClock',
-    name: 'Digital Clock',
-    description: 'Real-time digital clock display',
+    name: 'System Clock',
+    description: 'Real-time digital clock with timezone info',
     icon: <Clock className="w-5 h-5" />,
-    category: 'Utilities',
+    category: 'System',
     minW: 3,
     minH: 3,
     defaultW: 4,
@@ -32,8 +32,8 @@ const WIDGET_DEFINITIONS: WidgetDefinition[] = [
   },
   {
     id: 'SampleNote',
-    name: 'Note Widget',
-    description: 'Take and save notes with auto-sync',
+    name: 'Notes Terminal',
+    description: 'Persistent notepad with auto-save',
     icon: <StickyNote className="w-5 h-5" />,
     category: 'Productivity',
     minW: 4,
@@ -43,69 +43,14 @@ const WIDGET_DEFINITIONS: WidgetDefinition[] = [
   },
   {
     id: 'SampleChart',
-    name: 'Data Chart',
-    description: 'Interactive data visualization',
+    name: 'System Monitor',
+    description: 'Real-time system monitoring chart',
     icon: <BarChart3 className="w-5 h-5" />,
-    category: 'Analytics',
-    minW: 4,
-    minH: 4,
-    defaultW: 6,
-    defaultH: 6
-  },
-  {
-    id: 'AnalyticsWidget',
-    name: 'Analytics Dashboard',
-    description: 'Comprehensive analytics and metrics',
-    icon: <Grid3X3 className="w-5 h-5" />,
-    category: 'Analytics',
-    minW: 6,
-    minH: 6,
-    defaultW: 8,
-    defaultH: 8
-  },
-  {
-    id: 'ChatWidget',
-    name: 'Assistant Chat',
-    description: 'AI-powered chat assistant',
-    icon: <MessageSquare className="w-5 h-5" />,
-    category: 'Communication',
-    minW: 4,
-    minH: 6,
-    defaultW: 6,
-    defaultH: 8
-  },
-  {
-    id: 'AudioWidget',
-    name: 'Audio Player',
-    description: 'Music and audio playback controls',
-    icon: <Music className="w-5 h-5" />,
-    category: 'Media',
-    minW: 4,
-    minH: 6,
-    defaultW: 6,
-    defaultH: 8
-  },
-  {
-    id: 'MapWidget',
-    name: 'Interactive Map',
-    description: 'Location and mapping services',
-    icon: <Map className="w-5 h-5" />,
-    category: 'Location',
-    minW: 4,
-    minH: 4,
-    defaultW: 6,
-    defaultH: 6
-  },
-  {
-    id: 'BaseWidget',
-    name: 'Base Widget',
-    description: 'Template widget for development',
-    icon: <Cpu className="w-5 h-5" />,
     category: 'System',
-    minW: 3,
-    minH: 3,
-    defaultW: 4,
-    defaultH: 4
+    minW: 4,
+    minH: 4,
+    defaultW: 6,
+    defaultH: 6
   }
 ];
 
