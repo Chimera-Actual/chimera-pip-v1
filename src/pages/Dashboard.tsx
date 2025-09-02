@@ -283,15 +283,7 @@ function DashboardContent() {
       <div className="flex-1 p-6 overflow-y-auto">
         {/* Collapsible Toolbar */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <Button
-              onClick={() => setShowWidgetLibrary(true)}
-              className="crt-button px-4 py-2 rounded flex items-center space-x-2 text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Widget</span>
-            </Button>
-            
+          <div className="flex items-center justify-end">
             <Button
               onClick={() => setIsToolbarCollapsed(!isToolbarCollapsed)}
               variant="ghost"
@@ -317,36 +309,46 @@ function DashboardContent() {
                 className="overflow-hidden"
               >
                 <motion.div 
-                  className="flex items-center justify-end mt-4 space-x-3"
+                  className="flex items-center justify-between mt-4"
                   initial={{ y: -10 }}
                   animate={{ y: 0 }}
                   exit={{ y: -10 }}
                 >
-                  {orphanedWidgets.length > 0 && (
-                    <Button
-                      onClick={handleCleanupOrphanedWidgets}
-                      variant="outline"
-                      className="px-3 py-2 rounded flex items-center space-x-2 text-sm border-red-500/50 text-red-400 hover:bg-red-500/20"
-                      title={`Remove ${orphanedWidgets.length} orphaned widget${orphanedWidgets.length > 1 ? 's' : ''}`}
-                    >
-                      <AlertTriangle className="w-4 h-4" />
-                      <Trash2 className="w-4 h-4" />
-                      <span>Clean Up ({orphanedWidgets.length})</span>
-                    </Button>
-                  )}
-                  
                   <Button
-                    onClick={handleUndo}
-                    disabled={!canUndo}
-                    variant="outline"
-                    className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
-                    title={`Undo layout changes (${undoCount} available)`}
+                    onClick={() => setShowWidgetLibrary(true)}
+                    className="crt-button px-4 py-2 rounded flex items-center space-x-2 text-sm"
                   >
-                    <Undo className="w-4 h-4" />
-                    <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
+                    <Plus className="w-4 h-4" />
+                    <span>Add Widget</span>
                   </Button>
+                  
+                  <div className="flex items-center space-x-3">
+                    {orphanedWidgets.length > 0 && (
+                      <Button
+                        onClick={handleCleanupOrphanedWidgets}
+                        variant="outline"
+                        className="px-3 py-2 rounded flex items-center space-x-2 text-sm border-red-500/50 text-red-400 hover:bg-red-500/20"
+                        title={`Remove ${orphanedWidgets.length} orphaned widget${orphanedWidgets.length > 1 ? 's' : ''}`}
+                      >
+                        <AlertTriangle className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
+                        <span>Clean Up ({orphanedWidgets.length})</span>
+                      </Button>
+                    )}
+                    
+                    <Button
+                      onClick={handleUndo}
+                      disabled={!canUndo}
+                      variant="outline"
+                      className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
+                      title={`Undo layout changes (${undoCount} available)`}
+                    >
+                      <Undo className="w-4 h-4" />
+                      <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
+                    </Button>
 
-                  <DashboardSettings />
+                    <DashboardSettings />
+                  </div>
                 </motion.div>
               </motion.div>
             )}
