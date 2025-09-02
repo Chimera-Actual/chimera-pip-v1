@@ -1,61 +1,76 @@
-// Zustand Dashboard Store with Immer for State Management
+// Independent Widget System Store - Complete Isolation Architecture
 import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/utils/logger';
+import { immer } from 'zustand/middleware/immer';
 import type { 
   DashboardState, 
   DashboardLayout, 
   Widget, 
-  GridPosition, 
+  PanelConfig,
   DashboardSnapshot,
-  PanelConfig
+  GridPosition 
 } from '@/types/dashboard';
+import type { WidgetSettings } from '@/types/widget';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import type { Layout } from 'react-grid-layout';
 
 interface DashboardActions {
-  // Layout management
-  loadLayouts: (userId: string) => Promise<void>;
-  createLayout: (name: string, userId: string) => Promise<void>;
-  setActiveLayout: (layoutId: string) => Promise<void>;
-  updateLayout: (layout: Partial<DashboardLayout>) => Promise<void>;
-  deleteLayout: (layoutId: string) => Promise<void>;
-  
-  // Widget management
-  addWidget: (widget: Omit<Widget, 'id'>, position: GridPosition) => void;
-  moveWidget: (widgetId: string, position: GridPosition, panelId?: string) => void;
-  resizeWidget: (widgetId: string, size: { width: number; height: number }) => void;
+  // Widget Management - Complete Independence
+  addWidget: (widgetType: string, panelId?: string, position?: Partial<GridPosition>) => string; // returns widget ID
   removeWidget: (widgetId: string) => void;
-  updateWidgetSettings: (widgetId: string, settings: any) => void;
+  updateWidget: (widgetId: string, updates: Partial<Widget>) => void;
+  updateWidgetSettings: (widgetId: string, settings: WidgetSettings) => void;
+  moveWidget: (widgetId: string, position: GridPosition, panelId?: string) => void;
+  resizeWidget: (widgetId: string, size: { w: number; h: number }) => void;
   toggleWidgetCollapse: (widgetId: string) => void;
-  
-  // Selection
-  selectWidget: (widgetId: string | null) => void;
-  
-  // History management
+  duplicateWidget: (widgetId: string) => string; // returns new widget ID
+
+  // Layout Management  
+  loadLayouts: () => Promise<void>;
+  createLayout: (name: string) => Promise<void>;
+  updateLayout: (layoutId: string, updates: Partial<DashboardLayout>) => Promise<void>;
+  deleteLayout: (layoutId: string) => Promise<void>;
+  setActiveLayout: (layoutId: string) => void;
+  saveCurrentLayout: () => Promise<void>;
+
+  // Grid Layout Integration
+  updateGridLayout: (panelId: string, layout: Layout[]) => void;
+  getWidgetsByPanel: (panelId: string) => Widget[];
+  getGridLayout: (panelId: string) => Layout[];
+
+  // Selection and UI
+  setSelectedWidget: (widgetId: string | null) => void;
+
+  // History Management
+  createSnapshot: (action: string) => void;
   undo: () => void;
   redo: () => void;
-  createSnapshot: (action: string) => void;
-  
-  // Panel management
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+
+  // Panel Configuration
   updatePanelConfig: (panelId: string, config: Partial<PanelConfig>) => void;
-  
+
   // Utility
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
+  clearAllWidgets: () => void;
+  getWidget: (widgetId: string) => Widget | undefined;
+
+  // Legacy compatibility
+  selectedWidget?: string | null;
+  currentLayout?: DashboardLayout | null;
 }
 
 type DashboardStore = DashboardState & DashboardActions;
 
-const HISTORY_LIMIT = 10;
-const AUTO_SAVE_DELAY = 2000;
-
-// Default panel configuration
+// Default panels configuration
 const defaultPanels: PanelConfig[] = [
   {
-    id: 'sidebar-left',
-    name: 'Widget Catalog',
-    direction: 'horizontal',
+    id: 'sidebar',
+    name: 'Widget Library',
+    direction: 'vertical',
     defaultSize: 20,
     minSize: 15,
     collapsible: true,
@@ -64,16 +79,16 @@ const defaultPanels: PanelConfig[] = [
   {
     id: 'main',
     name: 'Dashboard',
-    direction: 'horizontal',
+    direction: 'vertical',
     defaultSize: 60,
     minSize: 40,
     collapsible: false,
     collapsed: false,
   },
   {
-    id: 'sidebar-right',
-    name: 'Properties',
-    direction: 'horizontal',
+    id: 'properties',
+    name: 'Widget Properties',
+    direction: 'vertical',
     defaultSize: 20,
     minSize: 15,
     collapsible: true,
@@ -81,379 +96,481 @@ const defaultPanels: PanelConfig[] = [
   },
 ];
 
+const HISTORY_LIMIT = 50;
+const AUTO_SAVE_DELAY = 30000; // 30 seconds
+
+// Widget type registry for default settings
+const WIDGET_DEFAULTS: Record<string, Partial<Widget>> = {
+  clock: {
+    title: 'Clock',
+    position: { x: 0, y: 0, w: 2, h: 1 },
+    minW: 1,
+    maxW: 4,
+    minH: 1,
+    maxH: 2,
+    settings: { format: '12h', showSeconds: true, showDate: true },
+  },
+  weather: {
+    title: 'Weather',
+    position: { x: 0, y: 0, w: 3, h: 2 },
+    minW: 2,
+    maxW: 6,
+    minH: 2,
+    maxH: 4,
+    settings: { units: 'metric', showForecast: true },
+  },
+  map: {
+    title: 'Map',
+    position: { x: 0, y: 0, w: 4, h: 3 },
+    minW: 3,
+    maxW: 8,
+    minH: 2,
+    maxH: 6,
+    settings: { zoom: 10, mapType: 'street' },
+  },
+  calendar: {
+    title: 'Calendar',
+    position: { x: 0, y: 0, w: 3, h: 3 },
+    minW: 2,
+    maxW: 6,
+    minH: 2,
+    maxH: 6,
+    settings: { view: 'month', showEvents: true },
+  },
+};
+
 let autoSaveTimeout: NodeJS.Timeout | null = null;
 
 export const useDashboardStore = create<DashboardStore>()(
   subscribeWithSelector(
     immer((set, get) => ({
-      // Initial state
-      currentLayout: null,
+      // State
+      widgets: new Map<string, Widget>(),
       layouts: [],
-      selectedWidget: null,
+      activeLayoutId: null,
+      selectedWidgetId: null,
       history: [],
       historyIndex: -1,
       isLoading: false,
       error: null,
 
-      // Layout management
-      loadLayouts: async (userId: string) => {
-        set(state => { state.isLoading = true; });
+      // Legacy compatibility properties
+      selectedWidget: null,
+      currentLayout: null,
+
+      // Widget Management Actions
+      addWidget: (widgetType: string, panelId = 'main', position?: Partial<GridPosition>) => {
+        const widgetId = crypto.randomUUID();
+        const defaults = WIDGET_DEFAULTS[widgetType] || {};
+        
+        set((state) => {
+          // Find next available position if not specified
+          const finalPosition: GridPosition = {
+            x: position?.x ?? defaults.position?.x ?? 0,
+            y: position?.y ?? defaults.position?.y ?? 0,
+            w: position?.w ?? defaults.position?.w ?? 2,
+            h: position?.h ?? defaults.position?.h ?? 1,
+          };
+
+          const newWidget: Widget = {
+            id: widgetId,
+            type: widgetType,
+            title: defaults.title || widgetType,
+            position: finalPosition,
+            panelId,
+            collapsed: false,
+            isDraggable: true,
+            isResizable: true,
+            settings: defaults.settings || {},
+            minW: defaults.minW,
+            maxW: defaults.maxW,
+            minH: defaults.minH,
+            maxH: defaults.maxH,
+            ...defaults,
+          };
+
+          state.widgets.set(widgetId, newWidget);
+          state.createSnapshot(`Added ${widgetType} widget`);
+        });
+
+        return widgetId;
+      },
+
+      removeWidget: (widgetId: string) => set((state) => {
+        if (state.widgets.has(widgetId)) {
+          state.widgets.delete(widgetId);
+          if (state.selectedWidgetId === widgetId) {
+            state.selectedWidgetId = null;
+            state.selectedWidget = null;
+          }
+          state.createSnapshot(`Removed widget`);
+        }
+      }),
+
+      updateWidget: (widgetId: string, updates: Partial<Widget>) => set((state) => {
+        const widget = state.widgets.get(widgetId);
+        if (widget) {
+          state.widgets.set(widgetId, { ...widget, ...updates });
+        }
+      }),
+
+      updateWidgetSettings: (widgetId: string, settings: WidgetSettings) => set((state) => {
+        const widget = state.widgets.get(widgetId);
+        if (widget) {
+          state.widgets.set(widgetId, { ...widget, settings });
+        }
+      }),
+
+      moveWidget: (widgetId: string, position: GridPosition, panelId?: string) => set((state) => {
+        const widget = state.widgets.get(widgetId);
+        if (widget) {
+          state.widgets.set(widgetId, {
+            ...widget,
+            position,
+            panelId: panelId || widget.panelId,
+          });
+        }
+      }),
+
+      resizeWidget: (widgetId: string, size: { w: number; h: number }) => set((state) => {
+        const widget = state.widgets.get(widgetId);
+        if (widget) {
+          state.widgets.set(widgetId, {
+            ...widget,
+            position: { ...widget.position, w: size.w, h: size.h },
+          });
+        }
+      }),
+
+      toggleWidgetCollapse: (widgetId: string) => set((state) => {
+        const widget = state.widgets.get(widgetId);
+        if (widget) {
+          state.widgets.set(widgetId, { ...widget, collapsed: !widget.collapsed });
+        }
+      }),
+
+      duplicateWidget: (widgetId: string) => {
+        const originalWidget = get().widgets.get(widgetId);
+        if (!originalWidget) return '';
+
+        const newWidgetId = crypto.randomUUID();
+        set((state) => {
+          const newWidget: Widget = {
+            ...originalWidget,
+            id: newWidgetId,
+            title: `${originalWidget.title} (Copy)`,
+            position: {
+              ...originalWidget.position,
+              x: originalWidget.position.x + 1, // Offset slightly
+            },
+          };
+          state.widgets.set(newWidgetId, newWidget);
+          state.createSnapshot(`Duplicated ${originalWidget.type} widget`);
+        });
+
+        return newWidgetId;
+      },
+
+      // Grid Layout Integration
+      updateGridLayout: (panelId: string, layout: Layout[]) => set((state) => {
+        layout.forEach((item) => {
+          const widget = state.widgets.get(item.i);
+          if (widget && widget.panelId === panelId) {
+            state.widgets.set(item.i, {
+              ...widget,
+              position: { x: item.x, y: item.y, w: item.w, h: item.h },
+            });
+          }
+        });
+      }),
+
+      getWidgetsByPanel: (panelId: string) => {
+        const widgets = get().widgets;
+        return Array.from(widgets.values()).filter(widget => widget.panelId === panelId);
+      },
+
+      getGridLayout: (panelId: string) => {
+        const widgets = get().getWidgetsByPanel(panelId);
+        return widgets.map(widget => ({
+          i: widget.id,
+          x: widget.position.x,
+          y: widget.position.y,
+          w: widget.position.w,
+          h: widget.position.h,
+          minW: widget.minW,
+          maxW: widget.maxW,
+          minH: widget.minH,
+          maxH: widget.maxH,
+          static: widget.static || false,
+          isDraggable: widget.isDraggable,
+          isResizable: widget.isResizable,
+        }));
+      },
+
+      // Selection
+      setSelectedWidget: (widgetId: string | null) => set((state) => {
+        state.selectedWidgetId = widgetId;
+        state.selectedWidget = widgetId; // Legacy compatibility
+      }),
+
+      // Layout Management
+      loadLayouts: async () => {
+        set((state) => { state.isLoading = true; });
         
         try {
+          const { data: user } = await supabase.auth.getUser();
+          if (!user.user) throw new Error('No authenticated user');
+
           const { data, error } = await supabase
             .from('dashboard_layouts')
             .select('*')
-            .eq('user_id', userId)
-            .order('updated_at', { ascending: false });
+            .eq('user_id', user.user.id)
+            .order('created_at', { ascending: false });
 
           if (error) throw error;
 
-          set(state => {
-            state.layouts = data?.map(layout => {
-              const layoutData = layout.layout_data as any;
-              return {
-                id: layout.id,
-                name: layout.name,
-                userId: layout.user_id,
-                panels: layoutData?.panels || defaultPanels,
-                widgets: layoutData?.widgets || [],
-                gridCols: layoutData?.gridCols || 12,
-                gridRows: layoutData?.gridRows || 'auto',
-                isActive: layout.is_active,
-                createdAt: new Date(layout.created_at),
-                updatedAt: new Date(layout.updated_at),
-              };
-            }) || [];
+          set((state) => {
+            state.layouts = data || [];
+            state.isLoading = false;
             
-            // Set active layout or create default
-            const activeLayout = state.layouts.find(l => l.isActive);
-            if (activeLayout) {
-              state.currentLayout = activeLayout;
+            // Set active layout if none selected
+            if (!state.activeLayoutId && data && data.length > 0) {
+              const activeLayout = data.find(l => l.is_active) || data[0];
+              state.activeLayoutId = activeLayout.id;
+              state.currentLayout = activeLayout; // Legacy compatibility
+              
+              // Load widgets from layout
+              if (activeLayout.layout_data?.widgets) {
+                state.widgets.clear();
+                activeLayout.layout_data.widgets.forEach((widget: Widget) => {
+                  state.widgets.set(widget.id, widget);
+                });
+              }
             }
           });
-
-          // Create default layout if none exists
-          if (!data?.length) {
-            await get().createLayout('Default Dashboard', userId);
-          }
         } catch (error) {
-          logger.error('Failed to load dashboard layouts:', error);
-          set(state => { state.error = 'Failed to load dashboard layouts'; });
-        } finally {
-          set(state => { state.isLoading = false; });
+          console.error('Error loading layouts:', error);
+          set((state) => {
+            state.error = error instanceof Error ? error.message : 'Failed to load layouts';
+            state.isLoading = false;
+          });
         }
       },
 
-      createLayout: async (name: string, userId: string) => {
-        const newLayout: DashboardLayout = {
-          id: crypto.randomUUID(),
-          name,
-          userId,
-          panels: defaultPanels,
-          widgets: [],
-          gridCols: 12,
-          gridRows: 'auto',
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
+      createLayout: async (name: string) => {
         try {
-          // Mark all other layouts as inactive
-          await supabase
-            .from('dashboard_layouts')
-            .update({ is_active: false })
-            .eq('user_id', userId);
+          const { data: user } = await supabase.auth.getUser();
+          if (!user.user) throw new Error('No authenticated user');
+
+          const layoutData = {
+            panels: defaultPanels,
+            widgets: Array.from(get().widgets.values()),
+          };
 
           const { data, error } = await supabase
             .from('dashboard_layouts')
             .insert({
               name,
-              user_id: userId,
-              layout_data: {
-                panels: newLayout.panels,
-                widgets: newLayout.widgets,
-                gridCols: newLayout.gridCols,
-                gridRows: newLayout.gridRows,
-              } as any,
-              is_active: true,
+              user_id: user.user.id,
+              layout_data: layoutData,
+              is_active: false,
             })
             .select()
             .single();
 
           if (error) throw error;
 
-          set(state => {
-            const layout = {
-              ...newLayout,
-              id: data.id,
-              createdAt: new Date(data.created_at),
-              updatedAt: new Date(data.updated_at),
-            };
-            state.layouts.unshift(layout);
-            state.currentLayout = layout;
+          set((state) => {
+            state.layouts.unshift(data);
           });
+
+          toast.success(`Layout "${name}" created`);
         } catch (error) {
-          logger.error('Failed to create dashboard layout:', error);
-          set(state => { state.error = 'Failed to create dashboard layout'; });
+          console.error('Error creating layout:', error);
+          toast.error('Failed to create layout');
         }
       },
 
-      setActiveLayout: async (layoutId: string) => {
-        const layout = get().layouts.find(l => l.id === layoutId);
-        if (!layout) return;
-
+      updateLayout: async (layoutId: string, updates: Partial<DashboardLayout>) => {
         try {
-          // Update database
-          await supabase
+          const { error } = await supabase
             .from('dashboard_layouts')
-            .update({ is_active: false })
-            .eq('user_id', layout.userId);
-
-          await supabase
-            .from('dashboard_layouts')
-            .update({ is_active: true })
+            .update(updates)
             .eq('id', layoutId);
 
-          set(state => {
-            state.layouts.forEach(l => { l.isActive = l.id === layoutId; });
-            state.currentLayout = layout;
+          if (error) throw error;
+
+          set((state) => {
+            const layoutIndex = state.layouts.findIndex(l => l.id === layoutId);
+            if (layoutIndex >= 0) {
+              state.layouts[layoutIndex] = { ...state.layouts[layoutIndex], ...updates };
+            }
           });
         } catch (error) {
-          logger.error('Failed to set active layout:', error);
-          set(state => { state.error = 'Failed to set active layout'; });
+          console.error('Error updating layout:', error);
+          toast.error('Failed to update layout');
         }
-      },
-
-      updateLayout: async (layoutUpdate: Partial<DashboardLayout>) => {
-        const currentLayout = get().currentLayout;
-        if (!currentLayout) return;
-
-        set(state => {
-          if (state.currentLayout) {
-            Object.assign(state.currentLayout, layoutUpdate);
-            state.currentLayout.updatedAt = new Date();
-          }
-        });
-
-        // Auto-save with debouncing
-        if (autoSaveTimeout) {
-          clearTimeout(autoSaveTimeout);
-        }
-
-        autoSaveTimeout = setTimeout(async () => {
-          try {
-            const layout = get().currentLayout;
-            if (!layout) return;
-
-            await supabase
-              .from('dashboard_layouts')
-              .update({
-                name: layout.name,
-                layout_data: {
-                  panels: layout.panels,
-                  widgets: layout.widgets,
-                  gridCols: layout.gridCols,
-                  gridRows: layout.gridRows,
-                } as any,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', layout.id);
-          } catch (error) {
-            logger.error('Failed to auto-save layout:', error);
-          }
-        }, AUTO_SAVE_DELAY);
       },
 
       deleteLayout: async (layoutId: string) => {
         try {
-          await supabase
+          const { error } = await supabase
             .from('dashboard_layouts')
             .delete()
             .eq('id', layoutId);
 
-          set(state => {
+          if (error) throw error;
+
+          set((state) => {
             state.layouts = state.layouts.filter(l => l.id !== layoutId);
-            if (state.currentLayout?.id === layoutId) {
-              state.currentLayout = state.layouts[0] || null;
+            if (state.activeLayoutId === layoutId) {
+              state.activeLayoutId = null;
+              state.currentLayout = null;
             }
           });
         } catch (error) {
-          logger.error('Failed to delete layout:', error);
-          set(state => { state.error = 'Failed to delete layout'; });
+          console.error('Error deleting layout:', error);
+          toast.error('Failed to delete layout');
         }
       },
 
-      // Widget management
-      addWidget: (widget: Omit<Widget, 'id'>, position: GridPosition) => {
-        const newWidget: Widget = {
-          ...widget,
-          id: crypto.randomUUID(),
-          position,
-        };
-
-        set(state => {
-          if (state.currentLayout) {
-            state.currentLayout.widgets.push(newWidget);
+      setActiveLayout: (layoutId: string) => set((state) => {
+        const layout = state.layouts.find(l => l.id === layoutId);
+        if (layout) {
+          state.activeLayoutId = layoutId;
+          state.currentLayout = layout; // Legacy compatibility
+          
+          // Load widgets from this layout
+          if (layout.layout_data?.widgets) {
+            state.widgets.clear();
+            layout.layout_data.widgets.forEach((widget: Widget) => {
+              state.widgets.set(widget.id, widget);
+            });
           }
-        });
+        }
+      }),
 
-        get().createSnapshot(`Added widget: ${widget.title}`);
-        get().updateLayout({ widgets: get().currentLayout?.widgets });
-      },
+      saveCurrentLayout: async () => {
+        const { activeLayoutId, widgets } = get();
+        if (!activeLayoutId) return;
 
-      moveWidget: (widgetId: string, position: GridPosition, panelId?: string) => {
-        set(state => {
-          if (state.currentLayout) {
-            const widget = state.currentLayout.widgets.find(w => w.id === widgetId);
-            if (widget) {
-              widget.position = position;
-              if (panelId) widget.panelId = panelId;
-            }
-          }
-        });
-
-        get().createSnapshot(`Moved widget: ${widgetId}`);
-        get().updateLayout({ widgets: get().currentLayout?.widgets });
-      },
-
-      resizeWidget: (widgetId: string, size: { width: number; height: number }) => {
-        set(state => {
-          if (state.currentLayout) {
-            const widget = state.currentLayout.widgets.find(w => w.id === widgetId);
-            if (widget) {
-              widget.position.width = size.width;
-              widget.position.height = size.height;
-            }
-          }
-        });
-
-        get().createSnapshot(`Resized widget: ${widgetId}`);
-        get().updateLayout({ widgets: get().currentLayout?.widgets });
-      },
-
-      removeWidget: (widgetId: string) => {
-        set(state => {
-          if (state.currentLayout) {
-            state.currentLayout.widgets = state.currentLayout.widgets.filter(w => w.id !== widgetId);
-          }
-        });
-
-        get().createSnapshot(`Removed widget: ${widgetId}`);
-        get().updateLayout({ widgets: get().currentLayout?.widgets });
-      },
-
-      updateWidgetSettings: (widgetId: string, settings: any) => {
-        set(state => {
-          if (state.currentLayout) {
-            const widget = state.currentLayout.widgets.find(w => w.id === widgetId);
-            if (widget) {
-              widget.settings = { ...widget.settings, ...settings };
-            }
-          }
-        });
-
-        get().updateLayout({ widgets: get().currentLayout?.widgets });
-      },
-
-      toggleWidgetCollapse: (widgetId: string) => {
-        set(state => {
-          if (state.currentLayout) {
-            const widget = state.currentLayout.widgets.find(w => w.id === widgetId);
-            if (widget) {
-              widget.collapsed = !widget.collapsed;
-            }
-          }
-        });
-
-        get().createSnapshot(`Toggled widget collapse: ${widgetId}`);
-        get().updateLayout({ widgets: get().currentLayout?.widgets });
-      },
-
-      // Selection
-      selectWidget: (widgetId: string | null) => {
-        set(state => { state.selectedWidget = widgetId; });
-      },
-
-      // History management
-      createSnapshot: (action: string) => {
-        const currentLayout = get().currentLayout;
-        if (!currentLayout) return;
-
-        set(state => {
-          const snapshot: DashboardSnapshot = {
-            layout: JSON.parse(JSON.stringify(currentLayout)),
-            timestamp: new Date(),
-            action,
+        try {
+          const layoutData = {
+            panels: defaultPanels,
+            widgets: Array.from(widgets.values()),
           };
 
-          // Remove any snapshots after current index (if we're not at the end)
-          if (state.historyIndex < state.history.length - 1) {
-            state.history = state.history.slice(0, state.historyIndex + 1);
-          }
-
-          state.history.push(snapshot);
-          state.historyIndex = state.history.length - 1;
-
-          // Limit history size
-          if (state.history.length > HISTORY_LIMIT) {
-            state.history.shift();
-            state.historyIndex--;
-          }
-        });
-      },
-
-      undo: () => {
-        const { history, historyIndex } = get();
-        if (historyIndex > 0) {
-          const previousSnapshot = history[historyIndex - 1];
-          set(state => {
-            state.currentLayout = previousSnapshot.layout;
-            state.historyIndex = historyIndex - 1;
+          await get().updateLayout(activeLayoutId, {
+            layout_data: layoutData,
+            updatedAt: new Date(),
           });
-          get().updateLayout(previousSnapshot.layout);
+        } catch (error) {
+          console.error('Error saving layout:', error);
         }
       },
 
-      redo: () => {
-        const { history, historyIndex } = get();
-        if (historyIndex < history.length - 1) {
-          const nextSnapshot = history[historyIndex + 1];
-          set(state => {
-            state.currentLayout = nextSnapshot.layout;
-            state.historyIndex = historyIndex + 1;
-          });
-          get().updateLayout(nextSnapshot.layout);
+      // History Management
+      createSnapshot: (action: string) => set((state) => {
+        const snapshot: DashboardSnapshot = {
+          layout: {
+            id: state.activeLayoutId || '',
+            name: 'Current',
+            userId: '',
+            panels: defaultPanels,
+            widgets: Array.from(state.widgets.values()),
+            gridCols: 12,
+            gridRows: 'auto',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          timestamp: new Date(),
+          action,
+        };
+
+        // Remove future history if we're not at the end
+        if (state.historyIndex < state.history.length - 1) {
+          state.history = state.history.slice(0, state.historyIndex + 1);
         }
-      },
 
-      // Panel management
-      updatePanelConfig: (panelId: string, config: Partial<PanelConfig>) => {
-        set(state => {
-          if (state.currentLayout) {
-            const panel = state.currentLayout.panels.find(p => p.id === panelId);
-            if (panel) {
-              Object.assign(panel, config);
-            }
+        state.history.push(snapshot);
+        if (state.history.length > HISTORY_LIMIT) {
+          state.history = state.history.slice(-HISTORY_LIMIT);
+        }
+        state.historyIndex = state.history.length - 1;
+      }),
+
+      undo: () => set((state) => {
+        if (state.historyIndex > 0) {
+          state.historyIndex--;
+          const snapshot = state.history[state.historyIndex];
+          if (snapshot) {
+            state.widgets.clear();
+            snapshot.layout.widgets.forEach(widget => {
+              state.widgets.set(widget.id, widget);
+            });
           }
-        });
+        }
+      }),
 
-        get().updateLayout({ panels: get().currentLayout?.panels });
-      },
+      redo: () => set((state) => {
+        if (state.historyIndex < state.history.length - 1) {
+          state.historyIndex++;
+          const snapshot = state.history[state.historyIndex];
+          if (snapshot) {
+            state.widgets.clear();
+            snapshot.layout.widgets.forEach(widget => {
+              state.widgets.set(widget.id, widget);
+            });
+          }
+        }
+      }),
+
+      canUndo: () => get().historyIndex > 0,
+      canRedo: () => get().historyIndex < get().history.length - 1,
+
+      // Panel Configuration
+      updatePanelConfig: (panelId: string, config: Partial<PanelConfig>) => set((state) => {
+        // This would update panel configuration if we stored it in state
+        // For now, panels are static
+      }),
 
       // Utility
-      setError: (error: string | null) => {
-        set(state => { state.error = error; });
-      },
+      setError: (error: string | null) => set((state) => {
+        state.error = error;
+      }),
 
-      setLoading: (loading: boolean) => {
-        set(state => { state.isLoading = loading; });
-      },
+      setLoading: (loading: boolean) => set((state) => {
+        state.isLoading = loading;
+      }),
+
+      clearAllWidgets: () => set((state) => {
+        state.widgets.clear();
+        state.selectedWidgetId = null;
+        state.selectedWidget = null;
+        state.createSnapshot('Cleared all widgets');
+      }),
+
+      getWidget: (widgetId: string) => get().widgets.get(widgetId),
     }))
   )
 );
 
-// Auto-save cleanup
+// Auto-save current layout every 30 seconds
+useDashboardStore.subscribe(
+  (state) => state.widgets,
+  () => {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+      const store = useDashboardStore.getState();
+      if (store.activeLayoutId) {
+        store.saveCurrentLayout();
+      }
+    }, AUTO_SAVE_DELAY);
+  }
+);
+
+// Cleanup on unload
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     if (autoSaveTimeout) {

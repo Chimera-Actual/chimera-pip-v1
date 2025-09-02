@@ -1,27 +1,31 @@
-// Dashboard Types for Panel-Based Grid System
+// Independent Widget System - Complete Isolation Architecture
 import { WidgetSettings } from './widget';
 
+// React Grid Layout compatible position format
 export interface GridPosition {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  x: number; // grid column position (0-based)
+  y: number; // grid row position (0-based) 
+  w: number; // width in grid units (1-12)
+  h: number; // height in grid units
 }
 
+// Completely independent widget instance
 export interface Widget {
-  id: string;
-  widgetInstanceId: string;
-  type: string;
+  id: string; // unique crypto.randomUUID() for complete isolation
+  type: string; // widget type (clock, weather, etc)
   title: string;
   customName?: string;
-  position: GridPosition;
-  panelId: string;
+  position: GridPosition; // react-grid-layout format
   collapsed: boolean;
   isDraggable: boolean;
   isResizable: boolean;
-  settings: WidgetSettings;
-  minSize?: { width: number; height: number };
-  maxSize?: { width: number; height: number };
+  settings: WidgetSettings; // completely isolated per instance
+  panelId: string; // which panel this widget belongs to
+  minW?: number; // minimum width in grid units
+  maxW?: number; // maximum width in grid units  
+  minH?: number; // minimum height in grid units
+  maxH?: number; // maximum height in grid units
+  static?: boolean; // if true, widget cannot be moved or resized
 }
 
 export interface PanelConfig {
@@ -48,11 +52,21 @@ export interface DashboardLayout {
 }
 
 export interface DashboardState {
-  currentLayout: DashboardLayout | null;
+  // Widget isolation - Map for O(1) lookups and true independence  
+  widgets: Map<string, Widget>;
+  
+  // Layout management
   layouts: DashboardLayout[];
-  selectedWidget: string | null;
+  activeLayoutId: string | null;
+  
+  // UI state
+  selectedWidgetId: string | null;
+  
+  // History for undo/redo
   history: DashboardSnapshot[];
   historyIndex: number;
+  
+  // Loading and error states
   isLoading: boolean;
   error: string | null;
 }
