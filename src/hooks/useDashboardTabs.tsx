@@ -158,6 +158,9 @@ function getDefaultTabs(): DashboardTab[] {
         { id: "clock-1", widgetType: "SampleClock", w: 4, h: 4, minW: 3, minH: 3 },
         { id: "note-1", widgetType: "SampleNote", w: 5, h: 6, minW: 4, minH: 4 },
         { id: "chart-1", widgetType: "SampleChart", w: 6, h: 6, minW: 4, minH: 4 },
+        { id: "add-widget-1", widgetType: "AddWidgetWidget", w: 3, h: 3, minW: 2, minH: 2 },
+        { id: "undo-1", widgetType: "UndoWidget", w: 3, h: 3, minW: 2, minH: 2 },
+        { id: "settings-1", widgetType: "DashboardSettingsWidget", w: 4, h: 4, minW: 3, minH: 3 },
       ],
       layout: [],
       createdAt: Date.now()

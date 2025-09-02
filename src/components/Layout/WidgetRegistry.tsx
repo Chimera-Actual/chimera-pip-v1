@@ -11,6 +11,9 @@ const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget'));
 const SampleClock = React.lazy(() => import('@/components/widgets/SampleClock'));
 const SampleNote = React.lazy(() => import('@/components/widgets/SampleNote'));
 const SampleChart = React.lazy(() => import('@/components/widgets/SampleChart'));
+const AddWidgetWidget = React.lazy(() => import('@/components/widgets/AddWidgetWidget'));
+const UndoWidget = React.lazy(() => import('@/components/widgets/UndoWidget'));
+const DashboardSettingsWidget = React.lazy(() => import('@/components/widgets/DashboardSettingsWidget'));
 
 // Applet adapters for dashboard
 const AnalyticsWidget = React.lazy(() => import('@/components/widgets/AnalyticsWidget'));
@@ -38,6 +41,9 @@ export const WIDGET_COMPONENTS = {
   SampleClock: createLazyWidget(SampleClock, 'minimal'),
   SampleNote: createLazyWidget(SampleNote, 'card'),
   SampleChart: createLazyWidget(SampleChart, 'chart'),
+  AddWidgetWidget: createLazyWidget(AddWidgetWidget, 'minimal'),
+  UndoWidget: createLazyWidget(UndoWidget, 'minimal'),
+  DashboardSettingsWidget: createLazyWidget(DashboardSettingsWidget, 'card'),
   
   // Applet widgets
   AnalyticsWidget: createLazyWidget(AnalyticsWidget, 'chart'),
