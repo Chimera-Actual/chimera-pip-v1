@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppletType } from './PipBoyLayout';
 import { Settings, X, Plus, Menu } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -333,7 +334,17 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
                 }}
               >
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
-                  <span className={`${isMobile ? 'text-xl' : 'text-lg'}`}>{widget.widget_definition?.icon}</span>
+                  <span className={`${isMobile ? 'text-xl' : 'text-lg'}`}>
+                    {(() => {
+                      const widgetSettings = getWidgetSettings(widget.id);
+                      const customIconName = widgetSettings?.customIcon;
+                      if (customIconName && (Icons as any)[customIconName]) {
+                        const IconComponent = (Icons as any)[customIconName];
+                        return <IconComponent className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />;
+                      }
+                      return widget.widget_definition?.icon;
+                    })()}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className={`${isMobile ? 'text-sm' : 'text-responsive-sm'} font-mono font-medium text-foreground truncate`}>
                       {widget.custom_name || widget.widget_definition?.name}

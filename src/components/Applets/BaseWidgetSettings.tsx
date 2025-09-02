@@ -25,6 +25,7 @@ export const BaseWidgetSettings: React.FC<BaseWidgetSettingsProps> = ({
     message: settings.message || 'This is a base widget template.',
     showTitle: settings.showTitle ?? true,
     variant: settings.variant || 'default',
+    customIcon: settings.customIcon || 'Cpu',
     ...settings
   });
 
@@ -46,12 +47,9 @@ export const BaseWidgetSettings: React.FC<BaseWidgetSettingsProps> = ({
       widgetName="Base Widget"
       widgetInstanceId={widgetInstanceId}
       initialWidgetName={localSettings.title}
-      currentIconName="Cpu"
+      currentIconName={localSettings.customIcon}
       onWidgetNameChange={(name) => updateSetting('title', name)}
-      onIconChange={(iconName) => {
-        // Handle icon change - you can add this to settings if needed
-        console.log('Icon changed to:', iconName);
-      }}
+      onIconChange={(iconName) => updateSetting('customIcon', iconName)}
       onSave={handleSave}
       onCancel={onClose}
     >

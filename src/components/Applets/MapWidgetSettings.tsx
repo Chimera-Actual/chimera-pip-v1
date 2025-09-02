@@ -26,6 +26,7 @@ export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
     showControls: settings.showControls !== false,
     followUser: settings.followUser || false,
     showCrosshair: settings.showCrosshair !== false,
+    customIcon: settings.customIcon || 'Map',
     ...settings
   });
 
@@ -51,7 +52,9 @@ export const MapWidgetSettings: React.FC<MapWidgetSettingsProps> = ({
       widgetName="Map Widget"
       widgetInstanceId={widgetInstanceId}
       initialWidgetName={localSettings.title}
+      currentIconName={localSettings.customIcon}
       onWidgetNameChange={handleWidgetNameChange}
+      onIconChange={(iconName) => updateSetting('customIcon', iconName)}
       onSave={handleSave}
       onCancel={onClose}
     >
