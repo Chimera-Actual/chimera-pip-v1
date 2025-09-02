@@ -9,8 +9,9 @@ import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { CRTThemeProvider, CRTChrome } from '@/lib/CRTTheme';
 
-export default function Auth() {
+function AuthContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -238,5 +239,15 @@ export default function Auth() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function Auth() {
+  return (
+    <CRTThemeProvider>
+      <CRTChrome>
+        <AuthContent />
+      </CRTChrome>
+    </CRTThemeProvider>
   );
 }
