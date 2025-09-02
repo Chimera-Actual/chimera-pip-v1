@@ -10,11 +10,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
+import { useWidgetManager } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
 import { WidgetLibrary } from './WidgetLibrary';
 import { WidgetSettings } from './WidgetSettings';
 import { useToast } from '@/hooks/use-toast';
+import { WidgetErrorBoundary, TabErrorBoundary } from '@/components/ui/ComprehensiveErrorBoundary';
+import type { UserWidgetInstance, WidgetSettings as WidgetSettingsType } from '@/types/widget';
 
 interface AppletContainerProps {
   activeApplet: string;
@@ -286,7 +288,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
           settings={widgetSettings} 
           widgetName={widgetName}
           widgetInstanceId={activeWidget.id}
-          onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeWidget.id, newSettings)}
+          onSettingsUpdate={(newSettings: WidgetSettingsType) => updateWidgetSettings(activeWidget.id, newSettings)}
         />
       </div>
     );
@@ -404,90 +406,99 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   );
 
   return (
-    <div 
-      className="flex h-full overflow-hidden relative"
-      onDragOver={!isMobile ? handleDragOver : undefined}
-      onDrop={!isMobile ? handleDrop : undefined}
-    >
-      {isMobile ? (
-        // Mobile: Sheet-based drawer with optimized widget display
-        <>
-          <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute top-2 left-2 z-50 bg-background/90 hover:bg-background border border-border touch-target backdrop-blur-sm"
-                title="Show widgets"
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-full sm:w-80 bg-card border-border p-0">
-              <div className="flex flex-col h-full">
+    <TabErrorBoundary>
+      <div 
+        className="flex h-full overflow-hidden relative"
+        onDragOver={!isMobile ? handleDragOver : undefined}
+        onDrop={!isMobile ? handleDrop : undefined}
+      >
+        {isMobile ? (
+          // Mobile: Sheet-based drawer with optimized widget display
+          <>
+            <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 left-2 z-50 bg-background/90 hover:bg-background border border-border touch-target backdrop-blur-sm"
+                  title="Show widgets"
+                  aria-label="Open widget sidebar"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-full sm:w-80 bg-card border-border p-0">
+                <div className="flex flex-col h-full">
+                  {renderSidebarContent()}
+                </div>
+              </SheetContent>
+            </Sheet>
+            
+            {/* Main Content - Optimized for Mobile */}
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <div className="flex-1 pt-12 px-1 pb-1 min-h-0">
+                <div className="w-full h-full rounded-lg overflow-hidden bg-background/50 backdrop-blur-sm border border-border/50">
+                  <WidgetErrorBoundary>
+                    {renderActiveWidget}
+                  </WidgetErrorBoundary>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          // Desktop: Original sidebar behavior
+          <>
+            {/* Toggle Button - Always Available */}
+            <Button
+              onClick={() => setShowSidebar(!showSidebar)}
+              variant="ghost"
+              size="sm"
+              className={`${showSidebar ? 'absolute top-4 left-56 z-50' : 'absolute top-4 left-4 z-50'} bg-background/80 hover:bg-background border border-border`}
+              title={showSidebar ? "Hide sidebar" : "Show sidebar"}
+              aria-label={showSidebar ? "Hide widget sidebar" : "Show widget sidebar"}
+              aria-expanded={showSidebar}
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+
+            {/* Sidebar */}
+            {showSidebar && (
+              <div className="w-72 bg-card border-r border-border flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
                 {renderSidebarContent()}
               </div>
-            </SheetContent>
-          </Sheet>
-          
-          {/* Main Content - Optimized for Mobile */}
-          <div className="w-full h-full flex flex-col overflow-hidden">
-            <div className="flex-1 pt-12 px-1 pb-1 min-h-0">
-              <div className="w-full h-full rounded-lg overflow-hidden bg-background/50 backdrop-blur-sm border border-border/50">
+            )}
+
+            {/* Main Content */}
+            <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full pt-16'}`}>
+              <WidgetErrorBoundary>
                 {renderActiveWidget}
-              </div>
+              </WidgetErrorBoundary>
             </div>
-          </div>
-        </>
-      ) : (
-        // Desktop: Original sidebar behavior
-        <>
-          {/* Toggle Button - Always Available */}
-          <Button
-            onClick={() => setShowSidebar(!showSidebar)}
-            variant="ghost"
-            size="sm"
-            className={`${showSidebar ? 'absolute top-4 left-56 z-50' : 'absolute top-4 left-4 z-50'} bg-background/80 hover:bg-background border border-border`}
-            title={showSidebar ? "Hide sidebar" : "Show sidebar"}
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
+          </>
+        )}
 
-          {/* Sidebar */}
-          {showSidebar && (
-            <div className="w-72 bg-card border-r border-border flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
-              {renderSidebarContent()}
-            </div>
-          )}
+        {/* Widget Library Dialog */}
+        <WidgetLibrary
+          isOpen={showWidgetLibrary}
+          onClose={() => setShowWidgetLibrary(false)}
+          availableWidgets={getAvailableWidgetsForTab(tabId)}
+          onAddWidget={handleAddWidget}
+          tabCategory={tabName}
+          onAddTag={addTagToWidget}
+          onRemoveTag={removeTagFromWidget}
+          allUserTags={getAllUserTags()}
+        />
 
-          {/* Main Content */}
-          <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? 'flex-1' : 'w-full pt-16'}`}>
-            {renderActiveWidget}
-          </div>
-        </>
-      )}
-
-      {/* Widget Library Dialog */}
-      <WidgetLibrary
-        isOpen={showWidgetLibrary}
-        onClose={() => setShowWidgetLibrary(false)}
-        availableWidgets={getAvailableWidgetsForTab(tabId)}
-        onAddWidget={handleAddWidget}
-        tabCategory={tabName}
-        onAddTag={addTagToWidget}
-        onRemoveTag={removeTagFromWidget}
-        allUserTags={getAllUserTags()}
-      />
-
-      {/* Widget Settings Dialog */}
-      <WidgetSettings
-        isOpen={showWidgetSettings}
-        onClose={handleCloseWidgetSettings}
-        widget={selectedWidgetForSettings}
-        onSettingsUpdate={updateWidgetSettings}
-        onWidgetNameUpdate={updateWidgetName}
-        currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.id) : {}}
-      />
-    </div>
+        {/* Widget Settings Dialog */}
+        <WidgetSettings
+          isOpen={showWidgetSettings}
+          onClose={handleCloseWidgetSettings}
+          widget={selectedWidgetForSettings}
+          onSettingsUpdate={(widgetId, settings) => updateWidgetSettings(widgetId, settings)}
+          onWidgetNameUpdate={(widgetId, name) => updateWidgetName(widgetId, name)}
+          currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.id) : {}}
+        />
+      </div>
+    </TabErrorBoundary>
   );
 });
