@@ -38,8 +38,17 @@ export function createLazyComponent<P = {}>(
   componentName: string
 ): React.LazyExoticComponent<React.ComponentType<P>> {
   return React.lazy(async () => {
-    const module = await dynamicImport(importFn, componentName);
-    return module;
+    try {
+      const module = await importFn();
+      if (!module.default) {
+        throw new Error(`Component ${componentName} does not have a default export`);
+      }
+      logger.debug(`Successfully loaded lazy component: ${componentName}`, undefined, 'BundleSplitting');
+      return module;
+    } catch (error) {
+      logger.error(`Failed to load lazy component: ${componentName}`, error, 'BundleSplitting');
+      throw error;
+    }
   });
 }
 

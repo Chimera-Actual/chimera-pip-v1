@@ -4,14 +4,14 @@ import React, { Suspense } from 'react';
 import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
 import { createLazyComponent, preloadComponent, getWidgetBundlePriority } from '@/lib/bundleSplitting';
 
-// Core widgets with optimized loading
-const SampleClock = createLazyComponent(() => import('@/components/widgets/SampleClock'), 'SampleClock');
-const SampleNote = createLazyComponent(() => import('@/components/widgets/SampleNote'), 'SampleNote');
-const SampleChart = createLazyComponent(() => import('@/components/widgets/SampleChart'), 'SampleChart');
+// Core widgets - using standard React.lazy for reliability
+const SampleClock = React.lazy(() => import('@/components/widgets/SampleClock'));
+const SampleNote = React.lazy(() => import('@/components/widgets/SampleNote'));
+const SampleChart = React.lazy(() => import('@/components/widgets/SampleChart'));
 
 // Dashboard widgets
-const AddWidgetWidget = createLazyComponent(() => import('@/components/widgets/AddWidgetWidget'), 'AddWidgetWidget');
-const DashboardSettingsWidget = createLazyComponent(() => import('@/components/widgets/DashboardSettingsWidget'), 'DashboardSettingsWidget');
+const AddWidgetWidget = React.lazy(() => import('@/components/widgets/AddWidgetWidget'));
+const DashboardSettingsWidget = React.lazy(() => import('@/components/widgets/DashboardSettingsWidget'));
 
 // Preload high-priority widgets
 if (typeof window !== 'undefined') {
@@ -42,8 +42,8 @@ export const WIDGET_COMPONENTS = {
   DashboardSettingsWidget: createLazyWidget(DashboardSettingsWidget, 'card'),
   
   // Demo and development widgets (lowest priority)
-  WidgetFactoryDemo: createLazyWidget(createLazyComponent(() => import('@/components/widgets/WidgetFactoryDemo'), 'WidgetFactoryDemo'), 'card'),
-  ModernCSSDemo: createLazyWidget(createLazyComponent(() => import('@/components/demo/ModernCSSDemo'), 'ModernCSSDemo'), 'card'),
+  WidgetFactoryDemo: createLazyWidget(React.lazy(() => import('@/components/widgets/WidgetFactoryDemo')), 'card'),
+  ModernCSSDemo: createLazyWidget(React.lazy(() => import('@/components/demo/ModernCSSDemo')), 'card'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
