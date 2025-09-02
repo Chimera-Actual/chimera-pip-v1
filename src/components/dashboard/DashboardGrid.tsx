@@ -24,7 +24,7 @@ export type GridItem = {
 
 interface DashboardGridProps {
   items: GridItem[];
-  renderItem: (id: string) => React.ReactNode;
+  renderItem: (id: string, onCollapseChange?: (widgetId: string, collapsed: boolean) => void) => React.ReactNode;
   storageKey?: string;
   cols?: number;
   rowHeight?: number;
@@ -32,6 +32,7 @@ interface DashboardGridProps {
   margin?: [number, number];
   containerPadding?: [number, number];
   onLayoutChange?: (layout: Layout[]) => void;
+  onWidgetCollapse?: (widgetId: string, collapsed: boolean) => void;
   className?: string;
 }
 
@@ -45,8 +46,11 @@ export default function DashboardGrid({
   margin = [8, 8],
   containerPadding = [0, 0],
   onLayoutChange,
+  onWidgetCollapse,
   className = ""
 }: DashboardGridProps) {
+  // Track collapsed widgets
+  const [collapsedWidgets, setCollapsedWidgets] = useState<Set<string>>(new Set());
   const [layout, setLayout] = useState<Layout[]>(() => {
     try {
       const cached = localStorage.getItem(storageKey);
@@ -82,24 +86,45 @@ export default function DashboardGrid({
   const memoizedLayoutData = useMemo(() => {
     return items.map(item => {
       const existingLayout = layout.find(l => l.i === item.id);
+      const isCollapsed = collapsedWidgets.has(item.id);
+      
       if (existingLayout) {
-        return existingLayout;
+        return {
+          ...existingLayout,
+          // Adjust height for collapsed widgets - collapsed widgets take 2 grid units (48px)
+          h: isCollapsed ? 2 : (existingLayout.h || item.h || 6)
+        };
       }
+      
       // Create layout for new items
       return {
         i: item.id,
         x: 0,
         y: Infinity, // This will place new items at the bottom
         w: item.w ?? 4,
-        h: item.h ?? 6,
+        h: isCollapsed ? 2 : (item.h ?? 6),
         minW: item.minW,
-        minH: item.minH,
+        minH: isCollapsed ? 2 : (item.minH || 2),
         maxW: item.maxW,
         maxH: item.maxH,
         static: item.static ?? false,
       };
     });
-  }, [items, layout]);
+  }, [items, layout, collapsedWidgets]);
+
+  // Handle widget collapse/expand
+  const handleWidgetCollapse = useCallback((widgetId: string, collapsed: boolean) => {
+    setCollapsedWidgets(prev => {
+      const newSet = new Set(prev);
+      if (collapsed) {
+        newSet.add(widgetId);
+      } else {
+        newSet.delete(widgetId);
+      }
+      return newSet;
+    });
+    onWidgetCollapse?.(widgetId, collapsed);
+  }, [onWidgetCollapse]);
 
   useEffect(() => {
     try {
@@ -132,8 +157,11 @@ export default function DashboardGrid({
         preventCollision={false}
       >
         {items.map(item => (
-          <div key={item.id} className="grid-item">
-            {renderItem(item.id)}
+          <div 
+            key={item.id} 
+            className={`grid-item ${collapsedWidgets.has(item.id) ? 'collapsed' : 'expanded'}`}
+          >
+            {renderItem(item.id, handleWidgetCollapse)}
           </div>
         ))}
       </Grid>

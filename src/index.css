@@ -747,14 +747,18 @@ All colors MUST be HSL - Monochrome Green Theme
     min-height: 48px !important;
     max-height: 48px !important;
     overflow: hidden;
-    transition: height 200ms ease, min-height 200ms ease, max-height 200ms ease;
+    transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1), 
+                min-height 300ms cubic-bezier(0.4, 0, 0.2, 1), 
+                max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .widget-expanded {
     height: auto;
     min-height: auto;
     max-height: none;
-    transition: height 200ms ease, min-height 200ms ease, max-height 200ms ease;
+    transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1), 
+                min-height 300ms cubic-bezier(0.4, 0, 0.2, 1), 
+                max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .widget-text-auto {

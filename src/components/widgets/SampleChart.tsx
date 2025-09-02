@@ -15,7 +15,8 @@ export default function SampleChart({
   settings: externalSettings, 
   onSettingsChange,
   widgetName,
-  title = "System Monitor"
+  title = "System Monitor",
+  onCollapseChange
 }: BaseWidgetProps) {
   const [data, setData] = useState<DataPoint[]>([]);
   const [isActive, setIsActive] = useState(true);
@@ -127,6 +128,7 @@ export default function SampleChart({
         className={!settings.showBorder ? 'border-none' : ''}
         style={{ opacity: settings.opacity / 100 }}
         widgetId={widgetInstanceId}
+        onCollapseChange={onCollapseChange}
         right={
           <div className="flex items-center space-x-2">
             <button 

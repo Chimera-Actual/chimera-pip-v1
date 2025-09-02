@@ -10,7 +10,8 @@ export default function SampleClock({
   settings: externalSettings, 
   onSettingsChange,
   widgetName,
-  title = "System Clock"
+  title = "System Clock",
+  onCollapseChange
 }: BaseWidgetProps) {
   const [time, setTime] = useState(new Date());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -98,6 +99,7 @@ export default function SampleClock({
         className={!settings.showBorder ? 'border-none' : ''}
         style={{ opacity: settings.opacity / 100 }}
         widgetId={widgetInstanceId}
+        onCollapseChange={onCollapseChange}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-4">
           <motion.div 

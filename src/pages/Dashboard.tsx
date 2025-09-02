@@ -296,7 +296,13 @@ function DashboardContent() {
     })) || [])
   ];
 
-  const renderWidget = (id: string) => {
+  // Handle widget collapse to communicate with grid
+  const handleWidgetCollapse = useCallback((widgetId: string, collapsed: boolean) => {
+    // This will be called when widgets are collapsed/expanded
+    // The grid will handle the layout updates automatically
+  }, []);
+
+  const renderWidget = (id: string, onCollapseChange?: (widgetId: string, collapsed: boolean) => void) => {
     // Check if it's a permanent widget first
     const permanentWidget = permanentWidgets.find(w => w.id === id);
     if (permanentWidget) {
@@ -308,6 +314,7 @@ function DashboardContent() {
             widgetName={permanentWidget.widgetType === 'AddWidgetWidget' ? 'Add Widget' : 'Dashboard Settings'}
             title={permanentWidget.widgetType === 'AddWidgetWidget' ? 'Add Widget' : 'Dashboard Settings'}
             widgetType={permanentWidget.widgetType}
+            onCollapseChange={onCollapseChange}
           />
         );
       }
@@ -351,6 +358,7 @@ function DashboardContent() {
         settings={widgetSettings}
         defaultSettings={widgetInstance.widget_definition.default_settings}
         onSettingsChange={(newSettings) => updateWidgetSettings({ instanceId: widgetInstance.id, settings: newSettings })}
+        onCollapseChange={onCollapseChange}
       />
     );
   };
@@ -386,6 +394,7 @@ function DashboardContent() {
             rowHeight={32}
             margin={[12, 12]}
             onLayoutChange={handleLayoutChange}
+            onWidgetCollapse={handleWidgetCollapse}
             className=""
           />
         </motion.div>

@@ -15,6 +15,8 @@ export interface BaseWidgetProps {
   onSettingsChange?: (settings: Record<string, any>) => void;
   /** Optional custom name for the widget instance */
   widgetName?: string;
+  /** Callback when widget collapse state changes */
+  onCollapseChange?: (widgetId: string, collapsed: boolean) => void;
 }
 
 export interface BaseWidgetSettings {

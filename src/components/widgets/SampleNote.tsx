@@ -10,7 +10,8 @@ export default function SampleNote({
   settings: externalSettings, 
   onSettingsChange,
   widgetName,
-  title = "Notes Terminal"
+  title = "Notes Terminal",
+  onCollapseChange
 }: BaseWidgetProps) {
   // Instance-specific storage keys
   const getNoteStorageKey = () => `widget-${widgetInstanceId}-note`;
@@ -108,6 +109,7 @@ export default function SampleNote({
         className={!settings.showBorder ? 'border-none' : ''}
         style={{ opacity: settings.opacity / 100 }}
         widgetId={widgetInstanceId}
+        onCollapseChange={onCollapseChange}
         right={
           <div className="flex items-center space-x-2">
             {hasUnsavedChanges ? (

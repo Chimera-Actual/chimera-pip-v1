@@ -19,6 +19,7 @@ export default function WidgetAdapter({
   widgetName,
   icon,
   onSettings,
+  onCollapseChange,
   className = ""
 }: WidgetAdapterProps) {
   return (
@@ -26,6 +27,7 @@ export default function WidgetAdapter({
       title={widgetName || title}
       widgetId={widgetInstanceId}
       onSettings={onSettings}
+      onCollapseChange={onCollapseChange}
       right={icon}
       className={className}
     >

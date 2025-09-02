@@ -12,7 +12,8 @@ import { useCRT } from '@/lib/CRTTheme';
 
 const DashboardSettingsWidget: React.FC<BaseWidgetProps> = ({
   widgetInstanceId,
-  widgetName
+  widgetName,
+  onCollapseChange
 }) => {
   const { theme, setTheme, scanlinesEnabled, setScanlinesEnabled } = useCRT();
 
@@ -22,6 +23,7 @@ const DashboardSettingsWidget: React.FC<BaseWidgetProps> = ({
       widgetInstanceId={widgetInstanceId}
       widgetName={widgetName}
       icon={<Settings className="w-4 h-4" />}
+      onCollapseChange={onCollapseChange}
     >
       <div className="h-full p-4 space-y-4">
         <Card>

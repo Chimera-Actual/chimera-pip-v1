@@ -13,6 +13,7 @@ interface WidgetFrameProps {
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   widgetId?: string;
+  onCollapseChange?: (widgetId: string, collapsed: boolean) => void;
 }
 
 export default function WidgetFrame({
@@ -24,7 +25,8 @@ export default function WidgetFrame({
   style,
   collapsible = true,
   defaultCollapsed = false,
-  widgetId
+  widgetId,
+  onCollapseChange
 }: WidgetFrameProps) {
   // Generate unique storage key for this widget - require widgetId for proper uniqueness
   const storageKey = `widget-${widgetId}-collapsed`;
@@ -47,6 +49,10 @@ export default function WidgetFrame({
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
+    // Notify parent grid about collapse state change
+    if (widgetId && onCollapseChange) {
+      onCollapseChange(widgetId, !isCollapsed);
+    }
   };
   return (
     <WidgetResizer 
