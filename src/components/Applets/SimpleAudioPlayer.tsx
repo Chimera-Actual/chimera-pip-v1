@@ -38,14 +38,77 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Local state - no complex context
+  // Local state with localStorage persistence
   const [playlist, setPlaylist] = useState<AudioTrack[]>([]);
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  
+  // Playback state with localStorage persistence
+  const [isPlaying, setIsPlaying] = useState(() => {
+    if (!widgetInstanceId) return false;
+    try {
+      const saved = localStorage.getItem(`widget-${widgetInstanceId}-isPlaying`);
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
+  });
+  
+  const [currentTime, setCurrentTime] = useState(() => {
+    if (!widgetInstanceId) return 0;
+    try {
+      const saved = localStorage.getItem(`widget-${widgetInstanceId}-currentTime`);
+      return saved ? JSON.parse(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(settings.volume || 75);
-  const [waveformSize, setWaveformSize] = useState(settings.waveformSize || 'medium');
+  
+  const [volume, setVolume] = useState(() => {
+    if (!widgetInstanceId) return settings.volume || 75;
+    try {
+      const saved = localStorage.getItem(`widget-${widgetInstanceId}-volume`);
+      return saved ? JSON.parse(saved) : (settings.volume || 75);
+    } catch {
+      return settings.volume || 75;
+    }
+  });
+  
+  const [waveformSize, setWaveformSize] = useState(() => {
+    if (!widgetInstanceId) return settings.waveformSize || 'medium';
+    try {
+      const saved = localStorage.getItem(`widget-${widgetInstanceId}-waveformSize`);
+      return saved ? JSON.parse(saved) : (settings.waveformSize || 'medium');
+    } catch {
+      return settings.waveformSize || 'medium';
+    }
+  });
+
+  // Save playback state to localStorage
+  useEffect(() => {
+    if (widgetInstanceId) {
+      localStorage.setItem(`widget-${widgetInstanceId}-isPlaying`, JSON.stringify(isPlaying));
+    }
+  }, [isPlaying, widgetInstanceId]);
+
+  useEffect(() => {
+    if (widgetInstanceId) {
+      localStorage.setItem(`widget-${widgetInstanceId}-currentTime`, JSON.stringify(currentTime));
+    }
+  }, [currentTime, widgetInstanceId]);
+
+  useEffect(() => {
+    if (widgetInstanceId) {
+      localStorage.setItem(`widget-${widgetInstanceId}-volume`, JSON.stringify(volume));
+    }
+  }, [volume, widgetInstanceId]);
+
+  useEffect(() => {
+    if (widgetInstanceId) {
+      localStorage.setItem(`widget-${widgetInstanceId}-waveformSize`, JSON.stringify(waveformSize));
+    }
+  }, [waveformSize, widgetInstanceId]);
 
   // Load playlist from database
   const loadPlaylist = async () => {

@@ -38,7 +38,8 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
     clearSearch
   } = useMapState({
     defaultLayer: settings.layer || 'standard',
-    defaultZoom: settings.zoom || 10
+    defaultZoom: settings.zoom || 10,
+    widgetInstanceId // Pass widget ID for state persistence
   });
 
   const title = settings.title || 'Open Source Map';

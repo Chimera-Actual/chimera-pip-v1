@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useLocation } from '@/contexts/LocationContext';
 
 export interface Placemark {
@@ -30,21 +30,73 @@ export interface MapState {
   followUser: boolean;
 }
 
-export const useMapState = (initialSettings?: any) => {
+export const useMapState = (config?: { 
+  defaultLayer?: MapLayer; 
+  defaultZoom?: number; 
+  placemarks?: Placemark[]; 
+  widgetInstanceId?: string;
+}) => {
   const { location, getCurrentLocation, autoFollow, setAutoFollow } = useLocation();
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [mapState, setMapState] = useState<MapState>({
-    center: location ? [location.latitude, location.longitude] : [37.7749, -122.4194],
-    zoom: 10,
-    layer: initialSettings?.defaultLayer || 'standard',
-    placemarks: initialSettings?.placemarks || [],
-    activeSearch: '',
-    searchResults: [],
-    isSearching: false,
-    showCenterpoint: true,
-    followUser: autoFollow
-  });
+  // Load initial state from localStorage if widgetInstanceId is provided
+  const getInitialState = (): MapState => {
+    const defaultState: MapState = {
+      center: location ? [location.longitude, location.latitude] : [-122.4194, 37.7749],
+      zoom: config?.defaultZoom || 10,
+      layer: config?.defaultLayer || 'standard',
+      placemarks: config?.placemarks || [],
+      activeSearch: '',
+      searchResults: [],
+      isSearching: false,
+      showCenterpoint: true,
+      followUser: autoFollow
+    };
+
+    if (!config?.widgetInstanceId) return defaultState;
+
+    try {
+      const saved = localStorage.getItem(`widget-${config.widgetInstanceId}-mapState`);
+      if (saved) {
+        const savedState = JSON.parse(saved);
+        return {
+          ...defaultState,
+          center: savedState.center || defaultState.center,
+          zoom: savedState.zoom || defaultState.zoom,
+          layer: savedState.layer || defaultState.layer,
+          placemarks: savedState.placemarks || defaultState.placemarks,
+          showCenterpoint: savedState.showCenterpoint !== undefined ? savedState.showCenterpoint : defaultState.showCenterpoint,
+          followUser: savedState.followUser !== undefined ? savedState.followUser : defaultState.followUser
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to load map state from localStorage:', error);
+    }
+
+    return defaultState;
+  };
+
+  const [mapState, setMapState] = useState<MapState>(getInitialState);
+
+  // Save state to localStorage when it changes
+  useEffect(() => {
+    if (!config?.widgetInstanceId) return;
+    
+    const stateToSave = {
+      center: mapState.center,
+      zoom: mapState.zoom,
+      layer: mapState.layer,
+      placemarks: mapState.placemarks,
+      showCenterpoint: mapState.showCenterpoint,
+      followUser: mapState.followUser
+    };
+    
+    try {
+      localStorage.setItem(`widget-${config.widgetInstanceId}-mapState`, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.warn('Failed to save map state to localStorage:', error);
+    }
+  }, [mapState.center, mapState.zoom, mapState.layer, mapState.placemarks, mapState.showCenterpoint, mapState.followUser, config?.widgetInstanceId]);
 
   const updateCenter = useCallback((center: [number, number]) => {
     setMapState(prev => ({ ...prev, center }));

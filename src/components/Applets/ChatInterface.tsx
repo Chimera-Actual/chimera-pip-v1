@@ -25,11 +25,35 @@ interface Message {
 
 interface ChatInterfaceProps {
   selectedAssistant: Assistant;
+  widgetInstanceId?: string;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant, widgetInstanceId }) => {
+  // Widget-specific localStorage keys
+  const getStorageKey = (key: string) => widgetInstanceId ? `widget-${widgetInstanceId}-${key}` : `chat-${key}`;
+  
+  // State with localStorage persistence
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (!widgetInstanceId) return [];
+    try {
+      const saved = localStorage.getItem(getStorageKey('messages'));
+      return saved ? JSON.parse(saved).map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      })) : [];
+    } catch {
+      return [];
+    }
+  });
+  
+  const [inputValue, setInputValue] = useState(() => {
+    try {
+      return localStorage.getItem(getStorageKey('inputValue')) || '';
+    } catch {
+      return '';
+    }
+  });
+  
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState(selectedAssistant.webhookUrl);
@@ -40,6 +64,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Save messages to localStorage when they change
+  useEffect(() => {
+    if (widgetInstanceId && messages.length > 0) {
+      try {
+        localStorage.setItem(getStorageKey('messages'), JSON.stringify(messages));
+      } catch (error) {
+        console.warn('Failed to save messages:', error);
+      }
+    }
+  }, [messages, widgetInstanceId]);
+
+  // Save input value to localStorage (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      try {
+        localStorage.setItem(getStorageKey('inputValue'), inputValue);
+      } catch (error) {
+        console.warn('Failed to save input value:', error);
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [inputValue, widgetInstanceId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

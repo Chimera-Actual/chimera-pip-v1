@@ -37,14 +37,63 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // State
+  // Local state with localStorage persistence
   const [playlist, setPlaylist] = useState<Track[]>([]);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  
+  // Playback state with localStorage persistence
+  const [isPlaying, setIsPlaying] = useState(() => {
+    if (!widgetInstanceId) return false;
+    try {
+      const saved = localStorage.getItem(`widget-${widgetInstanceId}-isPlaying`);
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
+  });
+  
+  const [currentTime, setCurrentTime] = useState(() => {
+    if (!widgetInstanceId) return 0;
+    try {
+      const saved = localStorage.getItem(`widget-${widgetInstanceId}-currentTime`);
+      return saved ? JSON.parse(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(settings.volume || 75);
+  
+  const [volume, setVolume] = useState(() => {
+    if (!widgetInstanceId) return settings.volume || 75;
+    try {
+      const saved = localStorage.getItem(`widget-${widgetInstanceId}-volume`);
+      return saved ? JSON.parse(saved) : (settings.volume || 75);
+    } catch {
+      return settings.volume || 75;
+    }
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
+
+  // Save playback state to localStorage
+  useEffect(() => {
+    if (widgetInstanceId) {
+      localStorage.setItem(`widget-${widgetInstanceId}-isPlaying`, JSON.stringify(isPlaying));
+    }
+  }, [isPlaying, widgetInstanceId]);
+
+  useEffect(() => {
+    if (widgetInstanceId) {
+      localStorage.setItem(`widget-${widgetInstanceId}-currentTime`, JSON.stringify(currentTime));
+    }
+  }, [currentTime, widgetInstanceId]);
+
+  useEffect(() => {
+    if (widgetInstanceId) {
+      localStorage.setItem(`widget-${widgetInstanceId}-volume`, JSON.stringify(volume));
+    }
+  }, [volume, widgetInstanceId]);
 
   // Load playlist from database
   useEffect(() => {
