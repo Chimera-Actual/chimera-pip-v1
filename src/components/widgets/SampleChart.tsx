@@ -3,18 +3,27 @@ import { Activity, TrendingUp } from "lucide-react";
 import WidgetFrame from "@/components/dashboard/WidgetFrame";
 import WidgetSettingsModal from "@/components/dashboard/WidgetSettingsModal";
 import { motion } from "framer-motion";
+import { BaseWidgetProps } from "@/types/widget";
 
 interface DataPoint {
   time: number;
   value: number;
 }
 
-export default function SampleChart() {
+export default function SampleChart({ 
+  widgetInstanceId, 
+  settings: externalSettings, 
+  onSettingsChange,
+  widgetName,
+  title = "System Monitor"
+}: BaseWidgetProps) {
   const [data, setData] = useState<DataPoint[]>([]);
   const [isActive, setIsActive] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState({
-    name: "System Monitor",
+  
+  // Default settings for this widget type
+  const defaultSettings = {
+    name: title || "System Monitor",
     autoRefresh: true,
     refreshRate: 1,
     opacity: 100,
@@ -25,7 +34,32 @@ export default function SampleChart() {
     showGrid: true,
     showStats: true,
     animateChart: true
+  };
+
+  // Instance-specific storage key
+  const getSettingsStorageKey = () => `widget-${widgetInstanceId}-settings`;
+  
+  // Load settings from external props or localStorage with instance-specific key  
+  const [settings, setSettings] = useState(() => {
+    if (externalSettings) return { ...defaultSettings, ...externalSettings };
+    
+    try {
+      const saved = localStorage.getItem(getSettingsStorageKey());
+      return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+    } catch {
+      return defaultSettings;
+    }
   });
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(getSettingsStorageKey(), JSON.stringify(settings)); 
+      onSettingsChange?.(settings);
+    } catch (error) {
+      console.warn('Failed to save widget settings:', error);
+    }
+  }, [settings, widgetInstanceId, onSettingsChange]);
 
   useEffect(() => {
     // Generate initial data points
@@ -201,19 +235,7 @@ export default function SampleChart() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSave={setSettings}
-        onReset={() => setSettings({
-          name: "System Monitor",
-          autoRefresh: true,
-          refreshRate: 1,
-          opacity: 100,
-          theme: 'default',
-          fontSize: 'medium',
-          showBorder: true,
-          dataPoints: 50,
-          showGrid: true,
-          showStats: true,
-          animateChart: true
-        })}
+        onReset={() => setSettings(defaultSettings)}
         widgetType="SampleChart"
         currentSettings={settings}
         widgetName="System Monitor"

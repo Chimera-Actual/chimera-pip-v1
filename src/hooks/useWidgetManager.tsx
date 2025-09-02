@@ -136,61 +136,20 @@ export const useWidgetManager = () => {
     if (!user) return;
 
     try {
-      // First check if there's already an active widget instance of this type in this tab
-      const existingWidget = userWidgetInstances.find(
-        w => w.widget_id === widgetId && w.tab_id === tabId && w.is_active
-      );
-
-      if (existingWidget) {
-        // Widget already exists and is active, no need to create a new one
-        return existingWidget;
-      }
-
-      // Check if there's an inactive widget instance we can reactivate
-      const inactiveWidget = userWidgetInstances.find(
-        w => w.widget_id === widgetId && w.tab_id === tabId && !w.is_active
-      );
-
-      if (inactiveWidget) {
-        // Reactivate the existing widget instance
-        const { data, error } = await supabase
-          .from('user_widget_instances')
-          .update({ is_active: true })
-          .eq('id', inactiveWidget.id)
-          .eq('user_id', user.id)
-          .select(`
-            *,
-            widget_definition:widget_definitions(*)
-          `)
-          .single();
-
-        if (error) throw error;
-        
-        if (data) {
-          const transformedData = {
-            ...data,
-            widget_definition: data.widget_definition ? {
-              ...data.widget_definition,
-              default_settings: (data.widget_definition.default_settings as Record<string, any>) || {}
-            } : undefined
-          };
-          setUserWidgetInstances(prev =>
-            prev.map(w => w.id === inactiveWidget.id ? transformedData : w)
-          );
-          return transformedData;
-        }
-      }
-
-      // No existing widget found, create a new one
+      // Always create a new widget instance with unique ID to allow multiple instances
       // Get the highest position in this tab
       const existingWidgets = userWidgetInstances.filter(
         w => w.tab_id === tabId && w.is_active
       );
       const maxPosition = Math.max(...existingWidgets.map(w => w.position), -1);
 
+      // Generate unique instance ID
+      const instanceId = crypto.randomUUID();
+
       const { data, error } = await supabase
         .from('user_widget_instances')
         .insert({
+          id: instanceId,
           user_id: user.id,
           widget_id: widgetId,
           tab_id: tabId,

@@ -3,16 +3,22 @@ import { FileText, Save } from "lucide-react";
 import WidgetFrame from "@/components/dashboard/WidgetFrame";
 import WidgetSettingsModal from "@/components/dashboard/WidgetSettingsModal";
 import { motion } from "framer-motion";
+import { BaseWidgetProps } from "@/types/widget";
 
-export default function SampleNote() {
-  const [value, setValue] = useState(() => 
-    localStorage.getItem("demo:note") || "Enter your notes here...\n\nThis is a persistent notepad widget."
-  );
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState({
-    name: "Notes Terminal",
+export default function SampleNote({ 
+  widgetInstanceId, 
+  settings: externalSettings, 
+  onSettingsChange,
+  widgetName,
+  title = "Notes Terminal"
+}: BaseWidgetProps) {
+  // Instance-specific storage keys
+  const getNoteStorageKey = () => `widget-${widgetInstanceId}-note`;
+  const getSettingsStorageKey = () => `widget-${widgetInstanceId}-settings`;
+  
+  // Default settings for this widget type
+  const defaultSettings = {
+    name: title || "Notes Terminal",
     autoRefresh: true,
     refreshRate: 1,
     opacity: 100,
@@ -22,19 +28,57 @@ export default function SampleNote() {
     showWordCount: true,
     autoSave: true,
     saveDelay: 1000
+  };
+
+  const [value, setValue] = useState(() => {
+    try {
+      return localStorage.getItem(getNoteStorageKey()) || "Enter your notes here...\n\nThis is a persistent notepad widget.";
+    } catch {
+      return "Enter your notes here...\n\nThis is a persistent notepad widget.";
+    }
   });
+  
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  // Load settings from external props or localStorage with instance-specific key  
+  const [settings, setSettings] = useState(() => {
+    if (externalSettings) return { ...defaultSettings, ...externalSettings };
+    
+    try {
+      const saved = localStorage.getItem(getSettingsStorageKey());
+      return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+    } catch {
+      return defaultSettings;
+    }
+  });
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(getSettingsStorageKey(), JSON.stringify(settings)); 
+      onSettingsChange?.(settings);
+    } catch (error) {
+      console.warn('Failed to save widget settings:', error);
+    }
+  }, [settings, widgetInstanceId, onSettingsChange]);
 
   useEffect(() => {
     if (!settings.autoSave) return;
     
     const timeoutId = setTimeout(() => {
-      localStorage.setItem("demo:note", value);
-      setLastSaved(new Date());
-      setHasUnsavedChanges(false);
+      try {
+        localStorage.setItem(getNoteStorageKey(), value);
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        console.warn('Failed to save note:', error);
+      }
     }, settings.saveDelay);
 
     return () => clearTimeout(timeoutId);
-  }, [value, settings.autoSave, settings.saveDelay]);
+  }, [value, settings.autoSave, settings.saveDelay, widgetInstanceId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
@@ -119,18 +163,7 @@ export default function SampleNote() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSave={setSettings}
-        onReset={() => setSettings({
-          name: "Notes Terminal",
-          autoRefresh: true,
-          refreshRate: 1,
-          opacity: 100,
-          theme: 'default',
-          fontSize: 'medium',
-          showBorder: true,
-          showWordCount: true,
-          autoSave: true,
-          saveDelay: 1000
-        })}
+        onReset={() => setSettings(defaultSettings)}
         widgetType="SampleNote"
         currentSettings={settings}
         widgetName="Notes Terminal"

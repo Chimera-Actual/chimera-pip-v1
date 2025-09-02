@@ -3,12 +3,21 @@ import { Clock } from "lucide-react";
 import WidgetFrame from "@/components/dashboard/WidgetFrame";
 import WidgetSettingsModal from "@/components/dashboard/WidgetSettingsModal";
 import { motion } from "framer-motion";
+import { BaseWidgetProps } from "@/types/widget";
 
-export default function SampleClock() {
+export default function SampleClock({ 
+  widgetInstanceId, 
+  settings: externalSettings, 
+  onSettingsChange,
+  widgetName,
+  title = "System Clock"
+}: BaseWidgetProps) {
   const [time, setTime] = useState(new Date());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState({
-    name: "System Clock",
+  
+  // Default settings for this widget type
+  const defaultSettings = {
+    name: title || "System Clock",
     showSeconds: true,
     format24h: true,
     showDate: true,
@@ -18,7 +27,31 @@ export default function SampleClock() {
     theme: 'default' as 'default' | 'accent' | 'muted',
     fontSize: 'medium' as 'small' | 'medium' | 'large',
     showBorder: true
+  };
+
+  // Load settings from external props or localStorage with instance-specific key
+  const getStorageKey = () => `widget-${widgetInstanceId}-settings`;
+  
+  const [settings, setSettings] = useState(() => {
+    if (externalSettings) return { ...defaultSettings, ...externalSettings };
+    
+    try {
+      const saved = localStorage.getItem(getStorageKey());
+      return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+    } catch {
+      return defaultSettings;
+    }
   });
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(getStorageKey(), JSON.stringify(settings));
+      onSettingsChange?.(settings);
+    } catch (error) {
+      console.warn('Failed to save widget settings:', error);
+    }
+  }, [settings, widgetInstanceId, onSettingsChange]);
 
   useEffect(() => {
     if (!settings.autoRefresh) return;
@@ -96,18 +129,7 @@ export default function SampleClock() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSave={setSettings}
-        onReset={() => setSettings({
-          name: "System Clock",
-          showSeconds: true,
-          format24h: true,
-          showDate: true,
-          autoRefresh: true,
-          refreshRate: 1,
-          opacity: 100,
-          theme: 'default',
-          fontSize: 'medium',
-          showBorder: true
-        })}
+        onReset={() => setSettings(defaultSettings)}
         widgetType="SampleClock"
         currentSettings={settings}
         widgetName="System Clock"

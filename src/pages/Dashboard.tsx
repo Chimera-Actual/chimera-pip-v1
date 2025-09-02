@@ -169,6 +169,9 @@ function DashboardContent() {
     getAllUserTags,
     addTagToWidget,
     removeTagFromWidget,
+    getActiveWidgetsForTab,
+    getWidgetSettings,
+    updateWidgetSettings
   } = useOptimizedWidgetManager();
 
   // Update the default tab to have the Monitor icon (already handled in hook)
@@ -299,13 +302,20 @@ function DashboardContent() {
     if (permanentWidget) {
       const WidgetComponent = WIDGET_COMPONENTS[permanentWidget.widgetType as WidgetComponentName];
       if (WidgetComponent) {
-        return <WidgetComponent widgetInstanceId={id} widgetName={permanentWidget.widgetType === 'AddWidgetWidget' ? 'Add Widget' : 'Dashboard Settings'} />;
+        return (
+          <WidgetComponent 
+            widgetInstanceId={id} 
+            widgetName={permanentWidget.widgetType === 'AddWidgetWidget' ? 'Add Widget' : 'Dashboard Settings'}
+            title={permanentWidget.widgetType === 'AddWidgetWidget' ? 'Add Widget' : 'Dashboard Settings'}
+            widgetType={permanentWidget.widgetType}
+          />
+        );
       }
     }
 
-    // Handle regular tab widgets
-    const widget = activeTab?.widgets.find(item => item.id === id);
-    if (!widget || !widget.widgetType) {
+    // Handle regular tab widgets - find widget instance from useOptimizedWidgetManager
+    const widgetInstance = getActiveWidgetsForTab(activeTabId).find(instance => instance.id === id);
+    if (!widgetInstance || !widgetInstance.widget_definition) {
       return (
         <OrphanedWidget
           widgetId={id}
@@ -315,19 +325,34 @@ function DashboardContent() {
       );
     }
 
-    const WidgetComponent = WIDGET_COMPONENTS[widget.widgetType as WidgetComponentName];
+    const ComponentName = widgetInstance.widget_definition.component_name as WidgetComponentName;
+    const WidgetComponent = WIDGET_COMPONENTS[ComponentName];
     if (!WidgetComponent) {
       return (
         <OrphanedWidget
           widgetId={id}
-          widgetType={widget.widgetType}
+          widgetType={widgetInstance.widget_definition.component_name}
           onRemove={handleRemoveWidget}
           reason="component-not-found"
         />
       );
     }
 
-    return <WidgetComponent widgetInstanceId={id} />;
+    // Get merged settings (default + user-specific)
+    const widgetSettings = getWidgetSettings(widgetInstance.id);
+    
+    return (
+      <WidgetComponent
+        key={id}
+        widgetInstanceId={widgetInstance.id}
+        widgetType={widgetInstance.widget_definition.component_name}
+        title={widgetInstance.widget_definition.name}
+        widgetName={widgetInstance.custom_name || widgetInstance.widget_definition.name}
+        settings={widgetSettings}
+        defaultSettings={widgetInstance.widget_definition.default_settings}
+        onSettingsChange={(newSettings) => updateWidgetSettings({ instanceId: widgetInstance.id, settings: newSettings })}
+      />
+    );
   };
 
 

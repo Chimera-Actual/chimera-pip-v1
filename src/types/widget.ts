@@ -3,8 +3,14 @@
 export interface BaseWidgetProps {
   /** Unique identifier for this widget instance */
   widgetInstanceId: string;
-  /** Widget settings object */
+  /** Widget type identifier */
+  widgetType?: string;
+  /** Widget display title */
+  title?: string;
+  /** Widget settings object with defaults merged */
   settings?: Record<string, any>;
+  /** Default settings for the widget */
+  defaultSettings?: Record<string, any>;
   /** Callback to handle settings changes */
   onSettingsChange?: (settings: Record<string, any>) => void;
   /** Optional custom name for the widget instance */
