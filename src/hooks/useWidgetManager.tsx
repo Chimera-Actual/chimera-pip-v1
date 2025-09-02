@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { cleanupWidgetFiles } from '@/lib/widgetCleanup';
 import { WidgetFactory, WidgetDefinition as FactoryWidgetDefinition, WidgetConfig } from '@/lib/WidgetFactory';
+import { logger } from '@/lib/logger';
 
 export interface WidgetDefinition {
   id: string;
@@ -139,7 +140,7 @@ export const useWidgetManager = () => {
       };
 
     } catch (error) {
-      console.error('Error loading widget data:', error);
+      logger.error('Error loading widget data', error, 'WidgetManager');
       throw error;
     } finally {
       setLoading(false);
@@ -218,7 +219,7 @@ export const useWidgetManager = () => {
       
       return data;
     } catch (error) {
-      console.error('Error adding widget:', error);
+      logger.error('Error adding widget', error, 'WidgetManager');
       throw error;
     }
   };
@@ -242,7 +243,7 @@ export const useWidgetManager = () => {
         prev.map(w => w.id === instanceId ? { ...w, is_active: false } : w)
       );
     } catch (error) {
-      console.error('Error removing widget:', error);
+      logger.error('Error removing widget', error, 'WidgetManager');
       throw error;
     }
   };
@@ -278,7 +279,7 @@ export const useWidgetManager = () => {
       
       return data;
     } catch (error) {
-      console.error('Error updating widget settings:', error);
+      logger.error('Error updating widget settings', error, 'WidgetManager');
       throw error;
     }
   };
@@ -322,7 +323,7 @@ export const useWidgetManager = () => {
         prev.map(w => w.id === instanceId ? { ...w, position: newPosition } : w)
       );
     } catch (error) {
-      console.error('Error updating widget position:', error);
+      logger.error('Error updating widget position', error, 'WidgetManager');
       throw error;
     }
   };
@@ -349,7 +350,7 @@ export const useWidgetManager = () => {
 
       return data;
     } catch (error) {
-      console.error('Error updating widget name:', error);
+      logger.error('Error updating widget name', error, 'WidgetManager');
       throw error;
     }
   };
@@ -375,7 +376,7 @@ export const useWidgetManager = () => {
         )
       );
     } catch (error) {
-      console.error('Error moving widget to tab:', error);
+      logger.error('Error moving widget to tab', error, 'WidgetManager');
       throw error;
     }
   };
@@ -407,7 +408,7 @@ export const useWidgetManager = () => {
 
       return data;
     } catch (error) {
-      console.error('Error adding tag to widget:', error);
+      logger.error('Error adding tag to widget', error, 'WidgetManager');
       throw error;
     }
   };
@@ -434,7 +435,7 @@ export const useWidgetManager = () => {
           : widget
       ));
     } catch (error) {
-      console.error('Error removing tag from widget:', error);
+      logger.error('Error removing tag from widget', error, 'WidgetManager');
       throw error;
     }
   };

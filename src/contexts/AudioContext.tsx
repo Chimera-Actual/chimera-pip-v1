@@ -206,7 +206,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     if (!user || !widgetInstanceId) return;
 
     try {
-      console.log('Uploading file:', file.name, 'for widget:', widgetInstanceId);
+      logger.info('Starting file upload', { fileName: file.name, widgetInstanceId }, 'AudioContext');
       
       // Create a consistent filename based on user and file content
       const fileExt = file.name.split('.').pop();
@@ -227,7 +227,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         // File already exists, use the existing one
         storagePath = `${user.id}/${existingFiles[0].name}`;
         needsUpload = false;
-        console.log('File already exists, reusing:', storagePath);
+        logger.debug('File already exists, reusing', { storagePath }, 'AudioContext');
       }
 
       if (needsUpload) {
@@ -236,10 +236,10 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
           .upload(fileName, file);
 
         if (error) {
-          console.error('Error uploading file:', error);
+          logger.error('Error uploading file', error, 'AudioContext');
           return;
         }
-        console.log('File uploaded successfully:', data.path);
+        logger.info('File uploaded successfully', { path: data.path }, 'AudioContext');
       }
 
       // Create a longer-lasting signed URL (30 days)
@@ -248,7 +248,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         .createSignedUrl(storagePath, 60 * 60 * 24 * 30);
 
       if (urlError || !urlData) {
-        console.error('Error creating signed URL:', urlError);
+        logger.error('Error creating signed URL', urlError, 'AudioContext');
         return;
       }
 
@@ -267,11 +267,11 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         // Update existing track with new URL
         newPlaylist = [...playlist];
         newPlaylist[existingTrackIndex] = track;
-        console.log('Updated existing track:', track.title);
+        logger.debug('Updated existing track', { title: track.title }, 'AudioContext');
       } else {
         // Add new track to playlist
         newPlaylist = [...playlist, track];
-        console.log('Added new track to playlist:', track.title);
+        logger.info('Added new track to playlist', { title: track.title }, 'AudioContext');
       }
       
       setPlaylist(newPlaylist);
@@ -281,7 +281,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         setCurrentTrack(track);
       }
     } catch (error) {
-      console.error('Error handling file upload:', error);
+      logger.error('Error handling file upload', error, 'AudioContext');
     }
   };
 
@@ -323,33 +323,35 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   };
 
   const playTrack = async (track: AudioTrack) => {
-    console.log('=== PLAY TRACK CALLED ===');
-    console.log('Track:', track.title, 'URL:', track.url);
-    console.log('Audio element exists:', !!audioRef.current);
-    console.log('Audio element readyState:', audioRef.current?.readyState);
-    console.log('Audio element src before:', audioRef.current?.src);
+    logger.debug('Starting track playback', { 
+      title: track.title, 
+      url: track.url, 
+      audioExists: !!audioRef.current,
+      readyState: audioRef.current?.readyState,
+      currentSrc: audioRef.current?.src
+    }, 'AudioContext');
     
     if (audioRef.current) {
       try {
         // Always set the source and load to ensure fresh state
         audioRef.current.src = track.url;
-        console.log('Audio element src after setting:', audioRef.current.src);
+        logger.debug('Audio source set', { src: audioRef.current.src }, 'AudioContext');
         audioRef.current.load();
         
         setCurrentTrack(track);
-        console.log('Current track set to:', track.title);
+        logger.debug('Current track updated', { title: track.title }, 'AudioContext');
         
         // Wait for loadeddata event before trying to play
         await new Promise((resolve, reject) => {
           const onLoadedData = () => {
-            console.log('Audio loaded data, ready to play');
+            logger.debug('Audio loaded data, ready to play', undefined, 'AudioContext');
             audioRef.current?.removeEventListener('loadeddata', onLoadedData);
             audioRef.current?.removeEventListener('error', onError);
             resolve(true);
           };
           
           const onError = (error: any) => {
-            console.error('Audio load error:', error);
+            logger.error('Audio load error', error, 'AudioContext');
             audioRef.current?.removeEventListener('loadeddata', onLoadedData);
             audioRef.current?.removeEventListener('error', onError);
             reject(error);
@@ -362,7 +364,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
           setTimeout(() => {
             audioRef.current?.removeEventListener('loadeddata', onLoadedData);
             audioRef.current?.removeEventListener('error', onError);
-            console.warn('Audio load timeout, trying to play anyway');
+            logger.warn('Audio load timeout, attempting play anyway', undefined, 'AudioContext');
             resolve(true);
           }, 10000);
         });
@@ -370,81 +372,87 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           await playPromise;
-          console.log('=== TRACK STARTED PLAYING SUCCESSFULLY ===');
+          logger.info('Track started playing successfully', { title: track.title }, 'AudioContext');
           setIsPlaying(true);
         }
       } catch (error) {
-        console.error('=== ERROR PLAYING TRACK ===');
-        console.error('Error details:', error);
-        console.error('Audio element src:', audioRef.current?.src);
-        console.error('Audio element readyState:', audioRef.current?.readyState);
-        console.error('Audio element networkState:', audioRef.current?.networkState);
+        logger.error('Error playing track', {
+          error,
+          src: audioRef.current?.src,
+          readyState: audioRef.current?.readyState,
+          networkState: audioRef.current?.networkState
+        }, 'AudioContext');
         setIsPlaying(false);
         
         // Try to refresh URL if it's a network/URL issue
         if (track.storagePath) {
-          console.log('Attempting to refresh track URL...');
+          logger.debug('Attempting to refresh track URL', { storagePath: track.storagePath }, 'AudioContext');
           await refreshTrackUrl(track);
         }
       }
     } else {
-      console.error('=== NO AUDIO ELEMENT AVAILABLE ===');
+      logger.error('No audio element available', undefined, 'AudioContext');
     }
   };
 
   const togglePlayPause = async () => {
-    console.log('=== TOGGLE PLAY/PAUSE CALLED ===');
-    console.log('Current playing state:', isPlaying);
-    console.log('Current track:', currentTrack?.title);
-    console.log('Playlist length:', playlist.length);
-    console.log('Audio element exists:', !!audioRef.current);
+    logger.debug('Toggle play/pause requested', { 
+      isPlaying, 
+      currentTrack: currentTrack?.title,
+      playlistLength: playlist.length,
+      audioExists: !!audioRef.current
+    }, 'AudioContext');
     
     if (!currentTrack && playlist.length > 0) {
-      console.log('No current track, playing first track from playlist');
+      logger.debug('No current track, playing first from playlist', undefined, 'AudioContext');
       await playTrack(playlist[0]);
       return;
     }
 
     if (!currentTrack || !audioRef.current) {
-      console.error('Cannot toggle: no current track or audio element');
-      console.error('Current track:', currentTrack);
-      console.error('Audio element:', audioRef.current);
+      logger.error('Cannot toggle playback', { 
+        currentTrack: currentTrack?.title, 
+        hasAudioElement: !!audioRef.current 
+      }, 'AudioContext');
       return;
     }
 
-    console.log('Audio element ready state:', audioRef.current.readyState);
-    console.log('Audio element paused:', audioRef.current.paused);
-    console.log('Audio element src:', audioRef.current.src);
+    logger.debug('Audio element state check', {
+      readyState: audioRef.current.readyState,
+      paused: audioRef.current.paused,
+      src: audioRef.current.src
+    }, 'AudioContext');
 
     if (isPlaying) {
-      console.log('Pausing audio...');
+      logger.debug('Pausing audio', undefined, 'AudioContext');
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      console.log('Playing audio...');
+      logger.debug('Starting audio playback', undefined, 'AudioContext');
       try {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           await playPromise;
-          console.log('=== AUDIO PLAY PROMISE RESOLVED ===');
+          logger.debug('Audio play promise resolved', undefined, 'AudioContext');
           setIsPlaying(true);
         }
       } catch (error) {
-        console.error('=== ERROR IN TOGGLE PLAY/PAUSE ===');
-        console.error('Play error:', error);
-        console.error('Audio element state:', {
-          readyState: audioRef.current?.readyState,
-          networkState: audioRef.current?.networkState,
-          paused: audioRef.current?.paused,
-          ended: audioRef.current?.ended,
-          currentTime: audioRef.current?.currentTime,
-          duration: audioRef.current?.duration,
-          src: audioRef.current?.src
-        });
+        logger.error('Error in toggle play/pause', {
+          error,
+          audioState: {
+            readyState: audioRef.current?.readyState,
+            networkState: audioRef.current?.networkState,
+            paused: audioRef.current?.paused,
+            ended: audioRef.current?.ended,
+            currentTime: audioRef.current?.currentTime,
+            duration: audioRef.current?.duration,
+            src: audioRef.current?.src
+          }
+        }, 'AudioContext');
         setIsPlaying(false);
         // Try to refresh the URL if it's expired
         if (currentTrack?.storagePath) {
-          console.log('Attempting to refresh expired URL...');
+          logger.debug('Attempting to refresh expired URL', { storagePath: currentTrack.storagePath }, 'AudioContext');
           await refreshTrackUrl(currentTrack);
         }
       }
@@ -479,14 +487,14 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   };
 
   const setVolume = (newVolume: number[]) => {
-    console.log('Volume slider changed to:', newVolume);
+    logger.debug('Volume changed via slider', { newVolume }, 'AudioContext');
     setVolumeState(newVolume);
     
     // Immediately apply to audio element if available
     if (audioRef.current && newVolume.length > 0) {
       const volumeValue = Math.max(0, Math.min(1, newVolume[0] / 100));
       audioRef.current.volume = volumeValue;
-      console.log('Immediately set audio volume to:', volumeValue);
+      logger.debug('Applied volume to audio element', { volumeValue }, 'AudioContext');
     }
     
     // Save volume to database with debouncing to prevent spam
@@ -502,9 +510,9 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
               widget_instance_id: currentWidgetInstance,
               settings: updatedSettings as any
             });
-          console.log('Volume saved to database:', newVolume[0]);
+          logger.info('Volume saved to database', { volume: newVolume[0] }, 'AudioContext');
         } catch (err) {
-          console.error('Error saving volume:', err);
+          logger.error('Error saving volume', err, 'AudioContext');
         }
       }, 500); // Save after 500ms of no changes
     }
@@ -538,7 +546,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error('Failed to refresh track URL:', error);
+      logger.error('Failed to refresh track URL', error, 'AudioContext');
     }
   };
 
@@ -580,45 +588,47 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
           setDuration(duration);
         }}
         onEnded={() => {
-          console.log('Audio ended, loop:', settings.loop);
+          logger.debug('Audio ended', { loop: settings.loop }, 'AudioContext');
           setIsPlaying(false);
           if (settings.loop && currentTrack) {
-            console.log('Looping current track');
+            logger.debug('Looping current track', { title: currentTrack.title }, 'AudioContext');
             setTimeout(() => {
               if (audioRef.current) {
                 audioRef.current.currentTime = 0;
-                audioRef.current.play().catch(err => console.error('Error looping:', err));
+                audioRef.current.play().catch(err => logger.error('Error looping track', err, 'AudioContext'));
               }
             }, 100);
           } else {
-            console.log('Moving to next track');
+            logger.debug('Moving to next track', undefined, 'AudioContext');
             nextTrack();
           }
         }}
         onPlay={() => {
-          console.log('Audio started playing');
+          logger.debug('Audio started playing', undefined, 'AudioContext');
           setIsPlaying(true);
         }}
         onPause={() => {
-          console.log('Audio paused');
+          logger.debug('Audio paused', undefined, 'AudioContext');
           setIsPlaying(false);
         }}
         onError={(e) => {
-          console.error('Audio error:', e);
-          console.error('Current src:', audioRef.current?.src);
+          logger.error('Audio element error', { 
+            error: e, 
+            currentSrc: audioRef.current?.src 
+          }, 'AudioContext');
           setIsPlaying(false);
           // Try to refresh the URL if it's expired
           if (currentTrack?.storagePath) {
-            console.log('Attempting to refresh expired URL...');
+            logger.debug('Attempting to refresh expired URL after audio error', { storagePath: currentTrack.storagePath }, 'AudioContext');
             refreshTrackUrl(currentTrack);
           }
         }}
-        onLoadStart={() => console.log('Audio load started')}
-        onCanPlay={() => console.log('Audio can play')}
-        onLoadedData={() => console.log('Audio loaded data')}
-        onStalled={() => console.log('Audio stalled')}
-        onSuspend={() => console.log('Audio suspended')}
-        onWaiting={() => console.log('Audio waiting')}
+        onLoadStart={() => logger.debug('Audio load started', undefined, 'AudioContext')}
+        onCanPlay={() => logger.debug('Audio can play', undefined, 'AudioContext')}
+        onLoadedData={() => logger.debug('Audio data loaded', undefined, 'AudioContext')}
+        onStalled={() => logger.debug('Audio stalled', undefined, 'AudioContext')}
+        onSuspend={() => logger.debug('Audio suspended', undefined, 'AudioContext')}
+        onWaiting={() => logger.debug('Audio waiting', undefined, 'AudioContext')}
         crossOrigin="anonymous"
         style={{ display: 'none' }}
         preload="metadata"

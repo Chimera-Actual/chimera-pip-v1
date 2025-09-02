@@ -4,6 +4,7 @@ import classNames from "classnames";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import "@/styles/crt.css";
+import { logger } from '@/lib/logger';
 
 const Grid = WidthProvider(RGL);
 
@@ -63,7 +64,7 @@ export default function DashboardGrid({
         }
       }
     } catch (error) {
-      console.warn("Failed to parse cached layout:", error);
+      logger.warn('Failed to parse cached layout', error, 'DashboardGrid');
     }
 
     // Generate default layout
@@ -115,7 +116,7 @@ export default function DashboardGrid({
     try {
       localStorage.setItem(storageKey, JSON.stringify(layout));
     } catch (error) {
-      console.warn("Failed to save layout to localStorage:", error);
+      logger.warn('Failed to save layout to localStorage', error, 'DashboardGrid');
     }
   }, [layout, storageKey]);
 

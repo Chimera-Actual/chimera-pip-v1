@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface ThemePreset {
   id: string;
@@ -66,7 +67,7 @@ export const useThemeSystem = () => {
         applyTheme(theme.hue);
       }
     } catch (error) {
-      console.error('Error loading user theme:', error);
+      logger.error('Error loading user theme', error, 'ThemeSystem');
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ export const useThemeSystem = () => {
         setCustomThemes(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Error loading custom themes:', error);
+      logger.error('Error loading custom themes', error, 'ThemeSystem');
     }
   };
 
@@ -116,7 +117,7 @@ export const useThemeSystem = () => {
 
         if (error) throw error;
       } catch (error) {
-        console.error('Error saving theme preference:', error);
+        logger.error('Error saving theme preference', error, 'ThemeSystem');
       }
     }
   };
@@ -149,7 +150,7 @@ export const useThemeSystem = () => {
       setCustomThemes(updatedThemes);
       return newTheme;
     } catch (error) {
-      console.error('Error creating custom theme:', error);
+      logger.error('Error creating custom theme', error, 'ThemeSystem');
       throw error;
     }
   };
@@ -164,7 +165,7 @@ export const useThemeSystem = () => {
       localStorage.setItem(`custom-themes-${user.id}`, JSON.stringify(updatedThemes));
       setCustomThemes(updatedThemes);
     } catch (error) {
-      console.error('Error deleting custom theme:', error);
+      logger.error('Error deleting custom theme', error, 'ThemeSystem');
       throw error;
     }
   };
@@ -188,7 +189,7 @@ export const useThemeSystem = () => {
 
         if (error) throw error;
       } catch (error) {
-        console.error('Error saving custom theme preference:', error);
+        logger.error('Error saving custom theme preference', error, 'ThemeSystem');
       }
     }
   };

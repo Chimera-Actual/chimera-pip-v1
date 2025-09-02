@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 
@@ -95,7 +96,7 @@ export const usePWAFeatures = () => {
           }
         });
       } catch (error) {
-        console.error('SW registration failed:', error);
+        logger.error('SW registration failed', error, 'PWAFeatures');
       }
     }
   };
@@ -114,7 +115,7 @@ export const usePWAFeatures = () => {
       }
       return false;
     } catch (error) {
-      console.error('Install failed:', error);
+      logger.error('Install failed', error, 'PWAFeatures');
       return false;
     }
   };
@@ -147,7 +148,7 @@ export const usePWAFeatures = () => {
         return true;
       }
     } catch (error) {
-      console.error('Share failed:', error);
+      logger.error('Share failed', error, 'PWAFeatures');
       return false;
     }
   };

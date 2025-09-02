@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -28,7 +29,7 @@ export class WidgetErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error to development console only
     if (process.env.NODE_ENV === 'development') {
-      console.error('Widget Error Boundary caught an error:', error, errorInfo);
+      logger.error('Widget Error Boundary caught an error', { error, errorInfo }, 'WidgetErrorBoundary');
     }
 
     // Call optional error handler

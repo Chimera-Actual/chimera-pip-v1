@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { clearWidgetState } from './widgetStateManager';
+import { logger } from './logger';
 
 export const cleanupWidgetFiles = async (instanceId: string) => {
   try {
@@ -47,9 +48,9 @@ export const cleanupWidgetFiles = async (instanceId: string) => {
         .eq('widget_instance_id', instanceId);
     }
 
-    console.log(`Cleaned up files for widget instance: ${instanceId}`);
+    logger.info('Cleaned up files for widget instance', { instanceId }, 'WidgetCleanup');
   } catch (error) {
-    console.error('Error cleaning up widget files:', error);
+    logger.error('Error cleaning up widget files', error, 'WidgetCleanup');
   }
 };
 
@@ -68,7 +69,7 @@ export const cleanupTabFiles = async (tabId: string) => {
       );
     }
   } catch (error) {
-    console.error('Error cleaning up tab files:', error);
+    logger.error('Error cleaning up tab files', error, 'WidgetCleanup');
   }
 };
 
@@ -76,7 +77,7 @@ export const cleanupTabFiles = async (tabId: string) => {
  * Comprehensive widget state cleanup including localStorage
  */
 export async function cleanupWidgetState(widgetInstanceId: string, userId: string) {
-  console.log('🧹 Starting widget state cleanup for:', widgetInstanceId);
+  logger.info('Starting widget state cleanup', { widgetInstanceId, userId }, 'WidgetCleanup');
   
   try {
     // Clear localStorage state for this widget
@@ -93,14 +94,14 @@ export async function cleanupWidgetState(widgetInstanceId: string, userId: strin
       .eq('user_id', userId);
 
     if (settingsError) {
-      console.warn('⚠️ Failed to clean up widget settings:', settingsError);
+      logger.warn('Failed to clean up widget settings', settingsError, 'WidgetCleanup');
     } else {
-      console.log('✅ Widget settings cleaned up successfully');
+      logger.info('Widget settings cleaned up successfully', { widgetInstanceId }, 'WidgetCleanup');
     }
 
-    console.log('🎉 Widget state cleanup completed for:', widgetInstanceId);
+    logger.info('Widget state cleanup completed', { widgetInstanceId }, 'WidgetCleanup');
   } catch (error) {
-    console.error('❌ Widget state cleanup failed:', error);
+    logger.error('Widget state cleanup failed', error, 'WidgetCleanup');
     throw error;
   }
 }
