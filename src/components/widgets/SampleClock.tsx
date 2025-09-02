@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Clock } from "lucide-react";
 import WidgetFrame from "@/components/dashboard/WidgetFrame";
 import WidgetSettingsModal from "@/components/dashboard/WidgetSettingsModal";
 import { motion } from "framer-motion";
 import { BaseWidgetProps } from "@/types/widget";
+import { logger } from '@/lib/logger';
 
-export default function SampleClock({ 
+export default React.memo(function SampleClock({ 
   widgetInstanceId, 
   settings: externalSettings, 
   onSettingsChange,
@@ -16,8 +17,8 @@ export default function SampleClock({
   const [time, setTime] = useState(new Date());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
-  // Default settings for this widget type
-  const defaultSettings = {
+  // Memoize default settings to prevent recreation on each render
+  const defaultSettings = useMemo(() => ({
     name: title || "System Clock",
     showSeconds: true,
     format24h: true,
@@ -28,31 +29,36 @@ export default function SampleClock({
     theme: 'default' as 'default' | 'accent' | 'muted',
     fontSize: 'medium' as 'small' | 'medium' | 'large',
     showBorder: true
-  };
+  }), [title]);
 
-  // Load settings from external props or localStorage with instance-specific key
-  const getStorageKey = () => `widget-${widgetInstanceId}-settings`;
+  // Memoize storage key to prevent recreation
+  const storageKey = useMemo(() => `widget-${widgetInstanceId}-settings`, [widgetInstanceId]);
   
   const [settings, setSettings] = useState(() => {
     if (externalSettings) return { ...defaultSettings, ...externalSettings };
     
     try {
-      const saved = localStorage.getItem(getStorageKey());
+      const saved = localStorage.getItem(storageKey);
       return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
     } catch {
       return defaultSettings;
     }
   });
 
+  // Memoized save function to prevent unnecessary re-renders
+  const saveSettings = useCallback((newSettings: typeof defaultSettings) => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(newSettings));
+      onSettingsChange?.(newSettings);
+    } catch (error) {
+      logger.warn('Failed to save widget settings', error, 'SampleClock');
+    }
+  }, [storageKey, onSettingsChange]);
+
   // Save settings to localStorage when they change
   useEffect(() => {
-    try {
-      localStorage.setItem(getStorageKey(), JSON.stringify(settings));
-      onSettingsChange?.(settings);
-    } catch (error) {
-      console.warn('Failed to save widget settings:', error);
-    }
-  }, [settings, widgetInstanceId, onSettingsChange]);
+    saveSettings(settings);
+  }, [settings, saveSettings]);
 
   useEffect(() => {
     if (!settings.autoRefresh) return;
@@ -139,4 +145,4 @@ export default function SampleClock({
       />
     </>
   );
-}
+}); // End of React.memo

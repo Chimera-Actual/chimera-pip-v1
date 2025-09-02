@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface AudioTrack {
   id: string;
@@ -105,7 +106,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     if (audioRef.current && volume.length > 0) {
       const volumeValue = Math.max(0, Math.min(1, volume[0] / 100));
       audioRef.current.volume = volumeValue;
-      console.log('Setting audio volume to:', volumeValue, 'from slider value:', volume[0]);
+      logger.info('Setting audio volume', { volumeValue, sliderValue: volume[0] }, 'AudioContext');
     }
   }, [volume]);
 
@@ -142,7 +143,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
                     return { ...track, url: urlData.signedUrl };
                   }
                 } catch (e) {
-                  console.error('Failed to refresh URL for track:', track.title, e);
+                  logger.error('Failed to refresh URL for track', { title: track.title, error: e }, 'AudioContext');
                 }
               }
               return track;
@@ -176,7 +177,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         setPlaylist([]);
       }
     } catch (error) {
-      console.error('Error loading widget playlist:', error);
+      logger.error('Error loading widget playlist', error, 'AudioContext');
     }
   };
 
@@ -197,7 +198,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       
       setSettings(updatedSettings);
     } catch (error) {
-      console.error('Error saving playlist:', error);
+      logger.error('Error saving playlist', error, 'AudioContext');
     }
   };
 

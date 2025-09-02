@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Activity, TrendingUp } from "lucide-react";
 import WidgetFrame from "@/components/dashboard/WidgetFrame";
 import WidgetSettingsModal from "@/components/dashboard/WidgetSettingsModal";
 import { motion } from "framer-motion";
 import { BaseWidgetProps } from "@/types/widget";
+import { logger } from '@/lib/logger';
 
 interface DataPoint {
   time: number;
   value: number;
 }
 
-export default function SampleChart({ 
+export default React.memo(function SampleChart({ 
   widgetInstanceId, 
   settings: externalSettings, 
   onSettingsChange,
@@ -22,8 +23,8 @@ export default function SampleChart({
   const [isActive, setIsActive] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
-  // Default settings for this widget type
-  const defaultSettings = {
+  // Memoize default settings to prevent recreation on each render
+  const defaultSettings = useMemo(() => ({
     name: title || "System Monitor",
     autoRefresh: true,
     refreshRate: 1,
@@ -35,32 +36,37 @@ export default function SampleChart({
     showGrid: true,
     showStats: true,
     animateChart: true
-  };
+  }), [title]);
 
-  // Instance-specific storage key
-  const getSettingsStorageKey = () => `widget-${widgetInstanceId}-settings`;
+  // Memoize storage key to prevent recreation
+  const settingsStorageKey = useMemo(() => `widget-${widgetInstanceId}-settings`, [widgetInstanceId]);
   
   // Load settings from external props or localStorage with instance-specific key  
   const [settings, setSettings] = useState(() => {
     if (externalSettings) return { ...defaultSettings, ...externalSettings };
     
     try {
-      const saved = localStorage.getItem(getSettingsStorageKey());
+      const saved = localStorage.getItem(settingsStorageKey);
       return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
     } catch {
       return defaultSettings;
     }
   });
 
+  // Memoized save function to prevent unnecessary re-renders
+  const saveSettings = useCallback((newSettings: typeof defaultSettings) => {
+    try {
+      localStorage.setItem(settingsStorageKey, JSON.stringify(newSettings));
+      onSettingsChange?.(newSettings);
+    } catch (error) {
+      logger.warn('Failed to save widget settings', error, 'SampleChart');
+    }
+  }, [settingsStorageKey, onSettingsChange]);
+
   // Save settings to localStorage when they change
   useEffect(() => {
-    try {
-      localStorage.setItem(getSettingsStorageKey(), JSON.stringify(settings)); 
-      onSettingsChange?.(settings);
-    } catch (error) {
-      console.warn('Failed to save widget settings:', error);
-    }
-  }, [settings, widgetInstanceId, onSettingsChange]);
+    saveSettings(settings);
+  }, [settings, saveSettings]);
 
   useEffect(() => {
     // Generate initial data points
@@ -245,4 +251,4 @@ export default function SampleChart({
       />
     </>
   );
-}
+}); // End of React.memo
