@@ -15,28 +15,28 @@ import { UserAvatar } from "@/components/Layout/UserAvatar";
 import { Toaster } from "@/components/ui/toaster";
 import debounce from "lodash.debounce";
 
-function ThemeControls() {
+function DashboardSettings() {
   const { theme, setTheme, scanlinesEnabled, setScanlinesEnabled } = useCRT();
-  const [showControls, setShowControls] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
-    <div className="fixed right-4 top-4 z-50">
-      <motion.button
-        onClick={() => setShowControls(!showControls)}
-        className="crt-button p-2 rounded-lg"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+    <div className="relative">
+      <Button
+        onClick={() => setShowSettings(!showSettings)}
+        variant="outline"
+        className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
       >
-        <Palette className="w-5 h-5" />
-      </motion.button>
+        <Settings className="w-4 h-4" />
+        <span>Dashboard Settings</span>
+      </Button>
       
       <AnimatePresence>
-        {showControls && (
+        {showSettings && (
           <motion.div
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute right-0 top-12 crt-card p-4 space-y-3 min-w-[200px]"
+            className="absolute right-0 top-12 crt-card p-4 space-y-3 min-w-[200px] z-10"
           >
             <div>
               <label className="block text-xs crt-muted uppercase mb-2">Theme</label>
@@ -240,7 +240,7 @@ function DashboardContent() {
 
       <div className="flex-1 p-6 overflow-y-auto">
         <motion.div 
-          className="flex items-center space-x-3 mb-6"
+          className="flex items-center justify-between mb-6"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
         >
@@ -252,16 +252,20 @@ function DashboardContent() {
             <span>Add Widget</span>
           </Button>
           
-          <Button
-            onClick={handleUndo}
-            disabled={!canUndo}
-            variant="outline"
-            className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
-            title={`Undo layout changes (${undoCount} available)`}
-          >
-            <Undo className="w-4 h-4" />
-            <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
-          </Button>
+          <div className="flex items-center space-x-3">
+            <Button
+              onClick={handleUndo}
+              disabled={!canUndo}
+              variant="outline"
+              className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
+              title={`Undo layout changes (${undoCount} available)`}
+            >
+              <Undo className="w-4 h-4" />
+              <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
+            </Button>
+
+            <DashboardSettings />
+          </div>
         </motion.div>
 
 
@@ -298,7 +302,6 @@ export default function Dashboard() {
   return (
     <CRTThemeProvider>
       <CRTChrome>
-        <ThemeControls />
         <DashboardContent />
         <Toaster />
       </CRTChrome>

@@ -119,6 +119,83 @@ interface NewTabModalProps {
   onCreate: (name: string, iconName: string) => void;
 }
 
+interface TabSettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tabs: DashboardTab[];
+  onTabCreate: (name: string, iconName: string) => void;
+  onTabEdit: (tab: DashboardTab) => void;
+  onTabDelete: (tabId: string) => void;
+}
+
+function TabSettingsModal({ isOpen, onClose, tabs, onTabCreate, onTabEdit, onTabDelete }: TabSettingsModalProps) {
+  const [showNewTab, setShowNewTab] = useState(false);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="crt-card max-w-md">
+        <DialogHeader>
+          <DialogTitle className="crt-text">Tab Settings</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold crt-muted">Existing Tabs</h3>
+            {tabs.map((tab) => {
+              const IconComponent = AVAILABLE_ICONS.find(i => i.name === tab.icon)?.icon || Monitor;
+              return (
+                <div key={tab.id} className="flex items-center justify-between p-2 rounded crt-card">
+                  <div className="flex items-center space-x-2">
+                    <IconComponent className="w-4 h-4" />
+                    <span className="text-sm">{tab.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => onTabEdit(tab)}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      onClick={() => onTabDelete(tab.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-400 hover:text-red-300"
+                      disabled={tabs.length <= 1}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="flex justify-between pt-4 border-t crt-border">
+            <Button
+              onClick={() => setShowNewTab(true)}
+              className="crt-button"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Tab
+            </Button>
+            
+            <Button onClick={onClose} variant="outline">
+              Close
+            </Button>
+          </div>
+        </div>
+
+        <NewTabModal
+          isOpen={showNewTab}
+          onClose={() => setShowNewTab(false)}
+          onCreate={onTabCreate}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
 function NewTabModal({ isOpen, onClose, onCreate }: NewTabModalProps) {
   const [name, setName] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('Monitor');
@@ -194,7 +271,7 @@ export default function TabManager({
   onTabReorder
 }: TabManagerProps) {
   const [editingTab, setEditingTab] = useState<DashboardTab | null>(null);
-  const [showNewTabModal, setShowNewTabModal] = useState(false);
+  const [showTabSettings, setShowTabSettings] = useState(false);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -263,13 +340,13 @@ export default function TabManager({
         </DragDropContext>
 
         <Button
-          onClick={() => setShowNewTabModal(true)}
+          onClick={() => setShowTabSettings(!showTabSettings)}
           variant="outline"
           size="sm"
           className="flex items-center space-x-2"
         >
-          <Plus className="w-4 h-4" />
-          <span>New Tab</span>
+          <Settings className="w-4 h-4" />
+          <span>Tab Settings</span>
         </Button>
       </div>
 
@@ -287,11 +364,16 @@ export default function TabManager({
         />
       )}
 
-      <NewTabModal
-        isOpen={showNewTabModal}
-        onClose={() => setShowNewTabModal(false)}
-        onCreate={onTabCreate}
-      />
+      {showTabSettings && (
+        <TabSettingsModal
+          isOpen={showTabSettings}
+          onClose={() => setShowTabSettings(false)}
+          tabs={tabs}
+          onTabCreate={onTabCreate}
+          onTabEdit={setEditingTab}
+          onTabDelete={onTabDelete}
+        />
+      )}
     </div>
   );
 }
