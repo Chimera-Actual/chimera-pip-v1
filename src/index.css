@@ -8,67 +8,89 @@
 All colors MUST be HSL - Monochrome Green Theme
 */
 
-@import url('https://fonts.googleapis.com/css2?family=VT323:wght@400&family=Share+Tech+Mono:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=VT323:wght@400&family=Share+Tech+Mono:wght@400&display=swap');
 
 @layer base {
   :root {
-    /* Dynamic Theme Hue - Will be updated by theme context */
-    --theme-hue: 120; /* Default: green */
+    /* PipBoy-Inspired CRT Color Scheme */
+    --theme-hue: 120; /* Emerald Green Base */
     
-    /* Core CRT Color Palette (using dynamic hue) */
-    --background: var(--theme-hue) 100% 3%;        /* Very dark themed-black */
-    --foreground: var(--theme-hue) 100% 75%;       /* Bright terminal color */
+    /* Core CRT Colors - Exact PipBoy Palette */
+    --crt-emerald-primary: 120 100% 50%;      /* Main CRT green */
+    --crt-emerald-glow: 120 100% 65%;         /* Bright glow variant */
+    --crt-emerald-dim: 120 100% 35%;          /* Dimmed variant */
+    --crt-emerald-muted: 120 40% 60%;         /* Secondary text */
+    --crt-emerald-border: 120 30% 25%;        /* Subtle borders */
     
-    --card: var(--theme-hue) 100% 4%;              /* Slightly lighter dark color */
-    --card-foreground: var(--theme-hue) 100% 70%;  /* Card text color */
+    --crt-background: 200 20% 8%;             /* Deep black with blue tint */
+    --crt-panel: 200 15% 12%;                 /* Dark panel background */
+    --crt-amber: 45 100% 60%;                 /* Warning/accent amber */
+    --crt-cyan: 200 100% 60%;                 /* Special highlights */
+    --crt-red: 0 100% 60%;                    /* Alert/error states */
     
-    --popover: var(--theme-hue) 100% 5%;
-    --popover-foreground: var(--theme-hue) 100% 75%;
+    /* Base Colors using CRT palette */
+    --background: var(--crt-background);
+    --foreground: var(--crt-emerald-glow);
     
-    --primary: var(--theme-hue) 100% 50%;          /* Electric terminal color */
-    --primary-foreground: var(--theme-hue) 100% 3%;
+    --card: var(--crt-panel);
+    --card-foreground: var(--crt-emerald-glow);
     
-    --secondary: var(--theme-hue) 50% 15%;         /* Darker color for secondary elements */
-    --secondary-foreground: var(--theme-hue) 100% 65%;
+    --popover: var(--crt-panel);
+    --popover-foreground: var(--crt-emerald-glow);
     
-    --muted: var(--theme-hue) 30% 10%;             /* Muted dark color */
-    --muted-foreground: var(--theme-hue) 50% 45%;  /* Muted text */
+    --primary: var(--crt-emerald-primary);
+    --primary-foreground: var(--crt-background);
     
-    --accent: var(--theme-hue) 100% 40%;           /* Accent bright color */
-    --accent-foreground: var(--theme-hue) 100% 5%;
+    --secondary: var(--crt-emerald-border);
+    --secondary-foreground: var(--crt-emerald-glow);
     
-    --destructive: 0 100% 45%;        /* Red for errors (always red) */
-    --destructive-foreground: var(--theme-hue) 100% 95%;
+    --muted: var(--crt-panel);
+    --muted-foreground: var(--crt-emerald-muted);
     
-    --border: var(--theme-hue) 50% 20%;            /* Border color */
-    --input: var(--theme-hue) 50% 12%;             /* Input background */
-    --ring: var(--theme-hue) 100% 50%;             /* Focus ring */
+    --accent: var(--crt-emerald-glow);
+    --accent-foreground: var(--crt-background);
     
-    --radius: 0.25rem;                /* Sharp corners for retro feel */
+    --destructive: var(--crt-red);
+    --destructive-foreground: 0 0% 100%;
     
-    /* CRT Effects */
-    --scanline-opacity: 0.1;
-    --flicker-intensity: 0.98;
-    --glow-size: 2px;
+    --border: var(--crt-emerald-border);
+    --input: var(--crt-panel);
+    --ring: var(--crt-emerald-primary);
     
-    /* Custom gradients (using dynamic hue) */
+    --radius: 1rem;                /* Rounded corners for modern feel */
+    
+    /* Enhanced CRT Effects */
+    --scanline-opacity: 0.08;
+    --flicker-intensity: 0.97;
+    --glow-size: 3px;
+    --panel-glow: 0 0 20px hsl(var(--crt-emerald-primary) / 0.15);
+    --text-glow: 0 0 8px hsl(var(--crt-emerald-primary)), 0 0 16px hsl(var(--crt-emerald-primary) / 0.5);
+    --border-glow: 0 0 4px hsl(var(--crt-emerald-primary) / 0.3), inset 0 0 4px hsl(var(--crt-emerald-primary) / 0.1);
+    
+    /* Enhanced PipBoy Gradients */
     --gradient-crt: linear-gradient(180deg, 
-      hsl(var(--theme-hue) 100% 5%), 
-      hsl(var(--theme-hue) 100% 3%), 
-      hsl(var(--theme-hue) 100% 5%));
+      hsl(var(--crt-panel)), 
+      hsl(var(--crt-background)), 
+      hsl(var(--crt-panel)));
     --gradient-screen: radial-gradient(ellipse at center,
-      hsl(var(--theme-hue) 100% 4%) 0%,
-      hsl(var(--theme-hue) 100% 2%) 100%);
+      hsl(var(--crt-panel)) 0%,
+      hsl(var(--crt-background)) 100%);
+    --gradient-sliding: linear-gradient(90deg,
+      transparent 0%,
+      hsl(var(--crt-emerald-primary) / 0.2) 30%,
+      hsl(var(--crt-emerald-glow) / 0.4) 50%,
+      hsl(var(--crt-emerald-primary) / 0.2) 70%,
+      transparent 100%);
       
-    /* Sidebar specific */
-    --sidebar-background: var(--theme-hue) 100% 4%;
-    --sidebar-foreground: var(--theme-hue) 100% 70%;
-    --sidebar-primary: var(--theme-hue) 100% 50%;
-    --sidebar-primary-foreground: var(--theme-hue) 100% 3%;
-    --sidebar-accent: var(--theme-hue) 50% 15%;
-    --sidebar-accent-foreground: var(--theme-hue) 100% 65%;
-    --sidebar-border: var(--theme-hue) 50% 20%;
-    --sidebar-ring: var(--theme-hue) 100% 50%;
+    /* Sidebar colors updated to match PipBoy scheme */
+    --sidebar-background: var(--crt-panel);
+    --sidebar-foreground: var(--crt-emerald-glow);
+    --sidebar-primary: var(--crt-emerald-primary);
+    --sidebar-primary-foreground: var(--crt-background);
+    --sidebar-accent: var(--crt-emerald-border);
+    --sidebar-accent-foreground: var(--crt-emerald-glow);
+    --sidebar-border: var(--crt-emerald-border);
+    --sidebar-ring: var(--crt-emerald-primary);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -129,10 +151,122 @@ All colors MUST be HSL - Monochrome Green Theme
   }
 
   .crt-glow {
+    text-shadow: var(--text-glow);
+  }
+
+  /* PipBoy Enhanced Typography Effects */
+  .pipboy-heading {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    text-shadow: var(--text-glow);
+    color: hsl(var(--crt-emerald-glow));
+    letter-spacing: 0.05em;
+  }
+
+  .pipboy-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 400;
     text-shadow: 
-      0 0 var(--glow-size) hsl(var(--primary)),
-      0 0 calc(var(--glow-size) * 2) hsl(var(--primary)),
-      0 0 calc(var(--glow-size) * 3) hsl(var(--primary));
+      0 0 4px hsl(var(--crt-emerald-primary)),
+      0 0 8px hsl(var(--crt-emerald-primary) / 0.3);
+    color: hsl(var(--crt-emerald-primary));
+  }
+
+  .terminal-text {
+    font-family: 'Share Tech Mono', monospace;
+    text-shadow: 0 0 2px hsl(var(--crt-emerald-primary) / 0.5);
+  }
+
+  /* Terminal Blink Effect */
+  .terminal-cursor::after {
+    content: '█';
+    animation: blink 1s infinite;
+    color: hsl(var(--crt-emerald-glow));
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Enhanced Panel Glow Effects */
+  .pipboy-panel {
+    background: hsl(var(--crt-panel));
+    border: 1px solid hsl(var(--crt-emerald-border));
+    box-shadow: var(--panel-glow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pipboy-panel::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+      transparent 30%, 
+      hsl(var(--crt-emerald-primary) / 0.1) 50%, 
+      transparent 70%);
+    z-index: -1;
+    border-radius: inherit;
+  }
+
+  /* Border Illumination */
+  .border-glow {
+    border: 1px solid hsl(var(--crt-emerald-border));
+    box-shadow: var(--border-glow);
+  }
+
+  .border-glow:hover {
+    border-color: hsl(var(--crt-emerald-primary));
+    box-shadow: 
+      0 0 8px hsl(var(--crt-emerald-primary) / 0.5),
+      inset 0 0 8px hsl(var(--crt-emerald-primary) / 0.1);
+  }
+
+  /* Hover Enhancement with Sliding Gradient */
+  .pipboy-hover {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .pipboy-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-sliding);
+    transition: left 0.5s ease;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .pipboy-hover:hover::before {
+    left: 100%;
+  }
+
+  .pipboy-hover:hover {
+    background-color: hsl(var(--crt-emerald-border) / 0.2);
+    box-shadow: 
+      var(--panel-glow),
+      inset 0 0 20px hsl(var(--crt-emerald-primary) / 0.1);
+  }
+
+  /* Enhanced Flicker Animation */
+  .pipboy-flicker {
+    animation: pipboyFlicker 3s infinite ease-in-out;
+  }
+
+  @keyframes pipboyFlicker {
+    0%, 96%, 100% { opacity: 1; }
+    97% { opacity: 0.92; }
+    98% { opacity: 1; }
+    99% { opacity: 0.96; }
   }
 
   /* Icon Color Utilities */
@@ -241,42 +375,63 @@ All colors MUST be HSL - Monochrome Green Theme
     50% { opacity: var(--flicker-intensity); }
   }
 
-  /* Custom Scrollbar Styling */
+  /* Enhanced PipBoy Scrollbar Styling */
   /* Webkit browsers (Chrome, Safari, Edge) */
   ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--background));
-    border: 1px solid hsl(var(--border));
-    border-radius: 6px;
+    background: hsl(var(--crt-background));
+    border: 1px solid hsl(var(--crt-emerald-border));
+    border-radius: 0;
+    box-shadow: inset 0 0 8px hsl(var(--crt-emerald-primary) / 0.1);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary) / 0.6);
-    border-radius: 6px;
-    border: 2px solid hsl(var(--background));
-    transition: background-color 0.2s ease;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--crt-emerald-primary) / 0.8) 0%,
+      hsl(var(--crt-emerald-primary) / 0.6) 50%,
+      hsl(var(--crt-emerald-primary) / 0.8) 100%
+    );
+    border-radius: 0;
+    border: 1px solid hsl(var(--crt-emerald-primary) / 0.5);
+    box-shadow: 
+      0 0 6px hsl(var(--crt-emerald-primary) / 0.4),
+      inset 0 0 4px hsl(var(--crt-emerald-primary) / 0.2);
+    transition: all 0.3s ease;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.8);
+    background: linear-gradient(
+      180deg,
+      hsl(var(--crt-emerald-glow)) 0%,
+      hsl(var(--crt-emerald-primary)) 50%,
+      hsl(var(--crt-emerald-glow)) 100%
+    );
+    box-shadow: 
+      0 0 12px hsl(var(--crt-emerald-primary) / 0.6),
+      inset 0 0 8px hsl(var(--crt-emerald-primary) / 0.3);
   }
 
   ::-webkit-scrollbar-thumb:active {
-    background: hsl(var(--primary));
+    background: hsl(var(--crt-emerald-glow));
+    box-shadow: 
+      0 0 16px hsl(var(--crt-emerald-primary)),
+      inset 0 0 12px hsl(var(--crt-emerald-primary) / 0.4);
   }
 
   ::-webkit-scrollbar-corner {
-    background: hsl(var(--background));
+    background: hsl(var(--crt-background));
+    border: 1px solid hsl(var(--crt-emerald-border));
   }
 
   /* Firefox scrollbar styling */
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary) / 0.6) hsl(var(--background));
+    scrollbar-color: hsl(var(--crt-emerald-primary) / 0.8) hsl(var(--crt-background));
   }
 
   /* Custom scrollbar for specific containers with CRT theme */

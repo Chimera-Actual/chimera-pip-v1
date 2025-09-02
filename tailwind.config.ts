@@ -21,6 +21,8 @@ export default {
 			fontFamily: {
 				mono: ['VT323', 'Share Tech Mono', 'monospace'],
 				display: ['VT323', 'monospace'],
+				heading: ['Orbitron', 'VT323', 'monospace'],
+				terminal: ['Share Tech Mono', 'monospace'],
 			},
 			fontSize: {
 				'2xs': '0.625rem',
