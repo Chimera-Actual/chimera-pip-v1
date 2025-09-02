@@ -97,6 +97,23 @@
   box-shadow: 0 0 8px var(--crt-border);
 }
 
+/* Dashboard Grid Styles */
+.dashboard-grid {
+  width: 100%;
+}
+
+.dashboard-grid .grid-item {
+  transition: all 200ms ease;
+}
+
+.dashboard-grid.edit-mode .grid-item {
+  cursor: move;
+}
+
+.dashboard-grid.edit-mode .grid-item:hover {
+  box-shadow: 0 0 16px var(--crt-border);
+}
+
 /* React Grid Layout overrides */
 .react-grid-layout {
   position: relative;
@@ -111,6 +128,15 @@
   transition-property: transform;
 }
 
+.react-grid-item.react-grid-placeholder {
+  background: var(--crt-border);
+  opacity: 0.2;
+  transition-duration: 100ms;
+  z-index: 2;
+  user-select: none;
+  border-radius: 1rem;
+}
+
 .react-grid-item > .react-resizable-handle {
   position: absolute;
   width: 20px;
@@ -119,14 +145,18 @@
   right: 0;
   background: var(--crt-border);
   padding: 0 3px 3px 0;
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZG90cyBmaWxsPSIjOTk5IiBkPSJtNSA1IDEgMVptLTEgMCAyIDJabS0xIDAgMyAzWm0tMSAwIDQgNFptLTEgMCA1IDVaIiBvcGFjaXR5PSIuNSIvPgo8L3N2Zz4K");
   background-position: bottom right;
-  padding: 0 3px 3px 0;
   background-repeat: no-repeat;
   background-origin: content-box;
   box-sizing: border-box;
   cursor: se-resize;
   border-radius: 0 0 1rem 0;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.react-grid-item > .react-resizable-handle:hover {
+  opacity: 1;
 }
 
 .react-grid-item > .react-resizable-handle::after {
