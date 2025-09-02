@@ -338,9 +338,13 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
                     {(() => {
                       const widgetSettings = getWidgetSettings(widget.id);
                       const customIconName = widgetSettings?.customIcon;
-                      if (customIconName && (Icons as any)[customIconName]) {
-                        const IconComponent = (Icons as any)[customIconName];
-                        return <IconComponent className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />;
+                      if (customIconName && typeof customIconName === 'string') {
+                        const IconComponent = (Icons as any)[customIconName] as React.ComponentType<any>;
+                        if (IconComponent && typeof IconComponent === 'function') {
+                          return React.createElement(IconComponent, { 
+                            className: `${isMobile ? 'w-5 h-5' : 'w-4 h-4'}` 
+                          });
+                        }
                       }
                       return widget.widget_definition?.icon;
                     })()}
