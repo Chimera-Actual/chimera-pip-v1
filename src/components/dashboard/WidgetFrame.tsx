@@ -8,6 +8,7 @@ interface WidgetFrameProps {
   onSettings?: () => void;
   right?: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export default function WidgetFrame({
@@ -15,11 +16,13 @@ export default function WidgetFrame({
   children,
   onSettings,
   right,
-  className = ""
+  className = "",
+  style
 }: WidgetFrameProps) {
   return (
     <motion.div 
       className={`crt-card h-full flex flex-col overflow-hidden ${className}`}
+      style={style}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
@@ -32,16 +35,17 @@ export default function WidgetFrame({
         </div>
         <div className="flex items-center gap-2">
           {right}
-          {onSettings && (
+          {onSettings ? (
             <button 
               onClick={onSettings}
-              className="crt-button px-2 py-1 rounded text-xs hover:scale-105 transition-transform flex items-center gap-1"
+              className="p-1 rounded hover:bg-crt-bg/50 transition-colors group"
+              title="Widget Settings"
             >
-              <Settings className="w-3 h-3" />
-              Settings
+              <MoreVertical className="w-4 h-4 opacity-70 crt-muted group-hover:crt-accent group-hover:opacity-100" />
             </button>
+          ) : (
+            <MoreVertical className="w-4 h-4 opacity-70 crt-muted" />
           )}
-          <MoreVertical className="w-4 h-4 opacity-70 crt-muted" />
         </div>
       </div>
       

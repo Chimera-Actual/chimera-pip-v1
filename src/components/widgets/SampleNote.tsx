@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FileText, Save } from "lucide-react";
 import WidgetFrame from "@/components/dashboard/WidgetFrame";
+import WidgetSettingsModal from "@/components/dashboard/WidgetSettingsModal";
 import { motion } from "framer-motion";
 
 export default function SampleNote() {
@@ -9,16 +10,31 @@ export default function SampleNote() {
   );
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState({
+    name: "Notes Terminal",
+    autoRefresh: true,
+    refreshRate: 1,
+    opacity: 100,
+    theme: 'default' as 'default' | 'accent' | 'muted',
+    fontSize: 'medium' as 'small' | 'medium' | 'large',
+    showBorder: true,
+    showWordCount: true,
+    autoSave: true,
+    saveDelay: 1000
+  });
 
   useEffect(() => {
+    if (!settings.autoSave) return;
+    
     const timeoutId = setTimeout(() => {
       localStorage.setItem("demo:note", value);
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
-    }, 1000);
+    }, settings.saveDelay);
 
     return () => clearTimeout(timeoutId);
-  }, [value]);
+  }, [value, settings.autoSave, settings.saveDelay]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
@@ -28,57 +44,97 @@ export default function SampleNote() {
   const wordCount = value.trim().split(/\s+/).filter(word => word.length > 0).length;
   const charCount = value.length;
 
+  const getFontSizeClass = () => {
+    if (settings.fontSize === 'small') return 'text-xs';
+    if (settings.fontSize === 'large') return 'text-base';
+    return 'text-sm';
+  };
+
+  const getThemeClass = () => {
+    if (settings.theme === 'accent') return 'crt-accent';
+    if (settings.theme === 'muted') return 'crt-muted';
+    return 'crt-text';
+  };
+
   return (
-    <WidgetFrame 
-      title="Notes Terminal"
-      right={
-        <div className="flex items-center space-x-2">
-          {hasUnsavedChanges ? (
-            <motion.div 
-              className="flex items-center space-x-1 text-xs crt-accent"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <div className="w-2 h-2 bg-current rounded-full animate-pulse" />
-              <span>SAVING...</span>
-            </motion.div>
-          ) : lastSaved && (
-            <motion.div 
-              className="flex items-center space-x-1 text-xs crt-muted"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <Save className="w-3 h-3" />
-              <span>SAVED</span>
-            </motion.div>
-          )}
-          <FileText className="w-4 h-4 crt-accent" />
-        </div>
-      }
-    >
-      <div className="flex flex-col h-full space-y-2">
-        <textarea
-          className="flex-1 w-full bg-transparent crt-input rounded p-3 resize-none font-mono text-sm leading-relaxed focus:ring-2 focus:ring-[var(--crt-border)]/50 placeholder-crt-muted"
-          value={value}
-          onChange={handleChange}
-          placeholder="Enter your notes here..."
-        />
-        
-        <div className="flex justify-between items-center text-xs crt-muted font-mono border-t crt-border pt-2">
-          <div className="flex space-x-4">
-            <span>{charCount} chars</span>
-            <span>{wordCount} words</span>
+    <>
+      <WidgetFrame 
+        title={settings.name}
+        onSettings={() => setIsSettingsOpen(true)}
+        className={!settings.showBorder ? 'border-none' : ''}
+        style={{ opacity: settings.opacity / 100 }}
+        right={
+          <div className="flex items-center space-x-2">
+            {hasUnsavedChanges ? (
+              <motion.div 
+                className="flex items-center space-x-1 text-xs crt-accent"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <div className="w-2 h-2 bg-current rounded-full animate-pulse" />
+                <span>SAVING...</span>
+              </motion.div>
+            ) : lastSaved && (
+              <motion.div 
+                className="flex items-center space-x-1 text-xs crt-muted"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <Save className="w-3 h-3" />
+                <span>SAVED</span>
+              </motion.div>
+            )}
+            <FileText className="w-4 h-4 crt-accent" />
           </div>
-          {lastSaved && (
-            <span>
-              Last saved: {lastSaved.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}
-            </span>
-          )}
+        }
+      >
+        <div className="flex flex-col h-full space-y-2">
+          <textarea
+            className={`flex-1 w-full bg-transparent crt-input rounded p-3 resize-none font-mono ${getFontSizeClass()} ${getThemeClass()} leading-relaxed focus:ring-2 focus:ring-[var(--crt-border)]/50 placeholder-crt-muted`}
+            value={value}
+            onChange={handleChange}
+            placeholder="Enter your notes here..."
+          />
+          
+          <div className="flex justify-between items-center text-xs crt-muted font-mono border-t crt-border pt-2">
+            {settings.showWordCount && (
+              <div className="flex space-x-4">
+                <span>{charCount} chars</span>
+                <span>{wordCount} words</span>
+              </div>
+            )}
+            {lastSaved && (
+              <span>
+                Last saved: {lastSaved.toLocaleTimeString([], { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-    </WidgetFrame>
+      </WidgetFrame>
+
+      <WidgetSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSave={setSettings}
+        onReset={() => setSettings({
+          name: "Notes Terminal",
+          autoRefresh: true,
+          refreshRate: 1,
+          opacity: 100,
+          theme: 'default',
+          fontSize: 'medium',
+          showBorder: true,
+          showWordCount: true,
+          autoSave: true,
+          saveDelay: 1000
+        })}
+        widgetType="SampleNote"
+        currentSettings={settings}
+        widgetName="Notes Terminal"
+      />
+    </>
   );
 }
