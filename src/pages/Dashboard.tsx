@@ -88,14 +88,6 @@ function DashboardHeader() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
       >
-        <Button
-          onClick={() => window.location.href = '/pipboy'}
-          variant="outline"
-          size="sm"
-          className="text-xs font-mono"
-        >
-          Legacy Mode
-        </Button>
         
         <div className="relative">
           <Button

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { AppletType } from './PipBoyLayout';
 import { Settings, X, Plus, Menu } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
