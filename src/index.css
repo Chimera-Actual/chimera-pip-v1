@@ -5,6 +5,7 @@
 @import "./styles/modern-css-architecture.css";
 @import "./styles/widget-system.css";
 @import "./styles/crt.css";
+@import "./styles/accessibility.css";
 
 @tailwind base;
 @tailwind components;
@@ -95,15 +96,74 @@
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* Responsive Typography System */
-    --text-scale-factor: clamp(0.8, 2cqw, 1.2);
-    --text-xs: calc(0.75rem * var(--text-scale-factor));
-    --text-sm: calc(0.875rem * var(--text-scale-factor));
-    --text-base: calc(1rem * var(--text-scale-factor));
-    --text-lg: calc(1.125rem * var(--text-scale-factor));
-    --text-xl: calc(1.25rem * var(--text-scale-factor));
-    --text-2xl: calc(1.5rem * var(--text-scale-factor));
-    --text-3xl: calc(1.875rem * var(--text-scale-factor));
+    /* Enhanced Responsive Typography System */
+    --text-scale-factor: clamp(0.85, 2.5cqw + 0.5rem, 1.25);
+    --text-responsive-xs: clamp(0.75rem, 1.5cqw + 0.5rem, 0.875rem);
+    --text-responsive-sm: clamp(0.875rem, 2cqw + 0.5rem, 1rem);
+    --text-responsive-md: clamp(1rem, 2.5cqw + 0.5rem, 1.125rem);
+    --text-responsive-lg: clamp(1.125rem, 3cqw + 0.5rem, 1.25rem);
+    --text-responsive-xl: clamp(1.25rem, 3.5cqw + 0.5rem, 1.5rem);
+    --text-responsive-2xl: clamp(1.5rem, 4cqw + 0.5rem, 1.875rem);
+    --text-responsive-3xl: clamp(1.875rem, 5cqw + 0.5rem, 2.25rem);
+
+    /* Enhanced Spacing System */
+    --space-xs: clamp(0.25rem, 1cqw, 0.5rem);
+    --space-sm: clamp(0.5rem, 1.5cqw, 0.75rem);
+    --space-md: clamp(0.75rem, 2cqw, 1rem);
+    --space-lg: clamp(1rem, 2.5cqw, 1.5rem);
+    --space-xl: clamp(1.5rem, 3cqw, 2rem);
+    --space-2xl: clamp(2rem, 4cqw, 3rem);
+    --space-3xl: clamp(3rem, 5cqw, 4rem);
+
+    /* Container System */
+    --container-xs: 20rem;
+    --container-sm: 24rem;
+    --container-md: 28rem;
+    --container-lg: 32rem;
+    --container-xl: 36rem;
+    --container-2xl: 42rem;
+    --container-3xl: 48rem;
+
+    /* Border Radius System */
+    --radius-xs: 0.125rem;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --radius-full: 9999px;
+
+    /* Enhanced Shadow System */
+    --shadow-xs: 0 1px 2px 0 hsl(var(--crt-background) / 0.5);
+    --shadow-sm: 0 1px 3px 0 hsl(var(--crt-background) / 0.5), 0 1px 2px -1px hsl(var(--crt-background) / 0.5);
+    --shadow-md: 0 4px 6px -1px hsl(var(--crt-background) / 0.5), 0 2px 4px -2px hsl(var(--crt-background) / 0.5);
+    --shadow-lg: 0 10px 15px -3px hsl(var(--crt-background) / 0.5), 0 4px 6px -4px hsl(var(--crt-background) / 0.5);
+    --shadow-xl: 0 20px 25px -5px hsl(var(--crt-background) / 0.5), 0 8px 10px -6px hsl(var(--crt-background) / 0.5);
+
+    /* Widget System Shadows */
+    --widget-shadow: 0 4px 12px hsl(var(--crt-emerald-primary) / 0.15), 0 0 0 1px hsl(var(--crt-emerald-border) / 0.8);
+    --widget-shadow-hover: 0 8px 24px hsl(var(--crt-emerald-primary) / 0.25), 0 0 0 1px hsl(var(--crt-emerald-primary) / 0.5);
+    --widget-shadow-focus: 0 0 0 2px hsl(var(--crt-emerald-primary) / 0.8), 0 8px 24px hsl(var(--crt-emerald-primary) / 0.25);
+
+    /* Animation Timing System */
+    --duration-instant: 0ms;
+    --duration-fast: 150ms;
+    --duration-base: 250ms;
+    --duration-slow: 350ms;
+    --duration-slower: 500ms;
+
+    /* Enhanced Easing Functions */
+    --easing-linear: linear;
+    --easing-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --easing-emphasis: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* Widget System Properties */
+    --widget-accent: var(--crt-emerald-primary);
+    --widget-text: var(--crt-emerald-glow);
+    --widget-muted: var(--crt-emerald-muted);
+    --widget-border: var(--crt-emerald-border);
+    --widget-collapsed-block-size: 3rem;
 
     /* CRT-aware line height for better readability */
     --line-height-tight: 1.1;
