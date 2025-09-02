@@ -266,6 +266,7 @@ function DashboardContent() {
             rowHeight={32}
             margin={[12, 12]}
             onLayoutChange={handleLayoutChange}
+            onEmptySpaceDoubleClick={() => setShowWidgetLibrary(true)}
             className=""
           />
         </motion.div>
