@@ -741,6 +741,22 @@ All colors MUST be HSL - Monochrome Green Theme
     @apply container-responsive;
   }
 
+  /* Widget Collapse Styles */
+  .widget-collapsed {
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    overflow: hidden;
+    transition: height 200ms ease, min-height 200ms ease, max-height 200ms ease;
+  }
+
+  .widget-expanded {
+    height: auto;
+    min-height: auto;
+    max-height: none;
+    transition: height 200ms ease, min-height 200ms ease, max-height 200ms ease;
+  }
+
   .widget-text-auto {
     font-size: clamp(0.75rem, 3cqw, 1.25rem);
     line-height: var(--line-height-normal);

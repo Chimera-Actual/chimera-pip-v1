@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { MoreVertical, GripVertical, Settings, ChevronDown, ChevronUp } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { MoreVertical, GripVertical, Settings, ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface WidgetFrameProps {
   title: string;
@@ -49,14 +49,20 @@ export default function WidgetFrame({
   };
   return (
     <motion.div 
-      className={`crt-card h-full flex flex-col overflow-hidden ${className}`}
-      style={style}
+      className={`crt-card h-full flex flex-col overflow-hidden transition-all duration-200 ease-out ${
+        isCollapsed ? 'widget-collapsed' : 'widget-expanded'
+      } ${className}`}
+      style={{
+        ...style,
+        height: isCollapsed ? '48px' : 'auto',
+        minHeight: isCollapsed ? '48px' : 'auto'
+      }}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b crt-border bg-gradient-to-r from-transparent to-[var(--crt-border)]/10">
+      <div className="flex items-center justify-between px-3 py-2 border-b crt-border bg-gradient-to-r from-transparent to-[var(--crt-border)]/10 flex-shrink-0">
         <div className="flex items-center gap-2">
           <GripVertical className="w-4 h-4 opacity-70 crt-muted drag-handle cursor-move" />
           <span className="font-mono text-sm crt-text font-medium pipboy-title">{title}</span>
@@ -69,7 +75,6 @@ export default function WidgetFrame({
               className="p-1 rounded hover:bg-crt-bg/50 transition-all duration-200 group pipboy-hover"
               title={isCollapsed ? "Expand widget" : "Collapse widget"}
             >
-              {/* Icon behavior: ChevronDown when expanded, ChevronUp when collapsed */}
               <motion.div
                 animate={{ rotate: isCollapsed ? 180 : 0 }}
                 transition={{ duration: 0.2, ease: "easeInOut" }}
@@ -92,23 +97,14 @@ export default function WidgetFrame({
         </div>
       </div>
       
-      {/* Content - Completely hidden when collapsed */}
-      <AnimatePresence mode="wait">
-        {!isCollapsed && (
-          <motion.div 
-            key="content"
-            className="flex-1 overflow-hidden pipboy-panel"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-          >
-            <div className="p-3 h-full">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Content - Conditionally rendered based on collapse state */}
+      {!isCollapsed && (
+        <div className="flex-1 overflow-hidden pipboy-panel">
+          <div className="p-3 h-full">
+            {children}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
