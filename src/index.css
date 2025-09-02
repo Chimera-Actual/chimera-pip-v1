@@ -1,17 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Import Google Fonts first */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=VT323:wght@400&family=Share+Tech+Mono:wght@400&display=swap');
 
 /* Import modern CSS architecture */
 @import "./styles/modern-css-architecture.css";
 @import "./styles/widget-system.css";
 @import "./styles/crt.css";
 
-/* Pip-Boy Retro CRT Design System 
-All colors MUST be HSL - Monochrome Green Theme
-*/
-
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=VT323:wght@400&family=Share+Tech+Mono:wght@400&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {

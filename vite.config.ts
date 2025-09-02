@@ -78,7 +78,7 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           'security': ['dompurify', 'crypto-js'],
           'vendor': ['react', 'react-dom'],
-          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-button'],
+          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-slot'],
         },
       },
     },
