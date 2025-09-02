@@ -4,9 +4,8 @@ import DashboardGrid, { GridItem } from "@/components/dashboard/DashboardGrid";
 import TabManager from "@/components/dashboard/TabManager";
 import OrphanedWidget from "@/components/dashboard/OrphanedWidget";
 import { WIDGET_COMPONENTS, WidgetComponentName } from "@/components/Layout/WidgetRegistry";
-import { WidgetLibrary } from "@/components/Layout/WidgetLibrary";
 import { useOptimizedWidgetManager } from "@/hooks/useOptimizedWidgetManager";
-import { Palette, Zap, Undo, Plus, Settings, User, LogOut, Monitor, Trash2, AlertTriangle, ChevronUp, ChevronDown } from "lucide-react";
+import { Zap, Undo, Settings, User, LogOut, Monitor, Trash2, AlertTriangle, ChevronUp, ChevronDown } from "lucide-react";
 import { useLayoutHistory } from "@/hooks/useLayoutHistory";
 import { useDashboardTabs } from "@/hooks/useDashboardTabs";
 import { useToast } from "@/hooks/use-toast";
@@ -320,19 +319,11 @@ function DashboardContent() {
                 className="overflow-hidden"
               >
                 <motion.div 
-                  className="flex items-center justify-between mt-4"
+                  className="flex items-center justify-end mt-4"
                   initial={{ y: -10 }}
                   animate={{ y: 0 }}
                   exit={{ y: -10 }}
-                >
-                  <Button
-                    onClick={() => setShowWidgetLibrary(true)}
-                    className="crt-button px-4 py-2 rounded flex items-center space-x-2 text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Widget</span>
-                  </Button>
-                  
+                >                  
                   <div className="flex items-center space-x-3">
                     {orphanedWidgets.length > 0 && (
                       <Button
@@ -357,8 +348,6 @@ function DashboardContent() {
                       <Undo className="w-4 h-4" />
                       <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
                     </Button>
-
-                    <DashboardSettings />
                   </div>
                 </motion.div>
               </motion.div>
@@ -387,16 +376,7 @@ function DashboardContent() {
         </motion.div>
       </div>
       
-      <WidgetLibrary
-        isOpen={showWidgetLibrary}
-        onClose={() => setShowWidgetLibrary(false)}
-        availableWidgets={availableWidgets}
-        onAddWidget={handleAddWidget}
-        tabCategory={activeTab?.name || "Main"}
-        onAddTag={addTagToWidget}
-        onRemoveTag={removeTagFromWidget}
-        allUserTags={getAllUserTags()}
-      />
+      {/* Remove the WidgetLibrary from here since it's now handled by AddWidgetWidget */}
     </div>
   );
 }
