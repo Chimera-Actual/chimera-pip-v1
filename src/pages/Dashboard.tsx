@@ -186,6 +186,32 @@ function DashboardContent() {
 
   const { saveLayout, undo, canUndo, undoCount } = useLayoutHistory(`dashboard:layout:${activeTabId}`);
 
+  // Permanent widgets that appear on every tab
+  const permanentWidgets = [
+    {
+      id: 'permanent-add-widget',
+      widgetType: 'AddWidgetWidget',
+      w: 4,
+      h: 6,
+      x: 0,
+      y: 0,
+      minW: 3,
+      minH: 4,
+    },
+    {
+      id: 'permanent-dashboard-settings',
+      widgetType: 'DashboardSettingsWidget', 
+      w: 4,
+      h: 6,
+      x: 4,
+      y: 0,
+      minW: 3,
+      minH: 4,
+    }
+  ];
+  
+  const permanentWidgetIds = new Set(permanentWidgets.map(w => w.id));
+
   // Show notification about orphaned widgets
   useEffect(() => {
     if (orphanedWidgets.length > 0) {
@@ -224,6 +250,15 @@ function DashboardContent() {
   };
 
   const handleRemoveWidget = (widgetId: string) => {
+    // Prevent removal of permanent widgets
+    if (permanentWidgetIds.has(widgetId)) {
+      toast({
+        title: "Cannot Remove Widget",
+        description: "This widget is permanently available on all tabs.",
+        variant: "destructive",
+      });
+      return;
+    }
     removeWidgetFromTab(activeTabId, widgetId);
   };
 
@@ -248,30 +283,6 @@ function DashboardContent() {
   };
 
   // Permanent widgets that appear on every tab
-  const permanentWidgets = [
-    {
-      id: 'permanent-add-widget',
-      widgetType: 'AddWidgetWidget',
-      w: 4,
-      h: 6,
-      x: 0,
-      y: 0,
-      static: true,
-      minW: 3,
-      minH: 4,
-    },
-    {
-      id: 'permanent-dashboard-settings',
-      widgetType: 'DashboardSettingsWidget', 
-      w: 4,
-      h: 6,
-      x: 4,
-      y: 0,
-      static: true,
-      minW: 3,
-      minH: 4,
-    }
-  ];
 
   // Combine permanent widgets with tab widgets, offsetting tab widgets to avoid overlap
   const allWidgets = [

@@ -1,6 +1,6 @@
-import React from "react";
-import { MoreVertical, GripVertical, Settings } from "lucide-react";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { MoreVertical, GripVertical, Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface WidgetFrameProps {
   title: string;
@@ -9,6 +9,8 @@ interface WidgetFrameProps {
   right?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 }
 
 export default function WidgetFrame({
@@ -17,8 +19,11 @@ export default function WidgetFrame({
   onSettings,
   right,
   className = "",
-  style
+  style,
+  collapsible = true,
+  defaultCollapsed = false
 }: WidgetFrameProps) {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   return (
     <motion.div 
       className={`crt-card h-full flex flex-col overflow-hidden ${className}`}
@@ -35,6 +40,19 @@ export default function WidgetFrame({
         </div>
         <div className="flex items-center gap-2">
           {right}
+          {collapsible && (
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-1 rounded hover:bg-crt-bg/50 transition-colors group"
+              title={isCollapsed ? "Expand widget" : "Collapse widget"}
+            >
+              {isCollapsed ? (
+                <ChevronDown className="w-4 h-4 opacity-70 crt-muted group-hover:crt-accent group-hover:opacity-100" />
+              ) : (
+                <ChevronUp className="w-4 h-4 opacity-70 crt-muted group-hover:crt-accent group-hover:opacity-100" />
+              )}
+            </button>
+          )}
           {onSettings ? (
             <button 
               onClick={onSettings}
@@ -50,9 +68,19 @@ export default function WidgetFrame({
       </div>
       
       {/* Content */}
-      <div className="flex-1 p-3 overflow-hidden">
-        {children}
-      </div>
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div 
+            className="flex-1 p-3 overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
