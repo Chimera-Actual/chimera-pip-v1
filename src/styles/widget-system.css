@@ -1,0 +1,357 @@
+/* Widget System - Modern CSS Architecture for Widgets */
+
+/* Container queries for responsive widgets */
+@layer widgets {
+  /* Widget container with container query context */
+  .widget-container {
+    container-type: size;
+    container-name: widget-container;
+    position: relative;
+    min-block-size: var(--widget-min-block-size);
+    transition: var(--transition-collapse);
+  }
+  
+  /* Collapsed state - using logical properties */
+  .widget-container--collapsed {
+    block-size: var(--widget-collapsed-block-size);
+    max-block-size: var(--widget-collapsed-block-size);
+    overflow: hidden;
+  }
+  
+  /* Widget grid integration */
+  .widget-grid-item {
+    container-type: size;
+    container-name: widget-grid-item;
+    position: relative;
+    transition: var(--transition-base);
+  }
+  
+  /* React Grid Layout integration with logical properties */
+  .react-grid-item {
+    transition: var(--transition-transform);
+  }
+  
+  .react-grid-item.react-grid-placeholder {
+    background: hsl(var(--widget-border) / 0.2);
+    border: 2px dashed hsl(var(--widget-border));
+    border-radius: var(--widget-radius);
+    opacity: 0.6;
+    z-index: var(--widget-z-overlay);
+  }
+  
+  /* Widget resize handles using logical properties */
+  .widget-resize-handle {
+    position: absolute;
+    background: transparent;
+    z-index: calc(var(--widget-z-overlay) + 1);
+    transition: 
+      background-color var(--duration-fast) var(--easing-smooth),
+      opacity var(--duration-fast) var(--easing-smooth);
+    opacity: 0;
+  }
+  
+  .widget-container:hover .widget-resize-handle {
+    opacity: 1;
+  }
+  
+  /* Resize handle positions using logical properties */
+  .widget-resize-handle--n {
+    inset-block-start: -4px;
+    inset-inline-start: var(--space-sm);
+    inset-inline-end: var(--space-sm);
+    block-size: 8px;
+    cursor: ns-resize;
+  }
+  
+  .widget-resize-handle--s {
+    inset-block-end: -4px;
+    inset-inline-start: var(--space-sm);
+    inset-inline-end: var(--space-sm);
+    block-size: 8px;
+    cursor: ns-resize;
+  }
+  
+  .widget-resize-handle--e {
+    inset-inline-end: -4px;
+    inset-block-start: var(--space-xs);
+    inset-block-end: var(--space-xs);
+    inline-size: 8px;
+    cursor: ew-resize;
+  }
+  
+  .widget-resize-handle--w {
+    inset-inline-start: -4px;
+    inset-block-start: var(--space-xs);
+    inset-block-end: var(--space-xs);
+    inline-size: 8px;
+    cursor: ew-resize;
+  }
+  
+  /* Corner handles */
+  .widget-resize-handle--nw {
+    inset-block-start: -4px;
+    inset-inline-start: -4px;
+    inline-size: 12px;
+    block-size: 12px;
+    cursor: nw-resize;
+  }
+  
+  .widget-resize-handle--ne {
+    inset-block-start: -4px;
+    inset-inline-end: -4px;
+    inline-size: 12px;
+    block-size: 12px;
+    cursor: ne-resize;
+  }
+  
+  .widget-resize-handle--sw {
+    inset-block-end: -4px;
+    inset-inline-start: -4px;
+    inline-size: 12px;
+    block-size: 12px;
+    cursor: sw-resize;
+  }
+  
+  .widget-resize-handle--se {
+    inset-block-end: -4px;
+    inset-inline-end: -4px;
+    inline-size: 12px;
+    block-size: 12px;
+    cursor: se-resize;
+  }
+  
+  /* Active state styling */
+  .widget-resize-handle:hover,
+  .widget-resize-handle--active {
+    background: hsl(var(--widget-accent) / 0.3);
+  }
+  
+  .widget-resize-handle--active {
+    opacity: 1 !important;
+  }
+  
+  /* Collapsed state - hide vertical resize handles */
+  .widget-container--collapsed .widget-resize-handle--n,
+  .widget-container--collapsed .widget-resize-handle--s,
+  .widget-container--collapsed .widget-resize-handle--nw,
+  .widget-container--collapsed .widget-resize-handle--ne,
+  .widget-container--collapsed .widget-resize-handle--sw,
+  .widget-container--collapsed .widget-resize-handle--se {
+    display: none;
+  }
+  
+  /* Responsive widget behavior based on container queries */
+  
+  /* Extra small widgets */
+  @container widget-container (max-inline-size: 200px) {
+    .widget-header {
+      padding-inline: var(--space-xs);
+      font-size: var(--text-responsive-xs);
+    }
+    
+    .widget-content {
+      padding-inline: var(--space-xs);
+      padding-block: var(--space-xs);
+    }
+    
+    .widget-title {
+      display: none; /* Hide title in very small widgets */
+    }
+  }
+  
+  /* Small widgets */
+  @container widget-container (max-inline-size: 300px) {
+    .widget-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-xs);
+      block-size: auto;
+      padding-block: var(--space-sm);
+    }
+    
+    .widget-controls {
+      align-self: flex-end;
+    }
+  }
+  
+  /* Medium widgets */
+  @container widget-container (min-inline-size: 400px) and (max-inline-size: 600px) {
+    .widget-content {
+      padding-inline: var(--space-lg);
+    }
+  }
+  
+  /* Large widgets */
+  @container widget-container (min-inline-size: 600px) {
+    .widget {
+      --widget-padding-inline: var(--space-xl);
+      --widget-padding-block: var(--space-lg);
+    }
+    
+    .widget-header {
+      block-size: calc(var(--widget-header-block-size) * 1.2);
+    }
+  }
+  
+  /* Very short widgets */
+  @container widget-container (max-block-size: 120px) {
+    .widget-content {
+      font-size: var(--text-responsive-sm);
+      line-height: var(--line-height-compact);
+    }
+    
+    .widget-header {
+      --widget-header-block-size: calc(var(--space-2xl) * 0.75);
+    }
+  }
+  
+  /* Tall widgets */
+  @container widget-container (min-block-size: 400px) {
+    .widget-content {
+      padding-block: var(--space-lg);
+      line-height: var(--line-height-relaxed);
+    }
+  }
+  
+  /* Widget density adjustments */
+  @container widget-grid-item (max-inline-size: 250px) {
+    .widget {
+      --widget-radius: var(--radius-md);
+    }
+  }
+  
+  /* Dashboard-level responsive behavior */
+  @container dashboard (max-inline-size: 768px) {
+    .widget-container {
+      min-inline-size: 100%;
+    }
+    
+    .widget-header {
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+  }
+  
+  /* Performance optimization for collapsed widgets */
+  .widget-container--collapsed .widget-content {
+    visibility: hidden;
+    pointer-events: none;
+  }
+  
+  .widget-container--collapsed .widget-content * {
+    animation-play-state: paused;
+  }
+  
+  /* Widget focus management */
+  .widget:focus-within {
+    z-index: calc(var(--widget-z-base) + 1);
+  }
+  
+  /* Widget drag state */
+  .widget--dragging {
+    z-index: var(--widget-z-overlay);
+    transform: scale(1.02);
+    box-shadow: var(--widget-shadow-focus);
+    transition: var(--transition-fast);
+  }
+  
+  .widget--dragging .widget-content {
+    pointer-events: none;
+  }
+  
+  /* Widget loading states */
+  .widget--loading {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .widget--loading::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: -100%;
+    inline-size: 100%;
+    block-size: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--widget-accent) / 0.1) 50%,
+      transparent
+    );
+    animation: loading-shimmer 2s infinite;
+    z-index: var(--widget-z-overlay);
+    pointer-events: none;
+  }
+  
+  @keyframes loading-shimmer {
+    0% {
+      inset-inline-start: -100%;
+    }
+    100% {
+      inset-inline-start: 100%;
+    }
+  }
+  
+  /* Widget error states */
+  .widget--error {
+    --widget-border: 0 100% 60%; /* Red */
+    --widget-accent: 0 100% 60%;
+  }
+  
+  .widget--error .widget-header {
+    background: hsl(0 100% 60% / 0.1);
+  }
+  
+  /* High contrast mode adjustments */
+  @media (prefers-contrast: high) {
+    .widget {
+      border-width: 2px;
+    }
+    
+    .widget-resize-handle {
+      border: 1px solid hsl(var(--widget-accent));
+    }
+    
+    .widget-resize-handle:hover,
+    .widget-resize-handle--active {
+      background: hsl(var(--widget-accent));
+    }
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .widget-container,
+    .widget-grid-item,
+    .react-grid-item,
+    .widget-resize-handle {
+      transition: none;
+    }
+    
+    .widget--loading::before {
+      animation: none;
+    }
+  }
+  
+  /* Print support */
+  @media print {
+    .widget-resize-handle {
+      display: none;
+    }
+    
+    .widget {
+      box-shadow: none;
+      border: 1px solid black;
+      break-inside: avoid;
+    }
+    
+    .widget-container--collapsed {
+      block-size: auto;
+      max-block-size: none;
+    }
+    
+    .widget-container--collapsed .widget-content {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+}

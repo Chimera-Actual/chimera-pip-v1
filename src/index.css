@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import modern CSS architecture */
+@import "./styles/modern-css-architecture.css";
+@import "./styles/widget-system.css";
 @import "./styles/crt.css";
 
 /* Pip-Boy Retro CRT Design System 
