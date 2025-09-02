@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MoreVertical, GripVertical, Settings, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
+import { WidgetErrorBoundary } from '@/components/ui/WidgetErrorBoundary';
 
 interface WidgetFrameProps {
   title: string;
@@ -108,7 +109,9 @@ export default function WidgetFrame({
       {!isCollapsed && (
         <div className="flex-1 overflow-hidden pipboy-panel">
           <div className="p-3">
-            {children}
+            <WidgetErrorBoundary widgetName={title}>
+              {children}
+            </WidgetErrorBoundary>
           </div>
         </div>
       )}

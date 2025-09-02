@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface AudioWaveformVisualizerProps {
   audioElement?: HTMLAudioElement | null;
@@ -46,7 +47,7 @@ export function AudioWaveformVisualizer({
       dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
       setIsInitialized(true);
     } catch (error) {
-      console.log('Web Audio API not supported, using fake data');
+      logger.info('Web Audio API not supported, using fake data', undefined, 'AudioWaveformVisualizer');
       // Create fake analyser for visualization
       analyserRef.current = {
         frequencyBinCount: 128,
