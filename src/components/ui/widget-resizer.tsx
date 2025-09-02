@@ -121,10 +121,15 @@ export default function WidgetResizer({
         'widget-resizer relative',
         {
           'widget-resizing': isResizing,
-          'widget-resize-disabled': disabled
+          'widget-resize-disabled': disabled,
+          'collapsed': collapsed
         },
         className
       )}
+      style={{
+        height: collapsed ? '48px' : 'auto',
+        maxHeight: collapsed ? '48px' : 'none'
+      }}
     >
       {children}
       

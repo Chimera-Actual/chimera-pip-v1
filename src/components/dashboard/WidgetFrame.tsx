@@ -57,7 +57,7 @@ export default function WidgetFrame({
   return (
     <WidgetResizer 
       collapsed={isCollapsed}
-      className={`widget-frame h-full ${isCollapsed ? 'collapsed' : 'expanded'}`}
+      className="widget-frame"
     >
       <motion.div 
         className={`crt-card flex flex-col ${

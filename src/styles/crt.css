@@ -183,17 +183,24 @@
 /* Custom Widget Resizer Styles */
 .widget-resizer {
   position: relative;
+  width: 100%;
   height: 100%;
+}
+
+/* Ensure resizer adapts to collapsed state */
+.widget-resizer.collapsed {
+  height: 48px !important;
+  max-height: 48px !important;
 }
 
 .widget-resize-handle {
   position: absolute;
   background: transparent;
-  z-index: 10;
+  z-index: 15;
   transition: background-color 0.2s ease;
 }
 
-/* Edge handles - 8px wide invisible zones */
+/* Edge handles - positioned relative to current container bounds */
 .widget-resize-handle-n {
   top: -4px;
   left: 8px;
@@ -212,21 +219,21 @@
 
 .widget-resize-handle-e {
   right: -4px;
-  top: 8px;
-  bottom: 8px;
+  top: 4px;
+  bottom: 4px;
   width: 8px;
   cursor: ew-resize;
 }
 
 .widget-resize-handle-w {
   left: -4px;
-  top: 8px;
-  bottom: 8px;
+  top: 4px;
+  bottom: 4px;
   width: 8px;
   cursor: ew-resize;
 }
 
-/* Corner handles - 12x12px zones */
+/* Corner handles - positioned relative to current bounds */
 .widget-resize-handle-nw {
   top: -4px;
   left: -4px;
@@ -259,15 +266,36 @@
   cursor: se-resize;
 }
 
+/* Collapsed state: only show horizontal handles */
+.widget-resizer.collapsed .widget-resize-handle-n,
+.widget-resizer.collapsed .widget-resize-handle-s,
+.widget-resizer.collapsed .widget-resize-handle-ne,
+.widget-resizer.collapsed .widget-resize-handle-nw,
+.widget-resizer.collapsed .widget-resize-handle-se,
+.widget-resizer.collapsed .widget-resize-handle-sw {
+  display: none;
+}
+
+/* Adjust vertical handles for collapsed state */
+.widget-resizer.collapsed .widget-resize-handle-e {
+  top: 0;
+  bottom: 0;
+}
+
+.widget-resizer.collapsed .widget-resize-handle-w {
+  top: 0;
+  bottom: 0;
+}
+
 /* Visual feedback on hover - subtle highlight */
 .widget-resize-handle:hover {
   background-color: var(--crt-accent);
-  opacity: 0.2;
+  opacity: 0.3;
 }
 
 .widget-resize-handle-active {
   background-color: var(--crt-accent);
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 /* Disable resize handles when resizing is disabled */
