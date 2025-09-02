@@ -133,13 +133,14 @@ export default function DashboardGrid({
         rowHeight={rowHeight}
         margin={margin}
         containerPadding={containerPadding}
-        isResizable={false}
+        isResizable={true}
         isDraggable={editable}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".drag-handle"
         useCSSTransforms={true}
-        compactType="vertical"
+        compactType={null}
         preventCollision={false}
+        resizeHandles={['se']}
       >
         {items.map(item => (
           <div 
