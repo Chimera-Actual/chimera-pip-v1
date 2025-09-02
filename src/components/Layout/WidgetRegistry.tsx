@@ -33,6 +33,9 @@ export const WIDGET_COMPONENTS = {
   // Dashboard widgets
   AddWidgetWidget: createLazyWidget(AddWidgetWidget, 'card'),
   DashboardSettingsWidget: createLazyWidget(DashboardSettingsWidget, 'card'),
+  
+  // Demo and development widgets
+  WidgetFactoryDemo: createLazyWidget(React.lazy(() => import('@/components/widgets/WidgetFactoryDemo')), 'card'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;

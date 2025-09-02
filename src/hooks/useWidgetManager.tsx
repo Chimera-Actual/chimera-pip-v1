@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { cleanupWidgetFiles } from '@/lib/widgetCleanup';
+import { WidgetFactory, WidgetDefinition as FactoryWidgetDefinition, WidgetConfig } from '@/lib/WidgetFactory';
 
 export interface WidgetDefinition {
   id: string;
@@ -9,7 +11,7 @@ export interface WidgetDefinition {
   icon: string;
   category: string;
   component_name: string;
-  default_settings?: Record<string, any>;
+  default_settings: Record<string, any>;
   user_tags?: string[];
 }
 
@@ -37,8 +39,6 @@ export interface UserWidgetSettings {
   widget_instance_id: string;
   settings: Record<string, any>;
 }
-
-import { cleanupWidgetFiles } from '@/lib/widgetCleanup';
 
 export const useWidgetManager = () => {
   const [availableWidgets, setAvailableWidgets] = useState<WidgetDefinition[]>([]);
@@ -150,25 +150,51 @@ export const useWidgetManager = () => {
     if (!user) return;
 
     try {
-      // Always create a new widget instance with unique ID to allow multiple instances
-      // Get the highest position in this tab
+      // Get widget definition for factory creation
+      const widgetDefinition = availableWidgets.find(w => w.id === widgetId);
+      if (!widgetDefinition) {
+        throw new Error(`Widget definition not found for ID: ${widgetId}`);
+      }
+
+      // Get the highest position in this tab for proper positioning
       const existingWidgets = userWidgetInstances.filter(
         w => w.tab_id === tabId && w.is_active
       );
       const maxPosition = Math.max(...existingWidgets.map(w => w.position), -1);
 
-      // Generate unique instance ID
-      const instanceId = crypto.randomUUID();
+      // Convert to factory-compatible definition
+      const factoryDefinition: FactoryWidgetDefinition = {
+        id: widgetDefinition.id,
+        name: widgetDefinition.name,
+        category: widgetDefinition.category,
+        icon: widgetDefinition.icon,
+        component_name: widgetDefinition.component_name,
+        description: widgetDefinition.description,
+        default_settings: widgetDefinition.default_settings || {}
+      };
 
+      // Use WidgetFactory to create proper widget configuration
+      const widgetConfig = WidgetFactory.fromWidgetDefinition(factoryDefinition, tabId, {
+        position: maxPosition + 1
+      });
+
+      // Validate the widget configuration
+      const validation = WidgetFactory.validateWidgetConfig(widgetConfig);
+      if (!validation.valid) {
+        throw new Error(`Invalid widget configuration: ${validation.errors.join(', ')}`);
+      }
+
+      // Insert the widget instance into the database
       const { data, error } = await supabase
         .from('user_widget_instances')
         .insert({
-          id: instanceId,
+          id: widgetConfig.instanceId,
           user_id: user.id,
-          widget_id: widgetId,
-          tab_id: tabId,
-          position: maxPosition + 1,
+          widget_id: widgetConfig.widgetId,
+          tab_id: widgetConfig.tabId,
+          position: widgetConfig.position,
           is_active: true,
+          custom_name: widgetConfig.name !== widgetDefinition.name ? widgetConfig.name : null,
         })
         .select(`
           *,

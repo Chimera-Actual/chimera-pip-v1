@@ -1,5 +1,7 @@
 // Base widget type definitions for standardized widget architecture
 
+import { WidgetConfig } from '@/lib/WidgetFactory';
+
 export interface BaseWidgetProps {
   /** Unique identifier for this widget instance */
   widgetInstanceId: string;
@@ -36,3 +38,6 @@ export interface WidgetControlConfig {
   /** Status display in header */
   statusDisplay?: React.ReactNode;
 }
+
+// Re-export WidgetConfig and related types from WidgetFactory
+export type { WidgetConfig, WidgetDefinition, CreateWidgetOptions } from '@/lib/WidgetFactory';
