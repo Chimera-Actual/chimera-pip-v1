@@ -37,8 +37,8 @@ const MapWidget: React.FC<BaseWidgetProps> = ({
     navigateToLocation,
     clearSearch
   } = useMapState({
-    defaultLayer: settings.layer || 'standard',
-    defaultZoom: settings.zoom || 10,
+    defaultLayer: (settings.layer as MapLayer) || 'standard',
+    defaultZoom: (settings.zoom as number) || 10,
     widgetInstanceId // Pass widget ID for state persistence
   });
 

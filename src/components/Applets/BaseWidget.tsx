@@ -30,7 +30,7 @@ const BaseWidget: React.FC<BaseWidgetProps> = ({
         <div className="text-center space-y-4 max-w-md">
           <div className={`opacity-50 ${isMobile ? 'text-4xl' : 'text-6xl'}`}>⚙️</div>
           <div className={`text-muted-foreground font-mono ${isMobile ? 'text-sm' : ''}`}>
-            {message}
+            {typeof message === 'string' ? message : String(message)}
           </div>
           <div className={`text-xs text-muted-foreground/70 font-mono space-y-1 ${isMobile ? 'px-4' : ''}`}>
             <div>Instance ID: {widgetInstanceId}</div>

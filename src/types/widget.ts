@@ -1,6 +1,7 @@
 // Base widget type definitions for standardized widget architecture
 
 import { WidgetConfig } from '@/lib/WidgetFactory';
+import { WidgetSettings } from '@/types/common';
 
 export interface BaseWidgetProps {
   /** Unique identifier for this widget instance */
@@ -10,11 +11,11 @@ export interface BaseWidgetProps {
   /** Widget display title */
   title?: string;
   /** Widget settings object with defaults merged */
-  settings?: Record<string, any>;
+  settings?: WidgetSettings;
   /** Default settings for the widget */
-  defaultSettings?: Record<string, any>;
+  defaultSettings?: WidgetSettings;
   /** Callback to handle settings changes */
-  onSettingsChange?: (settings: Record<string, any>) => void;
+  onSettingsChange?: (settings: WidgetSettings) => void;
   /** Optional custom name for the widget instance */
   widgetName?: string;
   /** Callback when widget collapse state changes */
