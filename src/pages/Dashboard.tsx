@@ -1,13 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { CRTChrome, CRTThemeProvider, useCRT } from "@/lib/CRTTheme";
 import DashboardGrid, { GridItem } from "@/components/dashboard/DashboardGrid";
 import WidgetLibrary from "@/components/dashboard/WidgetLibrary";
 import { WIDGET_COMPONENTS, WidgetComponentName } from "@/components/Layout/WidgetRegistry";
-import { Edit, Eye, Palette, Zap, RotateCcw, Plus, Settings, User, LogOut } from "lucide-react";
+import { Palette, Zap, Undo, Settings, User, LogOut } from "lucide-react";
+import { useLayoutHistory } from "@/hooks/useLayoutHistory";
+import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { UserAvatar } from "@/components/Layout/UserAvatar";
+import { Toaster } from "@/components/ui/toaster";
+import debounce from "lodash.debounce";
 
 function ThemeControls() {
   const { theme, setTheme, scanlinesEnabled, setScanlinesEnabled } = useCRT();
@@ -136,8 +140,9 @@ function DashboardHeader() {
 }
 
 function DashboardContent() {
-  const [editMode, setEditMode] = useState(false);
+  const { toast } = useToast();
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
+  const { saveLayout, undo, canUndo, undoCount } = useLayoutHistory("dashboard:layout");
   const [items, setItems] = useState<GridItem[]>(() => {
     // Load saved widgets or use defaults
     try {
@@ -186,6 +191,25 @@ function DashboardContent() {
     setItems(prev => prev.filter(item => item.id !== widgetId));
   };
 
+  const handleLayoutChange = useCallback(
+    debounce((layout: any[]) => {
+      saveLayout(layout);
+    }, 300),
+    [saveLayout]
+  );
+
+  const handleUndo = () => {
+    const previousLayout = undo();
+    if (previousLayout) {
+      // Force a re-render by updating a timestamp or similar
+      window.location.reload();
+      toast({
+        title: "Layout restored",
+        description: "Reverted to previous layout state",
+      });
+    }
+  };
+
   const renderWidget = (id: string) => {
     const widget = items.find(item => item.id === id);
     if (!widget || !widget.widgetType) {
@@ -200,10 +224,6 @@ function DashboardContent() {
     return <WidgetComponent widgetInstanceId={id} />;
   };
 
-  const resetLayout = () => {
-    localStorage.removeItem("dashboard:layout");
-    window.location.reload();
-  };
 
   return (
     <div className="p-6 font-mono crt-text min-h-screen">
@@ -215,56 +235,26 @@ function DashboardContent() {
         animate={{ opacity: 1, x: 0 }}
       >
         <Button
-          onClick={() => setShowWidgetLibrary(true)}
-          className="crt-button px-4 py-2 rounded flex items-center space-x-2 text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Widget</span>
-        </Button>
-        
-        <Button
-          onClick={resetLayout}
+          onClick={handleUndo}
+          disabled={!canUndo}
           variant="outline"
           className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
-          title="Reset Layout"
+          title={`Undo layout changes (${undoCount} available)`}
         >
-          <RotateCcw className="w-4 h-4" />
-          <span>Reset</span>
-        </Button>
-        
-        <Button
-          onClick={() => setEditMode(!editMode)}
-          className={`px-4 py-2 rounded flex items-center space-x-2 text-sm transition-colors ${
-            editMode ? 'bg-[var(--crt-accent)] text-[var(--crt-bg)]' : 'crt-button'
-          }`}
-        >
-          {editMode ? (
-            <>
-              <Eye className="w-4 h-4" />
-              <span>Exit Edit</span>
-            </>
-          ) : (
-            <>
-              <Edit className="w-4 h-4" />
-              <span>Edit Layout</span>
-            </>
-          )}
+          <Undo className="w-4 h-4" />
+          <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
         </Button>
       </motion.div>
 
-      {editMode && (
-        <motion.div 
-          className="mb-4 p-3 crt-card border-dashed"
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-        >
-          <div className="flex items-center space-x-2 text-sm crt-accent">
-            <Edit className="w-4 h-4" />
-            <span>Edit Mode Active - Drag widgets by their grip handles to reposition and resize</span>
-          </div>
-        </motion.div>
-      )}
+      <motion.div 
+        className="mb-4 p-3 crt-card border-dashed"
+        initial={{ opacity: 1 }}
+        animate={{ opacity: 1 }}
+      >
+        <div className="flex items-center space-x-2 text-sm crt-accent">
+          <span>⚡ Drag widgets to reposition • Click + to add widgets • Changes auto-save</span>
+        </div>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -274,12 +264,14 @@ function DashboardContent() {
         <DashboardGrid
           items={items}
           renderItem={renderWidget}
-          editable={editMode}
+          editable={true}
           storageKey="dashboard:layout"
           cols={12}
           rowHeight={32}
           margin={[12, 12]}
-          className={editMode ? 'edit-mode' : ''}
+          onLayoutChange={handleLayoutChange}
+          onAddWidget={() => setShowWidgetLibrary(true)}
+          className=""
         />
       </motion.div>
       
@@ -313,6 +305,7 @@ export default function Dashboard() {
       <CRTChrome>
         <ThemeControls />
         <DashboardContent />
+        <Toaster />
       </CRTChrome>
     </CRTThemeProvider>
   );
