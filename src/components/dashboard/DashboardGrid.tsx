@@ -79,7 +79,7 @@ export default function DashboardGrid({
   });
 
   // Memoize layout data to prevent unnecessary re-renders
-  const layoutData = useMemo(() => {
+  const memoizedLayoutData = useMemo(() => {
     return items.map(item => {
       const existingLayout = layout.find(l => l.i === item.id);
       if (existingLayout) {
@@ -118,7 +118,7 @@ export default function DashboardGrid({
     <div className={classNames("dashboard-grid", className)}>
       <Grid
         className="layout"
-        layout={layoutData}
+        layout={memoizedLayoutData}
         cols={cols}
         rowHeight={rowHeight}
         margin={margin}
