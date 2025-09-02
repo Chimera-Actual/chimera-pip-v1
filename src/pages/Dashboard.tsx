@@ -5,7 +5,7 @@ import WidgetLibrary from "@/components/dashboard/WidgetLibrary";
 import TabManager from "@/components/dashboard/TabManager";
 import OrphanedWidget from "@/components/dashboard/OrphanedWidget";
 import { WIDGET_COMPONENTS, WidgetComponentName } from "@/components/Layout/WidgetRegistry";
-import { Palette, Zap, Undo, Plus, Settings, User, LogOut, Monitor, Trash2, AlertTriangle } from "lucide-react";
+import { Palette, Zap, Undo, Plus, Settings, User, LogOut, Monitor, Trash2, AlertTriangle, ChevronUp, ChevronDown } from "lucide-react";
 import { useLayoutHistory } from "@/hooks/useLayoutHistory";
 import { useDashboardTabs } from "@/hooks/useDashboardTabs";
 import { useToast } from "@/hooks/use-toast";
@@ -145,6 +145,7 @@ function DashboardHeader() {
 function DashboardContent() {
   const { toast } = useToast();
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
+  const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false);
   
   // Initialize dashboard tab manager
   const {
@@ -280,47 +281,77 @@ function DashboardContent() {
       />
 
       <div className="flex-1 p-6 overflow-y-auto">
-        <motion.div 
-          className="flex items-center justify-between mb-6"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-        >
-          <Button
-            onClick={() => setShowWidgetLibrary(true)}
-            className="crt-button px-4 py-2 rounded flex items-center space-x-2 text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Widget</span>
-          </Button>
-          
-          <div className="flex items-center space-x-3">
-            {orphanedWidgets.length > 0 && (
-              <Button
-                onClick={handleCleanupOrphanedWidgets}
-                variant="outline"
-                className="px-3 py-2 rounded flex items-center space-x-2 text-sm border-red-500/50 text-red-400 hover:bg-red-500/20"
-                title={`Remove ${orphanedWidgets.length} orphaned widget${orphanedWidgets.length > 1 ? 's' : ''}`}
-              >
-                <AlertTriangle className="w-4 h-4" />
-                <Trash2 className="w-4 h-4" />
-                <span>Clean Up ({orphanedWidgets.length})</span>
-              </Button>
-            )}
+        {/* Collapsible Toolbar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <Button
+              onClick={() => setShowWidgetLibrary(true)}
+              className="crt-button px-4 py-2 rounded flex items-center space-x-2 text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Widget</span>
+            </Button>
             
             <Button
-              onClick={handleUndo}
-              disabled={!canUndo}
-              variant="outline"
-              className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
-              title={`Undo layout changes (${undoCount} available)`}
+              onClick={() => setIsToolbarCollapsed(!isToolbarCollapsed)}
+              variant="ghost"
+              size="sm"
+              className="px-2 py-1"
+              title={isToolbarCollapsed ? "Expand toolbar" : "Collapse toolbar"}
             >
-              <Undo className="w-4 h-4" />
-              <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
+              {isToolbarCollapsed ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronUp className="w-4 h-4" />
+              )}
             </Button>
-
-            <DashboardSettings />
           </div>
-        </motion.div>
+          
+          <AnimatePresence>
+            {!isToolbarCollapsed && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <motion.div 
+                  className="flex items-center justify-end mt-4 space-x-3"
+                  initial={{ y: -10 }}
+                  animate={{ y: 0 }}
+                  exit={{ y: -10 }}
+                >
+                  {orphanedWidgets.length > 0 && (
+                    <Button
+                      onClick={handleCleanupOrphanedWidgets}
+                      variant="outline"
+                      className="px-3 py-2 rounded flex items-center space-x-2 text-sm border-red-500/50 text-red-400 hover:bg-red-500/20"
+                      title={`Remove ${orphanedWidgets.length} orphaned widget${orphanedWidgets.length > 1 ? 's' : ''}`}
+                    >
+                      <AlertTriangle className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
+                      <span>Clean Up ({orphanedWidgets.length})</span>
+                    </Button>
+                  )}
+                  
+                  <Button
+                    onClick={handleUndo}
+                    disabled={!canUndo}
+                    variant="outline"
+                    className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
+                    title={`Undo layout changes (${undoCount} available)`}
+                  >
+                    <Undo className="w-4 h-4" />
+                    <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
+                  </Button>
+
+                  <DashboardSettings />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
 
         <motion.div
