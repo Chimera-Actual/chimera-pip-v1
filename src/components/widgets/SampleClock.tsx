@@ -97,6 +97,7 @@ export default function SampleClock({
         onSettings={() => setIsSettingsOpen(true)}
         className={!settings.showBorder ? 'border-none' : ''}
         style={{ opacity: settings.opacity / 100 }}
+        widgetId={widgetInstanceId}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-4">
           <motion.div 
