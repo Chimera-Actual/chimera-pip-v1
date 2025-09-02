@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { CRTChrome, CRTThemeProvider, useCRT } from "@/lib/CRTTheme";
 import DashboardGrid, { GridItem } from "@/components/dashboard/DashboardGrid";
-import WidgetLibrary from "@/components/dashboard/WidgetLibrary";
 import TabManager from "@/components/dashboard/TabManager";
 import OrphanedWidget from "@/components/dashboard/OrphanedWidget";
 import { WIDGET_COMPONENTS, WidgetComponentName } from "@/components/Layout/WidgetRegistry";
+import { WidgetLibrary } from "@/components/Layout/WidgetLibrary";
+import { useOptimizedWidgetManager } from "@/hooks/useOptimizedWidgetManager";
 import { Palette, Zap, Undo, Plus, Settings, User, LogOut, Monitor, Trash2, AlertTriangle, ChevronUp, ChevronDown } from "lucide-react";
 import { useLayoutHistory } from "@/hooks/useLayoutHistory";
 import { useDashboardTabs } from "@/hooks/useDashboardTabs";
@@ -162,6 +163,16 @@ function DashboardContent() {
     updateTabLayout
   } = useDashboardTabs();
 
+  // Widget management
+  const {
+    availableWidgets,
+    addWidgetToTab: addWidgetToTabHook,
+    removeWidgetFromTab: removeWidgetFromTabHook,
+    getAllUserTags,
+    addTagToWidget,
+    removeTagFromWidget,
+  } = useOptimizedWidgetManager();
+
   // Update the default tab to have the Monitor icon (already handled in hook)
   // React.useEffect(() => {
   //   if (tabs.length === 1 && tabs[0].id === 'default-tab' && !tabs[0].icon) {
@@ -198,20 +209,20 @@ function DashboardContent() {
     });
   };
 
-  const handleAddWidget = (widgetDef: any) => {
-    const newWidget: GridItem = {
-      id: `${widgetDef.id}-${Date.now()}`,
-      widgetType: widgetDef.id,
-      w: widgetDef.defaultW,
-      h: widgetDef.defaultH,
-      minW: widgetDef.minW,
-      minH: widgetDef.minH,
-      x: 0,
-      y: Infinity // Places at bottom
-    };
-    
-    addWidgetToTab(activeTabId, newWidget);
-    setShowWidgetLibrary(false);
+  const handleAddWidget = async (widgetId: string) => {
+    try {
+      await addWidgetToTabHook({ widgetId, tabId: activeTabId });
+      toast({
+        title: "Widget Added",
+        description: "Widget has been added to your dashboard.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add widget to dashboard.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRemoveWidget = (widgetId: string) => {
@@ -379,7 +390,12 @@ function DashboardContent() {
       <WidgetLibrary
         isOpen={showWidgetLibrary}
         onClose={() => setShowWidgetLibrary(false)}
+        availableWidgets={availableWidgets}
         onAddWidget={handleAddWidget}
+        tabCategory={activeTab?.name || "Main"}
+        onAddTag={addTagToWidget}
+        onRemoveTag={removeTagFromWidget}
+        allUserTags={getAllUserTags()}
       />
     </div>
   );
