@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Mic, MicOff, Send, User, Bot } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface Assistant {
   id: string;
@@ -75,7 +76,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
         return defaultAssistants.find(a => a.id === savedAssistant.id) || defaultAssistants[0];
       }
     } catch (error) {
-      console.warn('Failed to load selected assistant:', error);
+      logger.warn('Failed to load selected assistant', error, 'AssistantChat');
     }
     return defaultAssistants[0];
   });
@@ -89,7 +90,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
         timestamp: new Date(msg.timestamp)
       })) : [];
     } catch (error) {
-      console.warn('Failed to load messages:', error);
+      logger.warn('Failed to load messages', error, 'AssistantChat');
       return [];
     }
   });
@@ -99,7 +100,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
     try {
       return localStorage.getItem(getInputStorageKey()) || '';
     } catch (error) {
-      console.warn('Failed to load input value:', error);
+      logger.warn('Failed to load input value', error, 'AssistantChat');
       return '';
     }
   });
@@ -119,7 +120,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
       try {
         localStorage.setItem(getMessagesStorageKey(), JSON.stringify(messages));
       } catch (error) {
-        console.warn('Failed to save messages:', error);
+        logger.warn('Failed to save messages', error, 'AssistantChat');
       }
     }
   }, [messages, widgetInstanceId]);
@@ -130,7 +131,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
       try {
         localStorage.setItem(getSelectedAssistantStorageKey(), JSON.stringify(selectedAssistant));
       } catch (error) {
-        console.warn('Failed to save selected assistant:', error);
+        logger.warn('Failed to save selected assistant', error, 'AssistantChat');
       }
     }
   }, [selectedAssistant, widgetInstanceId]);
@@ -142,7 +143,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
       try {
         localStorage.setItem(getInputStorageKey(), inputValue);
       } catch (error) {
-        console.warn('Failed to save input value:', error);
+        logger.warn('Failed to save input value', error, 'AssistantChat');
       }
     }, 500);
     return () => clearTimeout(timeoutId);
@@ -163,7 +164,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error loading webhook configs:', error);
+        logger.error('Error loading webhook configs', error, 'AssistantChat');
         return;
       }
 
@@ -218,7 +219,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
         description: "Speak your message...",
       });
     } catch (error) {
-      console.error('Error starting recording:', error);
+      logger.error('Error starting recording', error, 'AssistantChat');
       toast({
         title: "Error",
         description: "Could not access microphone. Please check permissions.",
@@ -289,7 +290,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
           throw new Error('Failed to send audio message');
         }
       } catch (error) {
-        console.error('Error sending audio:', error);
+        logger.error('Error sending audio', error, 'AssistantChat');
         toast({
           title: "Error",
           description: "Failed to send audio message. Please try again.",
@@ -355,7 +356,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
         throw new Error('Failed to send message');
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message', error, 'AssistantChat');
       toast({
         title: "Error",
         description: "Failed to send message. Please check your webhook configuration.",
@@ -397,7 +398,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
         });
 
       if (error) {
-        console.error('Error saving webhook config:', error);
+        logger.error('Error saving webhook config', error, 'AssistantChat');
         toast({
           title: "Error",
           description: "Failed to save webhook configuration",
@@ -410,7 +411,7 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }
         });
       }
     } catch (error) {
-      console.error('Error saving webhook config:', error);
+      logger.error('Error saving webhook config', error, 'AssistantChat');
     }
   };
 

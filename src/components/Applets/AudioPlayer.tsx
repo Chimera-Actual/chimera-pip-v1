@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { OscilloscopeWaveform } from './OscilloscopeWaveform';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { logger } from '@/lib/logger';
 
 interface Track {
   id: string;
@@ -125,7 +126,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       const settingsData = data.settings as any;
       if (settingsData.playlist && Array.isArray(settingsData.playlist) && settingsData.playlist.length > 0) {
-        console.log('Migrating legacy audio playlist for widget instance:', widgetInstanceId);
+        logger.info('Migrating legacy audio playlist for widget instance', { widgetInstanceId }, 'AudioPlayer');
 
         // Check if we already have audio files in the new table
         const { data: existingAudio } = await supabase
@@ -159,11 +160,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             .eq('user_id', user.id)
             .eq('widget_instance_id', widgetInstanceId);
 
-          console.log('Legacy playlist migration completed');
+          logger.info('Legacy playlist migration completed', undefined, 'AudioPlayer');
         }
       }
     } catch (error) {
-      console.error('Error migrating legacy playlist:', error);
+      logger.error('Error migrating legacy playlist', error, 'AudioPlayer');
     }
   };
 
@@ -183,7 +184,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       nextTrack();
     };
     const handleError = (e: Event) => {
-      console.error('Audio error:', e);
+      logger.error('Audio error', e, 'AudioPlayer');
       setIsLoading(false);
       setIsPlaying(false);
       toast.error('Audio playback error');
@@ -223,7 +224,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         .order('position', { ascending: true });
 
       if (error) {
-        console.error('Error loading audio files:', error);
+        logger.error('Error loading audio files', error, 'AudioPlayer');
         return;
       }
 
@@ -248,7 +249,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 };
               }
             } catch (error) {
-              console.error('Error refreshing URL for track:', audioFile.audio_title, error);
+              logger.error('Error refreshing URL for track', { title: audioFile.audio_title, error }, 'AudioPlayer');
             }
             
             // Return track with empty URL if refresh failed
@@ -268,7 +269,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         setPlaylist([]);
       }
     } catch (error) {
-      console.error('Error loading playlist:', error);
+      logger.error('Error loading playlist', error, 'AudioPlayer');
     }
   };
 
@@ -290,7 +291,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           onConflict: 'user_id,widget_instance_id'
         });
     } catch (error) {
-      console.error('Error saving volume settings:', error);
+      logger.error('Error saving volume settings', error, 'AudioPlayer');
     }
   };
 
@@ -303,7 +304,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       audioRef.current.volume = volume / 100;
       await audioRef.current.play();
     } catch (error) {
-      console.error('Error playing track:', error);
+      logger.error('Error playing track', error, 'AudioPlayer');
       toast.error('Could not play audio file');
     }
   };
@@ -318,7 +319,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         await audioRef.current.play();
       }
     } catch (error) {
-      console.error('Playback error:', error);
+      logger.error('Playback error', error, 'AudioPlayer');
       toast.error('Playback error');
     }
   };
@@ -421,7 +422,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       
       toast.success('Audio file uploaded successfully!');
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error', error, 'AudioPlayer');
       toast.error('Failed to upload audio file');
     } finally {
       setIsLoading(false);
@@ -454,7 +455,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       
       toast.success('Track removed successfully');
     } catch (error) {
-      console.error('Error removing track:', error);
+      logger.error('Error removing track', error, 'AudioPlayer');
       toast.error('Failed to remove track');
     }
   };
