@@ -264,15 +264,6 @@ function DashboardContent() {
           </Button>
         </motion.div>
 
-        <motion.div 
-          className="mb-4 p-3 crt-card border-dashed"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 1 }}
-        >
-          <div className="flex items-center space-x-2 text-sm crt-accent">
-            <span>⚡ Drag widgets to reposition • Drag tabs to reorder • Changes auto-save</span>
-          </div>
-        </motion.div>
 
         <motion.div
           key={activeTabId} // Re-render when tab changes
