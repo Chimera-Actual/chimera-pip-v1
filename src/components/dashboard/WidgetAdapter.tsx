@@ -24,6 +24,7 @@ export default function WidgetAdapter({
   return (
     <WidgetFrame
       title={widgetName || title}
+      widgetId={widgetInstanceId}
       onSettings={onSettings}
       right={icon}
       className={className}
