@@ -57,13 +57,18 @@ export default function WidgetFrame({
   return (
     <WidgetResizer 
       collapsed={isCollapsed}
-      className="h-full"
+      className={`widget-frame h-full ${isCollapsed ? 'collapsed' : 'expanded'}`}
     >
       <motion.div 
-        className={`crt-card flex flex-col h-full ${
+        className={`crt-card flex flex-col ${
           isCollapsed ? 'widget-collapsed' : 'widget-expanded'
         } ${className}`}
-        style={style}
+        style={{
+          ...style,
+          height: isCollapsed ? '48px' : 'auto',
+          minHeight: isCollapsed ? '48px' : '200px',
+          maxHeight: isCollapsed ? '48px' : 'none'
+        }}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.2 }}

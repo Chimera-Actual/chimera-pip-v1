@@ -159,7 +159,7 @@ export default function DashboardGrid({
         {items.map(item => (
           <div 
             key={item.id} 
-            className={`grid-item ${collapsedWidgets.has(item.id) ? 'collapsed' : 'expanded'}`}
+            className={`grid-item widget-container ${collapsedWidgets.has(item.id) ? 'collapsed' : 'expanded'}`}
           >
             {renderItem(item.id, handleWidgetCollapse)}
           </div>
