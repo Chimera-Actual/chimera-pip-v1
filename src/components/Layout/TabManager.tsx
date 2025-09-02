@@ -21,7 +21,7 @@ interface TabManagerProps {
   canDeleteTab: (tabId: string) => boolean;
 }
 
-export const TabManager: React.FC<TabManagerProps> = ({
+export const TabManager: React.FC<TabManagerProps> = React.memo(({
   isOpen,
   onClose,
   tabs,
@@ -42,15 +42,19 @@ export const TabManager: React.FC<TabManagerProps> = ({
   const [draggedTab, setDraggedTab] = useState<UserTab | null>(null);
   const { toast } = useToast();
 
-  const fontSizeOptions = [
+  const fontSizeOptions = React.useMemo(() => [
     { value: 'text-xs', label: 'Extra Small' },
     { value: 'text-sm', label: 'Small' },
     { value: 'text-base', label: 'Medium' },
     { value: 'text-lg', label: 'Large' },
     { value: 'text-xl', label: 'Extra Large' },
-  ];
+  ], []);
 
-  const handleCreateTab = async () => {
+  const commonIcons = React.useMemo(() => 
+    ['◉', '◈', '◎', '◐', '◔', '☰', '⚙', '✉', '♫', '⌘', '🚀', '⭐', '🔧', '📊'], 
+  []);
+
+  const handleCreateTab = React.useCallback(async () => {
     if (!newTabName.trim()) {
       toast({
         title: "Error",
@@ -79,16 +83,16 @@ export const TabManager: React.FC<TabManagerProps> = ({
     } finally {
       setCreating(false);
     }
-  };
+  }, [newTabName, newTabIcon, newTabFontSize, onCreateTab, toast]);
 
-  const handleStartEdit = (tab: UserTab) => {
+  const handleStartEdit = React.useCallback((tab: UserTab) => {
     setEditingTab(tab);
     setEditName(tab.name);
     setEditIcon(tab.icon);
     setEditFontSize(tab.font_size || 'text-sm');
-  };
+  }, []);
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = React.useCallback(async () => {
     if (!editingTab || !editName.trim()) return;
 
     try {
@@ -114,16 +118,16 @@ export const TabManager: React.FC<TabManagerProps> = ({
         variant: "destructive"
       });
     }
-  };
+  }, [editingTab, editName, editIcon, editFontSize, onUpdateTab, toast]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = React.useCallback(() => {
     setEditingTab(null);
     setEditName('');
     setEditIcon('');
     setEditFontSize('text-sm');
-  };
+  }, []);
 
-  const handleDeleteTab = async (tab: UserTab) => {
+  const handleDeleteTab = React.useCallback(async (tab: UserTab) => {
     if (!canDeleteTab(tab.id)) {
       toast({
         title: "Cannot Delete",
@@ -146,19 +150,19 @@ export const TabManager: React.FC<TabManagerProps> = ({
         variant: "destructive"
       });
     }
-  };
+  }, [canDeleteTab, onDeleteTab, toast]);
 
-  const handleDragStart = (e: React.DragEvent, tab: UserTab) => {
+  const handleDragStart = React.useCallback((e: React.DragEvent, tab: UserTab) => {
     setDraggedTab(tab);
     e.dataTransfer.effectAllowed = 'move';
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent, targetTab: UserTab) => {
+  const handleDrop = React.useCallback((e: React.DragEvent, targetTab: UserTab) => {
     e.preventDefault();
     
     if (!draggedTab || draggedTab.id === targetTab.id) return;
@@ -174,9 +178,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
     // Update order
     onReorderTabs(newTabs.map(t => t.id));
     setDraggedTab(null);
-  };
-
-  const commonIcons = ['◉', '◈', '◎', '◐', '◔', '☰', '⚙', '✉', '♫', '⌘', '🚀', '⭐', '🔧', '📊'];
+  }, [draggedTab, tabs, onReorderTabs]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -206,12 +208,13 @@ export const TabManager: React.FC<TabManagerProps> = ({
                       placeholder="Enter tab name..."
                       className="font-mono bg-background/50 border-border h-10 md:h-9"
                       maxLength={20}
+                      aria-label="New tab name"
                     />
                   </div>
                   
                   <div>
                     <Label className="text-xs font-mono text-muted-foreground">ICON</Label>
-                    <div className="flex gap-1 flex-wrap mb-2">
+                    <div className="flex gap-1 flex-wrap mb-2" role="radiogroup" aria-label="Select tab icon">
                       {commonIcons.slice(0, 8).map(icon => (
                         <Button
                           key={icon}
@@ -219,6 +222,9 @@ export const TabManager: React.FC<TabManagerProps> = ({
                           size="sm"
                           className="w-9 h-9 md:w-8 md:h-8 p-0 text-sm touch-target"
                           onClick={() => setNewTabIcon(icon)}
+                          role="radio"
+                          aria-checked={newTabIcon === icon}
+                          aria-label={`Icon ${icon}`}
                         >
                           {icon}
                         </Button>
@@ -229,13 +235,14 @@ export const TabManager: React.FC<TabManagerProps> = ({
                       onChange={(e) => setNewTabIcon(e.target.value)}
                       className="font-mono bg-background/50 border-border text-center h-10 md:h-9"
                       maxLength={2}
+                      aria-label="Custom tab icon"
                     />
                   </div>
 
                   <div>
                     <Label className="text-xs font-mono text-muted-foreground">FONT SIZE</Label>
                     <Select value={newTabFontSize} onValueChange={setNewTabFontSize}>
-                      <SelectTrigger className="font-mono bg-background/50 border-border h-10 md:h-9">
+                      <SelectTrigger className="font-mono bg-background/50 border-border h-10 md:h-9" aria-label="Select font size">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -253,6 +260,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
                   onClick={handleCreateTab}
                   disabled={!newTabName.trim() || creating}
                   className="font-mono h-10 md:h-9 w-full md:w-auto"
+                  aria-label="Create new tab"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   {creating ? 'CREATING...' : 'CREATE TAB'}
@@ -267,7 +275,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
               EXISTING TABS ({tabs.length})
             </div>
             
-            <div className="max-h-96 md:max-h-64 overflow-y-auto">
+            <div className="max-h-96 md:max-h-64 overflow-y-auto" role="list" aria-label="Existing tabs">
               <div className="space-y-2 pr-2">
                 {tabs.map((tab, index) => (
                   <Card
@@ -277,10 +285,11 @@ export const TabManager: React.FC<TabManagerProps> = ({
                     onDragStart={(e) => handleDragStart(e, tab)}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, tab)}
+                    role="listitem"
                   >
                     <CardContent className="p-3 md:p-3">
                       {editingTab?.id === tab.id ? (
-                        <div className="space-y-3">
+                        <div className="space-y-3" role="form" aria-label="Edit tab form">
                           <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-4 md:gap-3">
                             <div className="md:col-span-2">
                               <Label className="text-xs font-mono text-muted-foreground">TAB NAME</Label>
@@ -289,6 +298,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
                                 onChange={(e) => setEditName(e.target.value)}
                                 className="font-mono bg-background/50 border-border h-10 md:h-9"
                                 maxLength={20}
+                                aria-label="Edit tab name"
                               />
                             </div>
                             <div>
@@ -298,12 +308,13 @@ export const TabManager: React.FC<TabManagerProps> = ({
                                 onChange={(e) => setEditIcon(e.target.value)}
                                 className="font-mono bg-background/50 border-border text-center h-10 md:h-9"
                                 maxLength={2}
+                                aria-label="Edit tab icon"
                               />
                             </div>
                             <div>
                               <Label className="text-xs font-mono text-muted-foreground">FONT SIZE</Label>
                               <Select value={editFontSize} onValueChange={setEditFontSize}>
-                                <SelectTrigger className="font-mono bg-background/50 border-border h-10 md:h-9">
+                                <SelectTrigger className="font-mono bg-background/50 border-border h-10 md:h-9" aria-label="Edit font size">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -317,11 +328,11 @@ export const TabManager: React.FC<TabManagerProps> = ({
                             </div>
                           </div>
                           <div className="flex gap-2 flex-col md:flex-row">
-                            <Button onClick={handleSaveEdit} size="sm" className="font-mono h-10 md:h-8">
+                            <Button onClick={handleSaveEdit} size="sm" className="font-mono h-10 md:h-8" aria-label="Save changes">
                               <Save className="w-3 h-3 mr-1" />
                               SAVE
                             </Button>
-                            <Button onClick={handleCancelEdit} variant="outline" size="sm" className="font-mono h-10 md:h-8">
+                            <Button onClick={handleCancelEdit} variant="outline" size="sm" className="font-mono h-10 md:h-8" aria-label="Cancel editing">
                               <X className="w-3 h-3 mr-1" />
                               CANCEL
                             </Button>
@@ -330,8 +341,11 @@ export const TabManager: React.FC<TabManagerProps> = ({
                       ) : (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-                            <span className="text-lg">{tab.icon}</span>
+                            <GripVertical 
+                              className="w-4 h-4 text-muted-foreground cursor-grab" 
+                              aria-label="Drag to reorder tab"
+                            />
+                            <span className="text-lg" role="img" aria-label={`Tab icon: ${tab.icon}`}>{tab.icon}</span>
                             <div>
                               <div className={`font-mono text-foreground font-medium ${tab.font_size || 'text-sm'}`}>
                                 {tab.name}
@@ -342,12 +356,13 @@ export const TabManager: React.FC<TabManagerProps> = ({
                             </div>
                           </div>
                           
-                          <div className="flex gap-1 md:gap-1">
+                          <div className="flex gap-1 md:gap-1" role="group" aria-label="Tab actions">
                             <Button
                               onClick={() => handleStartEdit(tab)}
                               variant="ghost"
                               size="sm"
                               className="h-10 w-10 md:h-8 md:w-8 p-0 opacity-70 hover:opacity-100 touch-target"
+                              aria-label={`Edit ${tab.name} tab`}
                             >
                               <Edit className="h-4 w-4 md:h-3 md:w-3" />
                             </Button>
@@ -357,6 +372,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
                               variant="ghost"
                               size="sm"
                               className="h-10 w-10 md:h-8 md:w-8 p-0 opacity-70 hover:opacity-100 hover:text-destructive disabled:opacity-30 touch-target"
+                              aria-label={`Delete ${tab.name} tab`}
                             >
                               <Trash2 className="h-4 w-4 md:h-3 md:w-3" />
                             </Button>
@@ -371,7 +387,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
           </div>
 
           {/* Help text moved inside the dialog content */}
-          <div className="text-xs text-muted-foreground font-mono space-y-1 bg-background/20 border border-border rounded p-3 mt-4">
+          <div className="text-xs text-muted-foreground font-mono space-y-1 bg-background/20 border border-border rounded p-3 mt-4" role="note">
             <div>• Drag tabs to reorder them (desktop only)</div>
             <div>• Tab names must be unique</div>
             <div>• Font size affects tab title display</div>
@@ -383,4 +399,4 @@ export const TabManager: React.FC<TabManagerProps> = ({
       </DialogContent>
     </Dialog>
   );
-};
+});

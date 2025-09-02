@@ -1,8 +1,8 @@
 import React from 'react';
-import { PipBoyLayout } from '@/components/Layout/PipBoyLayout';
+import { OptimizedPipBoyLayout } from '@/components/Layout/OptimizedPipBoyLayout';
 
 const Index = () => {
-  return <PipBoyLayout />;
+  return <OptimizedPipBoyLayout />;
 };
 
 export default Index;

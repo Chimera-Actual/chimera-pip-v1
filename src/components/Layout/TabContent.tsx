@@ -6,7 +6,7 @@ interface TabContentProps {
   tab: UserTab;
 }
 
-export const TabContent: React.FC<TabContentProps> = ({ tab }) => {
+export const TabContent: React.FC<TabContentProps> = React.memo(({ tab }) => {
   const [activeApplet, setActiveApplet] = useState<string>('');
 
   return (
@@ -19,4 +19,4 @@ export const TabContent: React.FC<TabContentProps> = ({ tab }) => {
       />
     </div>
   );
-};
+});
