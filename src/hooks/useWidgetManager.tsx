@@ -59,7 +59,7 @@ export const useWidgetManager = () => {
   }, [user]);
 
   const loadWidgetData = async () => {
-    if (!user) return;
+    if (!user) return null;
     
     setLoading(true);
     try {
@@ -70,10 +70,6 @@ export const useWidgetManager = () => {
         .order('category', { ascending: true });
 
       if (widgetsError) throw widgetsError;
-      setAvailableWidgets((widgets || []).map(w => ({
-        ...w,
-        default_settings: (w.default_settings as Record<string, any>) || {}
-      })));
 
       // Load user widget instances
       const { data: instances, error: instancesError } = await supabase
@@ -86,13 +82,6 @@ export const useWidgetManager = () => {
         .order('position', { ascending: true });
 
       if (instancesError) throw instancesError;
-      setUserWidgetInstances((instances || []).map(i => ({
-        ...i,
-        widget_definition: i.widget_definition ? {
-          ...i.widget_definition,
-          default_settings: (i.widget_definition.default_settings as Record<string, any>) || {}
-        } : undefined
-      })));
 
       // Load user widget settings
       const { data: settings, error: settingsError } = await supabase
@@ -101,10 +90,6 @@ export const useWidgetManager = () => {
         .eq('user_id', user.id);
 
       if (settingsError) throw settingsError;
-      setUserWidgetSettings((settings || []).map(s => ({
-        ...s,
-        settings: (s.settings as Record<string, any>) || {}
-      })));
 
       // Load user widget tags
       const { data: tags, error: tagsError } = await supabase
@@ -113,6 +98,26 @@ export const useWidgetManager = () => {
         .eq('user_id', user.id);
 
       if (tagsError) throw tagsError;
+
+      // Process and set state
+      setAvailableWidgets((widgets || []).map(w => ({
+        ...w,
+        default_settings: (w.default_settings as Record<string, any>) || {}
+      })));
+
+      setUserWidgetInstances((instances || []).map(i => ({
+        ...i,
+        widget_definition: i.widget_definition ? {
+          ...i.widget_definition,
+          default_settings: (i.widget_definition.default_settings as Record<string, any>) || {}
+        } : undefined
+      })));
+
+      setUserWidgetSettings((settings || []).map(s => ({
+        ...s,
+        settings: (s.settings as Record<string, any>) || {}
+      })));
+
       setUserWidgetTags(tags || []);
 
       // Merge tags with available widgets
@@ -125,8 +130,17 @@ export const useWidgetManager = () => {
         setAvailableWidgets(widgetsWithTags);
       }
 
+      // Return data for React Query
+      return {
+        availableWidgets: widgets || [],
+        userWidgetInstances: instances || [],
+        userWidgetSettings: settings || [],
+        userWidgetTags: tags || []
+      };
+
     } catch (error) {
       console.error('Error loading widget data:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
