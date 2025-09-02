@@ -26,7 +26,7 @@ interface TabManagerProps {
   tabs: DashboardTab[];
   activeTabId: string;
   onTabSelect: (tabId: string) => void;
-  onTabCreate: (name: string, icon: LucideIcon) => void;
+  onTabCreate: (name: string, iconName: string) => void;
   onTabDelete: (tabId: string) => void;
   onTabUpdate: (tabId: string, updates: Partial<DashboardTab>) => void;
   onTabReorder: (sourceIndex: number, destinationIndex: number) => void;
@@ -36,20 +36,17 @@ interface TabEditModalProps {
   tab: DashboardTab;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (name: string, icon: LucideIcon) => void;
+  onSave: (name: string, iconName: string) => void;
   onDelete: () => void;
   canDelete: boolean;
 }
 
 function TabEditModal({ tab, isOpen, onClose, onSave, onDelete, canDelete }: TabEditModalProps) {
   const [name, setName] = useState(tab.name);
-  const [selectedIcon, setSelectedIcon] = useState<string>(
-    AVAILABLE_ICONS.find(i => i.icon === tab.icon)?.name || 'Monitor'
-  );
+  const [selectedIcon, setSelectedIcon] = useState<string>(tab.icon || 'Monitor');
 
   const handleSave = () => {
-    const icon = AVAILABLE_ICONS.find(i => i.name === selectedIcon)?.icon || Monitor;
-    onSave(name, icon);
+    onSave(name, selectedIcon);
     onClose();
   };
 
@@ -119,7 +116,7 @@ function TabEditModal({ tab, isOpen, onClose, onSave, onDelete, canDelete }: Tab
 interface NewTabModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string, icon: LucideIcon) => void;
+  onCreate: (name: string, iconName: string) => void;
 }
 
 function NewTabModal({ isOpen, onClose, onCreate }: NewTabModalProps) {
@@ -128,8 +125,7 @@ function NewTabModal({ isOpen, onClose, onCreate }: NewTabModalProps) {
 
   const handleCreate = () => {
     if (name.trim()) {
-      const icon = AVAILABLE_ICONS.find(i => i.name === selectedIcon)?.icon || Monitor;
-      onCreate(name.trim(), icon);
+      onCreate(name.trim(), selectedIcon);
       setName('');
       setSelectedIcon('Monitor');
       onClose();
@@ -205,8 +201,8 @@ export default function TabManager({
     onTabReorder(result.source.index, result.destination.index);
   };
 
-  const handleTabEdit = (tab: DashboardTab, name: string, icon: LucideIcon) => {
-    onTabUpdate(tab.id, { name, icon });
+  const handleTabEdit = (tab: DashboardTab, name: string, iconName: string) => {
+    onTabUpdate(tab.id, { name, icon: iconName });
   };
 
   return (
@@ -221,7 +217,7 @@ export default function TabManager({
                 className="flex items-center space-x-2"
               >
                 {tabs.map((tab, index) => {
-                  const IconComponent = tab.icon || Monitor;
+                  const IconComponent = AVAILABLE_ICONS.find(i => i.name === tab.icon)?.icon || Monitor;
                   return (
                     <Draggable key={tab.id} draggableId={tab.id} index={index}>
                       {(provided, snapshot) => (
@@ -282,7 +278,7 @@ export default function TabManager({
           tab={editingTab}
           isOpen={!!editingTab}
           onClose={() => setEditingTab(null)}
-          onSave={(name, icon) => handleTabEdit(editingTab, name, icon)}
+          onSave={(name, iconName) => handleTabEdit(editingTab, name, iconName)}
           onDelete={() => {
             onTabDelete(editingTab.id);
             setEditingTab(null);

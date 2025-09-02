@@ -5,7 +5,7 @@ import { LucideIcon, Monitor } from 'lucide-react';
 export interface DashboardTab {
   id: string;
   name: string;
-  icon: LucideIcon;
+  icon: string; // Store as string identifier instead of component
   widgets: GridItem[];
   layout?: any[];
   createdAt: number;
@@ -59,11 +59,11 @@ export function useDashboardTabs() {
     }
   }, [activeTabId]);
 
-  const createTab = useCallback((name: string, icon: LucideIcon) => {
+  const createTab = useCallback((name: string, iconName: string) => {
     const newTab: DashboardTab = {
       id: `tab-${Date.now()}`,
       name,
-      icon,
+      icon: iconName,
       widgets: [],
       layout: [],
       createdAt: Date.now()
@@ -153,7 +153,7 @@ function getDefaultTabs(): DashboardTab[] {
     {
       id: 'default-tab',
       name: 'Main Dashboard',
-      icon: Monitor,
+      icon: 'Monitor',
       widgets: [
         { id: "clock-1", widgetType: "SampleClock", w: 4, h: 4, minW: 3, minH: 3 },
         { id: "note-1", widgetType: "SampleNote", w: 5, h: 6, minW: 4, minH: 4 },
