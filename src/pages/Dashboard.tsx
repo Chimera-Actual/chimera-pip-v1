@@ -220,17 +220,7 @@ function DashboardContent() {
       return <div className="p-4 text-center crt-muted">Widget not found: {widget.widgetType}</div>;
     }
 
-    // Pass special props for control widgets
-    const specialProps: any = {};
-    if (widget.widgetType === 'AddWidgetWidget') {
-      specialProps.onAddWidget = () => setShowWidgetLibrary(true);
-    } else if (widget.widgetType === 'UndoWidget') {
-      specialProps.onUndo = handleUndo;
-      specialProps.canUndo = canUndo;
-      specialProps.undoCount = undoCount;
-    }
-
-    return <WidgetComponent widgetInstanceId={id} {...specialProps} />;
+    return <WidgetComponent widgetInstanceId={id} />;
   };
 
 
@@ -249,6 +239,34 @@ function DashboardContent() {
       />
 
       <div className="flex-1 p-6 overflow-y-auto">
+        <motion.div 
+          className="flex items-center justify-between mb-6"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <Button
+            onClick={() => setShowWidgetLibrary(true)}
+            className="crt-button px-4 py-2 rounded flex items-center space-x-2 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Widget</span>
+          </Button>
+          
+          <div className="flex items-center space-x-3">
+            <Button
+              onClick={handleUndo}
+              disabled={!canUndo}
+              variant="outline"
+              className="px-3 py-2 rounded flex items-center space-x-2 text-sm"
+              title={`Undo layout changes (${undoCount} available)`}
+            >
+              <Undo className="w-4 h-4" />
+              <span>Undo {undoCount > 0 && `(${undoCount})`}</span>
+            </Button>
+
+            <DashboardSettings />
+          </div>
+        </motion.div>
 
 
         <motion.div
