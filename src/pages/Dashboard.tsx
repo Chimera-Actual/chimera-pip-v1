@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import debounce from "lodash.debounce";
 import { WidgetSettings } from "@/types/common";
+import { Layout } from "react-grid-layout";
 
 const DashboardContent = React.memo(() => {
   const { toast } = useToast();
@@ -136,7 +137,7 @@ const DashboardContent = React.memo(() => {
   };
 
   const handleLayoutChange = useCallback(
-    debounce((layout: any[]) => {
+    debounce((layout: Layout[]) => {
       saveLayout(layout);
       updateTabLayout(activeTabId, layout);
     }, 300),
@@ -204,6 +205,7 @@ const DashboardContent = React.memo(() => {
           onTabDelete={deleteTab}
           onTabUpdate={updateTab}
           onTabReorder={reorderTabs}
+          aria-label="Dashboard tab navigation"
         />
       </div>
 

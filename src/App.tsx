@@ -10,6 +10,7 @@ import { LocationProvider } from "@/contexts/LocationContext";
 import { UserProfileProvider } from "@/hooks/useUserProfile";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ProtectedRoute } from "@/components/Layout/ProtectedRoute";
+import { ComprehensiveErrorBoundary } from "@/components/ui/ComprehensiveErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -17,36 +18,38 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <SecurityProvider>
-        <UserProfileProvider>
-          <ThemeProvider>
-            <AudioProvider>
-              <LocationProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <Routes>
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/" element={
-                        <ProtectedRoute>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      } />
-                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </BrowserRouter>
-                </TooltipProvider>
-              </LocationProvider>
-            </AudioProvider>
-          </ThemeProvider>
-        </UserProfileProvider>
-      </SecurityProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ComprehensiveErrorBoundary showErrorDetails={process.env.NODE_ENV === 'development'}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SecurityProvider>
+          <UserProfileProvider>
+            <ThemeProvider>
+              <AudioProvider>
+                <LocationProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
+                      <Routes>
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/" element={
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        } />
+                        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </LocationProvider>
+              </AudioProvider>
+            </ThemeProvider>
+          </UserProfileProvider>
+        </SecurityProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ComprehensiveErrorBoundary>
 );
 
 export default App;

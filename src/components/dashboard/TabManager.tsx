@@ -154,6 +154,7 @@ function TabSettingsModal({ isOpen, onClose, tabs, onTabCreate, onTabEdit, onTab
                       onClick={() => onTabEdit(tab)}
                       variant="ghost"
                       size="sm"
+                      aria-label={`Edit tab ${tab.name}`}
                     >
                       <Edit3 className="w-3 h-3" />
                     </Button>
@@ -273,7 +274,7 @@ export default function TabManager({
   const [editingTab, setEditingTab] = useState<DashboardTab | null>(null);
   const [showTabSettings, setShowTabSettings] = useState(false);
 
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: { destination?: { index: number }, source: { index: number } }) => {
     if (!result.destination) return;
     onTabReorder(result.source.index, result.destination.index);
   };
@@ -298,7 +299,7 @@ export default function TabManager({
                   return (
                     <Draggable key={tab.id} draggableId={tab.id} index={index}>
                       {(provided, snapshot) => (
-                        <div
+                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           className={`flex items-center space-x-2 px-4 py-2 rounded-lg cursor-pointer transition-all group ${
@@ -306,6 +307,9 @@ export default function TabManager({
                               ? 'crt-card crt-accent'
                               : 'hover:crt-card hover:bg-muted/20'
                           } ${snapshot.isDragging ? 'shadow-lg z-50' : ''}`}
+                          role="tab"
+                          aria-selected={activeTabId === tab.id}
+                          aria-label={`Tab ${tab.name}`}
                         >
                           <div {...provided.dragHandleProps} className="flex items-center space-x-2">
                             <IconComponent className="w-4 h-4" />
@@ -344,6 +348,7 @@ export default function TabManager({
           variant="outline"
           size="icon"
           title="Tab Settings"
+          aria-label="Open tab settings menu"
         >
           <Settings className="w-4 h-4" />
         </Button>
