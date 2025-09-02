@@ -49,14 +49,10 @@ export default function WidgetFrame({
   };
   return (
     <motion.div 
-      className={`crt-card h-full flex flex-col overflow-hidden transition-all duration-200 ease-out ${
+      className={`crt-card flex flex-col ${
         isCollapsed ? 'widget-collapsed' : 'widget-expanded'
       } ${className}`}
-      style={{
-        ...style,
-        height: isCollapsed ? '48px' : 'auto',
-        minHeight: isCollapsed ? '48px' : 'auto'
-      }}
+      style={style}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
@@ -100,7 +96,7 @@ export default function WidgetFrame({
       {/* Content - Conditionally rendered based on collapse state */}
       {!isCollapsed && (
         <div className="flex-1 overflow-hidden pipboy-panel">
-          <div className="p-3 h-full">
+          <div className="p-3">
             {children}
           </div>
         </div>
