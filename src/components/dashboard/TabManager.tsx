@@ -342,11 +342,10 @@ export default function TabManager({
         <Button
           onClick={() => setShowTabSettings(!showTabSettings)}
           variant="outline"
-          size="sm"
-          className="flex items-center space-x-2"
+          size="icon"
+          title="Tab Settings"
         >
           <Settings className="w-4 h-4" />
-          <span>Tab Settings</span>
         </Button>
       </div>
 
