@@ -7,10 +7,12 @@ import { useState } from 'react';
 
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { DashboardGrid } from './DashboardGrid';
 import { WidgetCatalogPanel } from './WidgetCatalogPanel';
 import { WidgetPropertiesPanel } from './WidgetPropertiesPanel';
 import { DashboardHeader } from './DashboardHeader';
+import { CrossPanelDropZone } from './CrossPanelDropZone';
 import { PipBoyErrorFallback } from '../ui/PipBoyErrorFallback';
 import { cn } from '@/lib/utils';
 import type { DragItem } from '@/types/dashboard';
@@ -29,6 +31,9 @@ export const PanelDashboardLayout: React.FC = () => {
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dragItem, setDragItem] = useState<DragItem | null>(null);
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts();
 
   // Load layouts when user is available
   useEffect(() => {
@@ -81,7 +86,23 @@ export const PanelDashboardLayout: React.FC = () => {
       }, position);
     }
 
-    // Handle moving existing widget
+    // Handle cross-panel widget movement
+    if (dragItem?.type === 'widget' && overData?.type === 'panel-drop') {
+      const widget = dragItem.data as any;
+      const newPanelId = overData.panelId;
+      
+      // Move widget to new panel with default position
+      const position = {
+        x: 0,
+        y: 0,
+        width: widget.position.width,
+        height: widget.position.height,
+      };
+
+      moveWidget(widget.id, position, newPanelId);
+    }
+
+    // Handle moving existing widget within grid
     if (dragItem.type === 'widget' && overData?.type === 'grid-cell') {
       const widget = dragItem.data as any;
       const position = {
@@ -151,11 +172,16 @@ export const PanelDashboardLayout: React.FC = () => {
                 collapsible
                 className={cn(
                   "border-r border-border/50",
-                  "bg-card/20"
+                  "bg-card/20 relative"
                 )}
               >
                 <ErrorBoundary FallbackComponent={PipBoyErrorFallback}>
                   <WidgetCatalogPanel />
+                  <CrossPanelDropZone 
+                    panelId="sidebar-left" 
+                    panelName="Widget Catalog"
+                    isActive={!!dragItem && dragItem.type === 'widget'}
+                  />
                 </ErrorBoundary>
               </Panel>
 
@@ -165,12 +191,17 @@ export const PanelDashboardLayout: React.FC = () => {
               <Panel
                 defaultSize={60}
                 minSize={40}
-                className="bg-background"
+                className="bg-background relative"
               >
                 <ErrorBoundary FallbackComponent={PipBoyErrorFallback}>
                   <DashboardGrid 
                     layout={currentLayout}
                     onWidgetSelect={selectWidget}
+                  />
+                  <CrossPanelDropZone 
+                    panelId="main" 
+                    panelName="Main Dashboard"
+                    isActive={!!dragItem && dragItem.type === 'widget'}
                   />
                 </ErrorBoundary>
               </Panel>
@@ -185,11 +216,16 @@ export const PanelDashboardLayout: React.FC = () => {
                 collapsible
                 className={cn(
                   "border-l border-border/50",
-                  "bg-card/20"
+                  "bg-card/20 relative"
                 )}
               >
                 <ErrorBoundary FallbackComponent={PipBoyErrorFallback}>
                   <WidgetPropertiesPanel />
+                  <CrossPanelDropZone 
+                    panelId="sidebar-right" 
+                    panelName="Properties Panel"
+                    isActive={!!dragItem && dragItem.type === 'widget'}
+                  />
                 </ErrorBoundary>
               </Panel>
             </PanelGroup>
@@ -197,18 +233,18 @@ export const PanelDashboardLayout: React.FC = () => {
 
           {/* Drag Overlay */}
           <DragOverlay>
-            {activeId && dragItem ? (
-              <div className="
-                bg-card/90 border-2 border-primary/50 rounded-lg 
-                shadow-[0_0_20px_rgba(var(--primary),0.3)] 
-                p-4 pointer-events-none
-                transform rotate-3 scale-105
-              ">
-                <div className="text-sm font-mono text-foreground">
-                  {(dragItem.data as any).name || (dragItem.data as any).title}
-                </div>
+          {activeId && dragItem ? (
+            <div className="
+              bg-card/90 border-2 border-primary/50 rounded-lg 
+              shadow-[0_0_20px_rgba(var(--primary),0.3)] 
+              p-4 pointer-events-none
+              transform rotate-3 scale-105
+            ">
+              <div className="text-sm font-mono text-foreground">
+                {(dragItem.data as any)?.name || (dragItem.data as any)?.title || 'Widget'}
               </div>
-            ) : null}
+            </div>
+          ) : null}
           </DragOverlay>
         </DndContext>
       </div>

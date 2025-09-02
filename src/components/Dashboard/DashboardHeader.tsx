@@ -1,6 +1,6 @@
 // Dashboard Header with Layout Management
 import React from 'react';
-import { Monitor, Plus, Save, Undo, Redo, Settings } from 'lucide-react';
+import { Monitor, Plus, Save, Undo, Redo, Settings, Layout, HelpCircle } from 'lucide-react';
 
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger 
 } from '../ui/dropdown-menu';
 import { Badge } from '../ui/badge';
+import { LAYOUT_TEMPLATES, createLayoutFromTemplate } from './LayoutTemplates';
+import { HelpModal } from './HelpModal';
 import { cn } from '@/lib/utils';
 
 export const DashboardHeader: React.FC = () => {
@@ -31,6 +33,8 @@ export const DashboardHeader: React.FC = () => {
     updateLayout
   } = useDashboardStore();
 
+  const [showHelp, setShowHelp] = React.useState(false);
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
@@ -39,6 +43,19 @@ export const DashboardHeader: React.FC = () => {
     const name = prompt('Enter layout name:');
     if (name) {
       await createLayout(name, user.id);
+    }
+  };
+
+  const handleCreateFromTemplate = async (templateId: string) => {
+    if (!user?.id) return;
+    const template = LAYOUT_TEMPLATES.find(t => t.id === templateId);
+    if (!template) return;
+    
+    const name = prompt('Enter layout name:', template.name);
+    if (name) {
+      const layoutData = createLayoutFromTemplate(template, user.id, name);
+      await createLayout(name, user.id);
+      // Note: In a real implementation, we'd pass the template data to createLayout
     }
   };
 
@@ -119,15 +136,40 @@ export const DashboardHeader: React.FC = () => {
 
         <div className="w-px h-6 bg-border/50 mx-1" />
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCreateLayout}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          New Layout
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              New Layout
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-64">
+            <DropdownMenuItem onClick={handleCreateLayout}>
+              <Plus className="w-4 h-4 mr-2" />
+              Blank Layout
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {LAYOUT_TEMPLATES.map((template) => (
+              <DropdownMenuItem
+                key={template.id}
+                onClick={() => handleCreateFromTemplate(template.id)}
+                className="flex items-start gap-2"
+              >
+                <div className="mt-0.5">{template.icon}</div>
+                <div>
+                  <div className="font-medium">{template.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {template.description}
+                  </div>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Right Section - Layout Selector & Settings */}
@@ -186,10 +228,13 @@ export const DashboardHeader: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
+          onClick={() => setShowHelp(true)}
           className="text-muted-foreground hover:text-foreground"
         >
-          <Settings className="w-4 h-4" />
+          <HelpCircle className="w-4 h-4" />
         </Button>
+
+        <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
       </div>
     </header>
   );

@@ -6,6 +6,7 @@ import { GripVertical, Maximize2, Minimize2, X } from 'lucide-react';
 
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { WidgetRenderer } from '../Layout/WidgetRenderer';
+import { ResizableWidget } from './ResizableWidget';
 import { cn } from '@/lib/utils';
 import type { Widget } from '@/types/dashboard';
 
@@ -24,7 +25,8 @@ export const DashboardGridWidget: React.FC<DashboardGridWidgetProps> = ({
     selectedWidget, 
     removeWidget, 
     toggleWidgetCollapse,
-    updateWidgetSettings 
+    updateWidgetSettings,
+    resizeWidget
   } = useDashboardStore();
 
   const {
@@ -68,6 +70,10 @@ export const DashboardGridWidget: React.FC<DashboardGridWidgetProps> = ({
     updateWidgetSettings(widget.id, newSettings);
   };
 
+  const handleResize = (widgetId: string, newSize: { width: number; height: number }) => {
+    resizeWidget(widgetId, newSize);
+  };
+
   if (isDragging) {
     return (
       <div 
@@ -79,9 +85,10 @@ export const DashboardGridWidget: React.FC<DashboardGridWidgetProps> = ({
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{ ...style, ...dragStyle }}
+    <ResizableWidget
+      widget={widget}
+      isSelected={isSelected}
+      onResize={handleResize}
       className={cn(
         "group relative",
         "bg-card/90 border-2 rounded-lg overflow-hidden",
@@ -92,8 +99,13 @@ export const DashboardGridWidget: React.FC<DashboardGridWidgetProps> = ({
           : "border-border/50 hover:border-primary/70",
         "pip-boy-scanlines"
       )}
-      onClick={handleSelect}
+      style={{ ...style, ...dragStyle }}
     >
+      <div
+        ref={setNodeRef}
+        className="h-full"
+        onClick={handleSelect}
+      >
       {/* Widget Header */}
       <div className={cn(
         "flex items-center justify-between px-3 py-2",
@@ -158,37 +170,15 @@ export const DashboardGridWidget: React.FC<DashboardGridWidgetProps> = ({
         </div>
       )}
 
-      {/* Resize Handles (when selected) */}
-      {isSelected && widget.isResizable && (
-        <>
-          {/* Corner resize handle */}
+        {/* Selection indicator */}
+        {isSelected && (
           <div className={cn(
-            "absolute bottom-0 right-0 w-4 h-4",
-            "bg-primary/50 cursor-se-resize",
-            "hover:bg-primary transition-colors",
-            "border-l border-t border-primary/30"
+            "absolute inset-0 pointer-events-none",
+            "border-2 border-primary/50 rounded-lg",
+            "animate-pulse"
           )} />
-          
-          {/* Edge resize handles */}
-          <div className={cn(
-            "absolute bottom-0 left-4 right-4 h-1",
-            "bg-primary/20 cursor-s-resize hover:bg-primary/40"
-          )} />
-          <div className={cn(
-            "absolute top-4 bottom-4 right-0 w-1",
-            "bg-primary/20 cursor-e-resize hover:bg-primary/40"
-          )} />
-        </>
-      )}
-
-      {/* Selection indicator */}
-      {isSelected && (
-        <div className={cn(
-          "absolute inset-0 pointer-events-none",
-          "border-2 border-primary/50 rounded-lg",
-          "animate-pulse"
-        )} />
-      )}
-    </div>
+        )}
+      </div>
+    </ResizableWidget>
   );
 };
