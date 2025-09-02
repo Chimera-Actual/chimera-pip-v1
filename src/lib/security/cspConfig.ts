@@ -204,10 +204,8 @@ class CSPManager {
       // Referrer Policy
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       
-      // Strict Transport Security (if using HTTPS)
-      ...(typeof window !== 'undefined' && window.location.protocol === 'https:' ? {
-        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
-      } : {}),
+      // Strict Transport Security (for HTTPS in production)
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
       
       // Permissions Policy (Feature Policy)
       'Permissions-Policy': [

@@ -12,8 +12,8 @@ export function withSecurityMiddleware<T extends Record<string, any>>(
     enforceRateLimit?: boolean;
     endpoint?: string;
   } = {}
-) {
-  return function SecureComponent(props: T) {
+): React.ComponentType<T> {
+  return function SecureComponent(props: T): JSX.Element {
     const security = useSecurity();
     const {
       sanitizeProps = true,
@@ -50,7 +50,7 @@ export function withSecurityMiddleware<T extends Record<string, any>>(
       }
     }
 
-    return <Component {...secureProps} />;
+    return React.createElement(Component, secureProps);
   };
 }
 
@@ -58,8 +58,8 @@ export function withSecurityMiddleware<T extends Record<string, any>>(
 export function withFormSecurity<T extends Record<string, any>>(
   Component: React.ComponentType<T>,
   validationRules?: Record<string, (value: any) => boolean>
-) {
-  return function SecureFormComponent(props: T) {
+): React.ComponentType<T> {
+  return function SecureFormComponent(props: T): JSX.Element {
     const security = useSecurity();
 
     // Validate form data if validation rules are provided
@@ -83,7 +83,7 @@ export function withFormSecurity<T extends Record<string, any>>(
       stripTags: true,
     });
 
-    return <Component {...secureProps} />;
+    return React.createElement(Component, secureProps);
   };
 }
 
