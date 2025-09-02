@@ -14,6 +14,7 @@ import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
 import { WidgetLibrary } from './WidgetLibrary';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/lib/logger';
 
 interface AppletContainerProps {
   activeApplet: string;
@@ -165,7 +166,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
         description: `"${dragData.widgetName}" has been moved to this tab`,
       });
     } catch (error) {
-      console.error('Error moving widget:', error);
+      logger.error('Error moving widget', error, 'AppletContainer');
       toast({
         title: "Error",
         description: "Failed to move widget between tabs",
@@ -217,7 +218,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
         }
       }
     } catch (error) {
-      console.error('Error reordering widget:', error);
+      logger.error('Error reordering widget', error, 'AppletContainer');
       toast({
         title: "Error",
         description: "Failed to reorder widget",

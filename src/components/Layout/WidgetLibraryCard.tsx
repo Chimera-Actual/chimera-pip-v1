@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Tags, Settings } from 'lucide-react';
+import { Plus, Eye, Hash, Settings2, Tags } from 'lucide-react';
 import * as Icons from 'lucide-react';
-import { IconPicker } from '@/components/ui/icon-picker';
 import { WidgetDefinition } from '@/hooks/useWidgetManager';
+import { IconPicker } from '@/components/ui/icon-picker';
+import { logger } from '@/lib/logger';
 
 interface WidgetLibraryCardProps {
   widget: WidgetDefinition;
@@ -42,7 +43,7 @@ export default function WidgetLibraryCard({
       try {
         await onUpdateIcon(widget.id, iconName);
       } catch (error) {
-        console.error('Failed to update icon:', error);
+        logger.error('Failed to update icon', error, 'WidgetLibraryCard');
       }
     }
     setShowIconPicker(false);

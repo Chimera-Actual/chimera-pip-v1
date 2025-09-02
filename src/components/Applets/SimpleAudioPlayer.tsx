@@ -7,6 +7,7 @@ import { SimpleWaveform } from './SimpleWaveform';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface AudioTrack {
   id: string;
@@ -129,7 +130,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error loading playlist:', error);
+      logger.error('Error loading playlist', error, 'SimpleAudioPlayer');
     }
   };
 
@@ -155,7 +156,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error saving playlist:', error);
+      logger.error('Error saving playlist', error, 'SimpleAudioPlayer');
     }
   };
 
@@ -205,15 +206,15 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
     if (!audioRef.current) return;
 
     try {
-      console.log('Playing track:', track.title);
+      logger.debug('Playing track', { title: track.title }, 'SimpleAudioPlayer');
       setCurrentTrack(track);
       audioRef.current.src = track.url;
       audioRef.current.volume = volume / 100;
       
       await audioRef.current.play();
-      console.log('Track playing successfully');
+      logger.debug('Track playing successfully', undefined, 'SimpleAudioPlayer');
     } catch (error) {
-      console.error('Error playing track:', error);
+      logger.error('Error playing track', error, 'SimpleAudioPlayer');
       toast.error('Could not play audio file');
     }
   };
@@ -228,7 +229,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
         await audioRef.current.play();
       }
     } catch (error) {
-      console.error('Error toggling playback:', error);
+      logger.error('Error toggling playback', error, 'SimpleAudioPlayer');
       toast.error('Playback error');
     }
   };
@@ -307,7 +308,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
       
       toast.success('Audio file uploaded successfully!');
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error', error, 'SimpleAudioPlayer');
       toast.error('Failed to upload audio file');
     }
   };

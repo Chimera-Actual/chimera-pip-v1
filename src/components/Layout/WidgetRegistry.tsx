@@ -1,16 +1,23 @@
 
-// Standardized widget component registry with lazy loading
+// Standardized widget component registry with optimized lazy loading
 import React, { Suspense } from 'react';
 import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
+import { createLazyComponent, preloadComponent, getWidgetBundlePriority } from '@/lib/bundleSplitting';
 
-// Dashboard native widgets - keeping only essential system widgets
-const SampleClock = React.lazy(() => import('@/components/widgets/SampleClock'));
-const SampleNote = React.lazy(() => import('@/components/widgets/SampleNote'));
-const SampleChart = React.lazy(() => import('@/components/widgets/SampleChart'));
+// Core widgets with optimized loading
+const SampleClock = createLazyComponent(() => import('@/components/widgets/SampleClock'), 'SampleClock');
+const SampleNote = createLazyComponent(() => import('@/components/widgets/SampleNote'), 'SampleNote');
+const SampleChart = createLazyComponent(() => import('@/components/widgets/SampleChart'), 'SampleChart');
 
 // Dashboard widgets
-const AddWidgetWidget = React.lazy(() => import('@/components/widgets/AddWidgetWidget'));
-const DashboardSettingsWidget = React.lazy(() => import('@/components/widgets/DashboardSettingsWidget'));
+const AddWidgetWidget = createLazyComponent(() => import('@/components/widgets/AddWidgetWidget'), 'AddWidgetWidget');
+const DashboardSettingsWidget = createLazyComponent(() => import('@/components/widgets/DashboardSettingsWidget'), 'DashboardSettingsWidget');
+
+// Preload high-priority widgets
+if (typeof window !== 'undefined') {
+  preloadComponent(() => import('@/components/widgets/SampleClock'), 'SampleClock');
+  preloadComponent(() => import('@/components/widgets/SampleNote'), 'SampleNote');
+}
 
 // Create wrapped components with suspense and optimized skeletons
 const createLazyWidget = (
@@ -34,9 +41,9 @@ export const WIDGET_COMPONENTS = {
   AddWidgetWidget: createLazyWidget(AddWidgetWidget, 'card'),
   DashboardSettingsWidget: createLazyWidget(DashboardSettingsWidget, 'card'),
   
-  // Demo and development widgets
-  WidgetFactoryDemo: createLazyWidget(React.lazy(() => import('@/components/widgets/WidgetFactoryDemo')), 'card'),
-  ModernCSSDemo: createLazyWidget(React.lazy(() => import('@/components/demo/ModernCSSDemo')), 'card'),
+  // Demo and development widgets (lowest priority)
+  WidgetFactoryDemo: createLazyWidget(createLazyComponent(() => import('@/components/widgets/WidgetFactoryDemo'), 'WidgetFactoryDemo'), 'card'),
+  ModernCSSDemo: createLazyWidget(createLazyComponent(() => import('@/components/demo/ModernCSSDemo'), 'ModernCSSDemo'), 'card'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;

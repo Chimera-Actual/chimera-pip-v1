@@ -8,6 +8,7 @@ import { WidgetTagManager } from './WidgetTagManager';
 import WidgetLibraryCard from './WidgetLibraryCard';
 import { useWidgetIconManager } from '@/hooks/useWidgetIconManager';
 import { toast } from '@/hooks/use-toast';
+import { logger } from '@/lib/logger';
 
 interface WidgetLibraryProps {
   isOpen: boolean;
@@ -68,7 +69,7 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
         description: `Widget icon changed to ${newIcon}`,
       });
     } catch (error) {
-      console.error('Failed to update widget icon:', error);
+      logger.error('Failed to update widget icon', error, 'WidgetLibrary');
       toast({
         title: "Update Failed", 
         description: "Cannot modify widget definitions (admin only)",
