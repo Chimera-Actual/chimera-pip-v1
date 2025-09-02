@@ -10,6 +10,7 @@ import { UserProfileProvider } from "@/hooks/useUserProfile";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ProtectedRoute } from "@/components/Layout/ProtectedRoute";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,7 @@ const App = () => (
                 <BrowserRouter>
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/" element={
                       <ProtectedRoute>
                         <Index />

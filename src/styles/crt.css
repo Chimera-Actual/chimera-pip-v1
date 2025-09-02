@@ -1,0 +1,141 @@
+:root {
+  --crt-bg: #081d14;
+  --crt-panel: #072116;
+  --crt-border: #10b981; /* emerald-500 */
+  --crt-text: #a7f3d0;   /* emerald-200/300 */
+  --crt-accent: #34d399; /* emerald-400 */
+  --crt-muted: #6b7280;  /* gray-500 */
+}
+
+:root[data-crt="amber"] {
+  --crt-bg: #161107;
+  --crt-panel: #221a08;
+  --crt-border: #f59e0b;
+  --crt-text: #fde68a;
+  --crt-accent: #fbbf24;
+  --crt-muted: #78716c;
+}
+
+:root[data-crt="blue"] {
+  --crt-bg: #060c16;
+  --crt-panel: #0a1624;
+  --crt-border: #60a5fa;
+  --crt-text: #bfdbfe;
+  --crt-accent: #93c5fd;
+  --crt-muted: #64748b;
+}
+
+.crt-bg { 
+  background: var(--crt-bg); 
+}
+
+.crt-panel { 
+  background: var(--crt-panel); 
+}
+
+.crt-border { 
+  border-color: var(--crt-border); 
+}
+
+.crt-text { 
+  color: var(--crt-text); 
+}
+
+.crt-accent {
+  color: var(--crt-accent);
+}
+
+.crt-muted {
+  color: var(--crt-muted);
+}
+
+.crt-scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  mix-blend-mode: screen;
+  opacity: 0.25;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 140, 0.06) 0px,
+    rgba(0, 255, 140, 0.06) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  pointer-events: none;
+}
+
+.crt-card {
+  border: 1px solid var(--crt-border);
+  border-radius: 1rem;
+  background: var(--crt-panel);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.12);
+  position: relative;
+}
+
+.crt-input {
+  background: var(--crt-panel);
+  border: 1px solid var(--crt-border);
+  color: var(--crt-text);
+}
+
+.crt-input:focus {
+  box-shadow: 0 0 8px var(--crt-border);
+  outline: none;
+}
+
+.crt-button {
+  background: var(--crt-panel);
+  border: 1px solid var(--crt-border);
+  color: var(--crt-text);
+  transition: all 0.2s ease;
+}
+
+.crt-button:hover {
+  background: var(--crt-border);
+  color: var(--crt-bg);
+  box-shadow: 0 0 8px var(--crt-border);
+}
+
+/* React Grid Layout overrides */
+.react-grid-layout {
+  position: relative;
+}
+
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  background: var(--crt-border);
+  padding: 0 3px 3px 0;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZG90cyBmaWxsPSIjOTk5IiBkPSJtNSA1IDEgMVptLTEgMCAyIDJabS0xIDAgMyAzWm0tMSAwIDQgNFptLTEgMCA1IDVaIiBvcGFjaXR5PSIuNSIvPgo8L3N2Zz4K");
+  background-position: bottom right;
+  padding: 0 3px 3px 0;
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  box-sizing: border-box;
+  cursor: se-resize;
+  border-radius: 0 0 1rem 0;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid var(--crt-text);
+  border-bottom: 2px solid var(--crt-text);
+}
