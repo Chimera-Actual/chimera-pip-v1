@@ -119,46 +119,44 @@ class CacheManager {
 
   // Prefetch data that's likely to be needed
   async prefetchWidgetData(userId: string): Promise<void> {
-    const prefetchQueries = [
-      {
+    try {
+      // Prefetch widget definitions
+      const widgetDefsConfig = this.getCacheConfig(['widget-definitions']);
+      await this.queryClient.prefetchQuery({
         queryKey: ['widget-definitions'],
         queryFn: async () => {
           const { optimizedSupabase } = await import('./optimizedSupabaseClient');
-          return optimizedSupabase.query(
-            optimizedSupabase.raw
-              .from('widget_definitions')
-              .select('*')
-              .order('category', { ascending: true })
-          );
+          const { data, error } = await optimizedSupabase.raw
+            .from('widget_definitions')
+            .select('*')
+            .order('category', { ascending: true });
+          
+          if (error) throw error;
+          return data;
         },
-      },
-      {
+        staleTime: widgetDefsConfig.staleTime,
+        gcTime: widgetDefsConfig.gcTime,
+      });
+
+      // Prefetch user widget instances
+      const widgetInstancesConfig = this.getCacheConfig(['user-widget-instances', userId]);
+      await this.queryClient.prefetchQuery({
         queryKey: ['user-widget-instances', userId],
         queryFn: async () => {
           const { optimizedSupabase } = await import('./optimizedSupabaseClient');
-          return optimizedSupabase.query(
-            optimizedSupabase.raw
-              .from('user_widget_instances')
-              .select('*, widget_definition:widget_definitions(*)')
-              .eq('user_id', userId)
-              .order('position', { ascending: true })
-          );
+          const { data, error } = await optimizedSupabase.raw
+            .from('user_widget_instances')
+            .select('*, widget_definition:widget_definitions(*)')
+            .eq('user_id', userId)
+            .order('position', { ascending: true });
+          
+          if (error) throw error;
+          return data;
         },
-      },
-    ];
-
-    const promises = prefetchQueries.map(({ queryKey, queryFn }) => {
-      const config = this.getCacheConfig(queryKey);
-      return this.queryClient.prefetchQuery({
-        queryKey,
-        queryFn,
-        staleTime: config.staleTime,
-        gcTime: config.gcTime,
+        staleTime: widgetInstancesConfig.staleTime,
+        gcTime: widgetInstancesConfig.gcTime,
       });
-    });
 
-    try {
-      await Promise.allSettled(promises);
       logger.info('Widget data prefetched successfully');
     } catch (error) {
       logger.error('Failed to prefetch widget data:', error);
