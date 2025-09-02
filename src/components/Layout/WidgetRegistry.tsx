@@ -46,3 +46,28 @@ export const WIDGET_COMPONENTS = {
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
+
+// Widget Registry class for the new dashboard system
+export class WidgetRegistry {
+  private static widgets = new Map<string, any>();
+
+  static register(definition: any) {
+    this.widgets.set(definition.id, definition);
+  }
+
+  static getAll() {
+    // Return mock widget definitions for now
+    return [
+      { id: 'MapWidget', name: 'Map', description: 'Location and navigation', icon: '🗺️', category: 'Location', component_name: 'MapWidget', default_settings: {} },
+      { id: 'WeatherWidget', name: 'Weather', description: 'Current weather conditions', icon: '🌤️', category: 'Information', component_name: 'WeatherWidget', default_settings: {} },
+      { id: 'ClockWidget', name: 'Clock', description: 'Digital clock display', icon: '🕐', category: 'Utilities', component_name: 'ClockWidget', default_settings: {} },
+      { id: 'UserInfoWidget', name: 'User Info', description: 'User profile information', icon: '👤', category: 'Profile', component_name: 'UserInfoWidget', default_settings: {} },
+    ];
+  }
+
+  static get(type: string) {
+    const component = WIDGET_COMPONENTS[type as WidgetComponentName];
+    if (!component) return null;
+    return { component };
+  }
+}
