@@ -1,10 +1,11 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { CRTChrome, CRTThemeProvider, useCRT } from "@/lib/CRTTheme";
 import DashboardGrid, { GridItem } from "@/components/dashboard/DashboardGrid";
 import WidgetLibrary from "@/components/dashboard/WidgetLibrary";
 import TabManager from "@/components/dashboard/TabManager";
+import OrphanedWidget from "@/components/dashboard/OrphanedWidget";
 import { WIDGET_COMPONENTS, WidgetComponentName } from "@/components/Layout/WidgetRegistry";
-import { Palette, Zap, Undo, Plus, Settings, User, LogOut, Monitor } from "lucide-react";
+import { Palette, Zap, Undo, Plus, Settings, User, LogOut, Monitor, Trash2, AlertTriangle } from "lucide-react";
 import { useLayoutHistory } from "@/hooks/useLayoutHistory";
 import { useDashboardTabs } from "@/hooks/useDashboardTabs";
 import { useToast } from "@/hooks/use-toast";
@@ -167,7 +168,34 @@ function DashboardContent() {
   //   }
   // }, [tabs, updateTab]);
 
+  // Detect orphaned widgets in the current tab
+  const orphanedWidgets = (activeTab?.widgets || []).filter(widget => {
+    if (!widget.widgetType) return true;
+    return !WIDGET_COMPONENTS[widget.widgetType as WidgetComponentName];
+  });
+
   const { saveLayout, undo, canUndo, undoCount } = useLayoutHistory(`dashboard:layout:${activeTabId}`);
+
+  // Show notification about orphaned widgets
+  useEffect(() => {
+    if (orphanedWidgets.length > 0) {
+      toast({
+        title: "Orphaned widgets detected",
+        description: `${orphanedWidgets.length} widget${orphanedWidgets.length > 1 ? 's' : ''} could not be loaded`,
+        variant: "destructive",
+      });
+    }
+  }, [orphanedWidgets.length, toast]);
+
+  const handleCleanupOrphanedWidgets = () => {
+    orphanedWidgets.forEach(widget => {
+      removeWidgetFromTab(activeTabId, widget.id);
+    });
+    toast({
+      title: "Widgets cleaned up",
+      description: `Removed ${orphanedWidgets.length} orphaned widget${orphanedWidgets.length > 1 ? 's' : ''}`,
+    });
+  };
 
   const handleAddWidget = (widgetDef: any) => {
     const newWidget: GridItem = {
@@ -212,12 +240,25 @@ function DashboardContent() {
   const renderWidget = (id: string) => {
     const widget = activeTab?.widgets.find(item => item.id === id);
     if (!widget || !widget.widgetType) {
-      return <div className="p-4 text-center crt-muted">Unknown widget: {id}</div>;
+      return (
+        <OrphanedWidget
+          widgetId={id}
+          onRemove={handleRemoveWidget}
+          reason="missing-type"
+        />
+      );
     }
 
     const WidgetComponent = WIDGET_COMPONENTS[widget.widgetType as WidgetComponentName];
     if (!WidgetComponent) {
-      return <div className="p-4 text-center crt-muted">Widget not found: {widget.widgetType}</div>;
+      return (
+        <OrphanedWidget
+          widgetId={id}
+          widgetType={widget.widgetType}
+          onRemove={handleRemoveWidget}
+          reason="component-not-found"
+        />
+      );
     }
 
     return <WidgetComponent widgetInstanceId={id} />;
@@ -253,6 +294,19 @@ function DashboardContent() {
           </Button>
           
           <div className="flex items-center space-x-3">
+            {orphanedWidgets.length > 0 && (
+              <Button
+                onClick={handleCleanupOrphanedWidgets}
+                variant="outline"
+                className="px-3 py-2 rounded flex items-center space-x-2 text-sm border-red-500/50 text-red-400 hover:bg-red-500/20"
+                title={`Remove ${orphanedWidgets.length} orphaned widget${orphanedWidgets.length > 1 ? 's' : ''}`}
+              >
+                <AlertTriangle className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" />
+                <span>Clean Up ({orphanedWidgets.length})</span>
+              </Button>
+            )}
+            
             <Button
               onClick={handleUndo}
               disabled={!canUndo}
