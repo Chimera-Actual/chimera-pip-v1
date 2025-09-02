@@ -123,7 +123,7 @@ export default function DashboardGrid({
         rowHeight={rowHeight}
         margin={margin}
         containerPadding={containerPadding}
-        isResizable={editable}
+        isResizable={false}
         isDraggable={editable}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".drag-handle"

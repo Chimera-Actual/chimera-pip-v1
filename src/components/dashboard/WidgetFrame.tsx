@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MoreVertical, GripVertical, Settings, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
+import WidgetResizer from "@/components/ui/widget-resizer";
 
 interface WidgetFrameProps {
   title: string;
@@ -48,15 +49,19 @@ export default function WidgetFrame({
     setIsCollapsed(!isCollapsed);
   };
   return (
-    <motion.div 
-      className={`crt-card flex flex-col ${
-        isCollapsed ? 'widget-collapsed' : 'widget-expanded'
-      } ${className}`}
-      style={style}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
+    <WidgetResizer 
+      collapsed={isCollapsed}
+      className="h-full"
     >
+      <motion.div 
+        className={`crt-card flex flex-col h-full ${
+          isCollapsed ? 'widget-collapsed' : 'widget-expanded'
+        } ${className}`}
+        style={style}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
+      >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b crt-border bg-gradient-to-r from-transparent to-[var(--crt-border)]/10 flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -101,6 +106,7 @@ export default function WidgetFrame({
           </div>
         </div>
       )}
-    </motion.div>
+      </motion.div>
+    </WidgetResizer>
   );
 }

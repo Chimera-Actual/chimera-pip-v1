@@ -137,35 +137,108 @@
   border-radius: 1rem;
 }
 
+/* Disable default react-grid-layout resize handles */
 .react-grid-item > .react-resizable-handle {
+  display: none;
+}
+
+/* Custom Widget Resizer Styles */
+.widget-resizer {
+  position: relative;
+  height: 100%;
+}
+
+.widget-resize-handle {
   position: absolute;
-  width: 20px;
-  height: 20px;
-  bottom: 0;
-  right: 0;
-  background: var(--crt-border);
-  padding: 0 3px 3px 0;
-  background-position: bottom right;
-  background-repeat: no-repeat;
-  background-origin: content-box;
-  box-sizing: border-box;
+  background: transparent;
+  z-index: 10;
+  transition: background-color 0.2s ease;
+}
+
+/* Edge handles - 8px wide invisible zones */
+.widget-resize-handle-n {
+  top: -4px;
+  left: 8px;
+  right: 8px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.widget-resize-handle-s {
+  bottom: -4px;
+  left: 8px;
+  right: 8px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.widget-resize-handle-e {
+  right: -4px;
+  top: 8px;
+  bottom: 8px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.widget-resize-handle-w {
+  left: -4px;
+  top: 8px;
+  bottom: 8px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+/* Corner handles - 12x12px zones */
+.widget-resize-handle-nw {
+  top: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+}
+
+.widget-resize-handle-ne {
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: ne-resize;
+}
+
+.widget-resize-handle-sw {
+  bottom: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: sw-resize;
+}
+
+.widget-resize-handle-se {
+  bottom: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
   cursor: se-resize;
-  border-radius: 0 0 1rem 0;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
 }
 
-.react-grid-item > .react-resizable-handle:hover {
-  opacity: 1;
+/* Visual feedback on hover - subtle highlight */
+.widget-resize-handle:hover {
+  background-color: var(--crt-accent);
+  opacity: 0.2;
 }
 
-.react-grid-item > .react-resizable-handle::after {
-  content: "";
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 5px;
-  height: 5px;
-  border-right: 2px solid var(--crt-text);
-  border-bottom: 2px solid var(--crt-text);
+.widget-resize-handle-active {
+  background-color: var(--crt-accent);
+  opacity: 0.4;
+}
+
+/* Disable resize handles when resizing is disabled */
+.widget-resize-disabled .widget-resize-handle {
+  display: none;
+}
+
+/* Visual feedback when actively resizing */
+.widget-resizing {
+  outline: 2px solid var(--crt-accent);
+  outline-offset: -2px;
 }
