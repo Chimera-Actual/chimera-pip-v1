@@ -365,20 +365,22 @@ function DashboardContent() {
 
 
   return (
-    <div className="font-mono crt-text min-h-screen max-h-screen flex flex-col overflow-hidden">
-      <DashboardHeader />
-      
-      <TabManager
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onTabSelect={setActiveTabId}
-        onTabCreate={createTab}
-        onTabDelete={deleteTab}
-        onTabUpdate={updateTab}
-        onTabReorder={reorderTabs}
-      />
+    <div className="font-mono crt-text min-h-screen flex flex-col">
+      <div className="px-6 pt-6">
+        <DashboardHeader />
+        
+        <TabManager
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onTabSelect={setActiveTabId}
+          onTabCreate={createTab}
+          onTabDelete={deleteTab}
+          onTabUpdate={updateTab}
+          onTabReorder={reorderTabs}
+        />
+      </div>
 
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex-1 p-6 min-h-0">
         <motion.div
           key={activeTabId} // Re-render when tab changes
           initial={{ opacity: 0, y: 20 }}
