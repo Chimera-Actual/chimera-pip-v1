@@ -53,11 +53,57 @@ const defaultAssistants: Assistant[] = [
   }
 ];
 
-export const AssistantChat: React.FC = () => {
+interface AssistantChatProps {
+  widgetInstanceId?: string;
+}
+
+export const AssistantChat: React.FC<AssistantChatProps> = ({ widgetInstanceId }) => {
+  // Widget-specific storage keys
+  const getMessagesStorageKey = () => `widget-${widgetInstanceId}-chat-messages`;
+  const getSelectedAssistantStorageKey = () => `widget-${widgetInstanceId}-selected-assistant`;
+  const getInputStorageKey = () => `widget-${widgetInstanceId}-chat-input`;
+
   const [assistants, setAssistants] = useState<Assistant[]>(defaultAssistants);
-  const [selectedAssistant, setSelectedAssistant] = useState<Assistant>(defaultAssistants[0]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  
+  // Widget-specific state with localStorage persistence
+  const [selectedAssistant, setSelectedAssistant] = useState<Assistant>(() => {
+    if (!widgetInstanceId) return defaultAssistants[0];
+    try {
+      const saved = localStorage.getItem(getSelectedAssistantStorageKey());
+      if (saved) {
+        const savedAssistant = JSON.parse(saved);
+        return defaultAssistants.find(a => a.id === savedAssistant.id) || defaultAssistants[0];
+      }
+    } catch (error) {
+      console.warn('Failed to load selected assistant:', error);
+    }
+    return defaultAssistants[0];
+  });
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (!widgetInstanceId) return [];
+    try {
+      const saved = localStorage.getItem(getMessagesStorageKey());
+      return saved ? JSON.parse(saved).map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      })) : [];
+    } catch (error) {
+      console.warn('Failed to load messages:', error);
+      return [];
+    }
+  });
+
+  const [inputValue, setInputValue] = useState(() => {
+    if (!widgetInstanceId) return '';
+    try {
+      return localStorage.getItem(getInputStorageKey()) || '';
+    } catch (error) {
+      console.warn('Failed to load input value:', error);
+      return '';
+    }
+  });
+
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
@@ -66,6 +112,41 @@ export const AssistantChat: React.FC = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Save messages to localStorage when they change
+  useEffect(() => {
+    if (widgetInstanceId && messages.length > 0) {
+      try {
+        localStorage.setItem(getMessagesStorageKey(), JSON.stringify(messages));
+      } catch (error) {
+        console.warn('Failed to save messages:', error);
+      }
+    }
+  }, [messages, widgetInstanceId]);
+
+  // Save selected assistant to localStorage when it changes
+  useEffect(() => {
+    if (widgetInstanceId) {
+      try {
+        localStorage.setItem(getSelectedAssistantStorageKey(), JSON.stringify(selectedAssistant));
+      } catch (error) {
+        console.warn('Failed to save selected assistant:', error);
+      }
+    }
+  }, [selectedAssistant, widgetInstanceId]);
+
+  // Save input value to localStorage when it changes (debounced)
+  useEffect(() => {
+    if (!widgetInstanceId) return;
+    const timeoutId = setTimeout(() => {
+      try {
+        localStorage.setItem(getInputStorageKey(), inputValue);
+      } catch (error) {
+        console.warn('Failed to save input value:', error);
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [inputValue, widgetInstanceId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -104,9 +185,9 @@ export const AssistantChat: React.FC = () => {
 
   // Initialize session ID when component mounts or assistant changes
   useEffect(() => {
-    const newSessionId = `${selectedAssistant.id}_${Date.now()}`;
+    const newSessionId = `${selectedAssistant.id}_${widgetInstanceId}_${Date.now()}`;
     setSessionId(newSessionId);
-  }, [selectedAssistant]);
+  }, [selectedAssistant, widgetInstanceId]);
 
   useEffect(() => {
     scrollToBottom();

@@ -19,7 +19,7 @@ const ChatWidget: React.FC<BaseWidgetProps> = ({
       widgetName={widgetName}
       icon={<MessageSquare className="w-4 h-4" />}
     >
-      <AssistantChat />
+      <AssistantChat widgetInstanceId={widgetInstanceId} />
     </WidgetAdapter>
   );
 };

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { clearWidgetState } from './widgetStateManager';
 
 export const cleanupWidgetFiles = async (instanceId: string) => {
   try {
@@ -70,3 +71,36 @@ export const cleanupTabFiles = async (tabId: string) => {
     console.error('Error cleaning up tab files:', error);
   }
 };
+
+/**
+ * Comprehensive widget state cleanup including localStorage
+ */
+export async function cleanupWidgetState(widgetInstanceId: string, userId: string) {
+  console.log('🧹 Starting widget state cleanup for:', widgetInstanceId);
+  
+  try {
+    // Clear localStorage state for this widget
+    clearWidgetState(widgetInstanceId);
+    
+    // Also clean up files
+    await cleanupWidgetFiles(widgetInstanceId);
+
+    // Clean up any widget-specific settings
+    const { error: settingsError } = await supabase
+      .from('user_widget_settings')
+      .delete()
+      .eq('widget_instance_id', widgetInstanceId)
+      .eq('user_id', userId);
+
+    if (settingsError) {
+      console.warn('⚠️ Failed to clean up widget settings:', settingsError);
+    } else {
+      console.log('✅ Widget settings cleaned up successfully');
+    }
+
+    console.log('🎉 Widget state cleanup completed for:', widgetInstanceId);
+  } catch (error) {
+    console.error('❌ Widget state cleanup failed:', error);
+    throw error;
+  }
+}

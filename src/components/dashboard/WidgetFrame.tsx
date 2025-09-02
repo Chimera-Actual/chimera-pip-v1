@@ -25,12 +25,12 @@ export default function WidgetFrame({
   defaultCollapsed = false,
   widgetId
 }: WidgetFrameProps) {
-  // Generate unique storage key for this widget
-  const storageKey = `widget-collapsed-${widgetId || title.replace(/\s+/g, '-').toLowerCase()}`;
+  // Generate unique storage key for this widget - require widgetId for proper uniqueness
+  const storageKey = `widget-${widgetId}-collapsed`;
   
   // Load initial state from localStorage or use default
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && widgetId) {
       const saved = localStorage.getItem(storageKey);
       return saved !== null ? JSON.parse(saved) : defaultCollapsed;
     }
@@ -39,10 +39,10 @@ export default function WidgetFrame({
 
   // Save collapse state to localStorage whenever it changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && widgetId) {
       localStorage.setItem(storageKey, JSON.stringify(isCollapsed));
     }
-  }, [isCollapsed, storageKey]);
+  }, [isCollapsed, storageKey, widgetId]);
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
