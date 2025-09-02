@@ -225,7 +225,7 @@ function DashboardContent() {
 
 
   return (
-    <div className="font-mono crt-text min-h-screen flex flex-col">
+    <div className="font-mono crt-text min-h-screen max-h-screen flex flex-col overflow-hidden">
       <DashboardHeader />
       
       <TabManager
@@ -290,21 +290,6 @@ function DashboardContent() {
         onClose={() => setShowWidgetLibrary(false)}
         onAddWidget={handleAddWidget}
       />
-      
-      <motion.footer 
-        className="mt-8 text-center text-xs crt-muted space-y-1"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <div>Dashboard Control System v2.0 - Powered by React Grid Layout</div>
-        <div className="flex justify-center space-x-4">
-          <span>⚡ CRT Effects</span>
-          <span>🎛️ Resizable Widgets</span>
-          <span>💾 Auto-Save Layout</span>
-          <span>📦 Widget Library</span>
-        </div>
-      </motion.footer>
     </div>
   );
 }
