@@ -49,8 +49,7 @@ export default function DashboardGrid({
   onWidgetCollapse,
   className = ""
 }: DashboardGridProps) {
-  // Track collapsed widgets
-  const [collapsedWidgets, setCollapsedWidgets] = useState<Set<string>>(new Set());
+  // Single layout state - no separate collapse tracking
   const [layout, setLayout] = useState<Layout[]>(() => {
     try {
       const cached = localStorage.getItem(storageKey);
@@ -86,14 +85,9 @@ export default function DashboardGrid({
   const memoizedLayoutData = useMemo(() => {
     return items.map(item => {
       const existingLayout = layout.find(l => l.i === item.id);
-      const isCollapsed = collapsedWidgets.has(item.id);
       
       if (existingLayout) {
-        return {
-          ...existingLayout,
-          // Adjust height for collapsed widgets - collapsed widgets take 2 grid units (48px)
-          h: isCollapsed ? 2 : (existingLayout.h || item.h || 6)
-        };
+        return existingLayout;
       }
       
       // Create layout for new items
@@ -102,27 +96,18 @@ export default function DashboardGrid({
         x: 0,
         y: Infinity, // This will place new items at the bottom
         w: item.w ?? 4,
-        h: isCollapsed ? 2 : (item.h ?? 6),
+        h: item.h ?? 6,
         minW: item.minW,
-        minH: isCollapsed ? 2 : (item.minH || 2),
+        minH: item.minH || 2,
         maxW: item.maxW,
         maxH: item.maxH,
         static: item.static ?? false,
       };
     });
-  }, [items, layout, collapsedWidgets]);
+  }, [items, layout]);
 
-  // Handle widget collapse/expand
+  // Handle widget collapse/expand - just pass through to parent
   const handleWidgetCollapse = useCallback((widgetId: string, collapsed: boolean) => {
-    setCollapsedWidgets(prev => {
-      const newSet = new Set(prev);
-      if (collapsed) {
-        newSet.add(widgetId);
-      } else {
-        newSet.delete(widgetId);
-      }
-      return newSet;
-    });
     onWidgetCollapse?.(widgetId, collapsed);
   }, [onWidgetCollapse]);
 
@@ -159,7 +144,7 @@ export default function DashboardGrid({
         {items.map(item => (
           <div 
             key={item.id} 
-            className={`grid-item widget-container ${collapsedWidgets.has(item.id) ? 'collapsed' : 'expanded'}`}
+            className="grid-item"
           >
             {renderItem(item.id, handleWidgetCollapse)}
           </div>

@@ -108,7 +108,7 @@ export default function SampleNote({
         onSettings={() => setIsSettingsOpen(true)}
         className={!settings.showBorder ? 'border-none' : ''}
         style={{ opacity: settings.opacity / 100 }}
-        widgetId={widgetInstanceId}
+        widgetInstanceId={widgetInstanceId}
         onCollapseChange={onCollapseChange}
         right={
           <div className="flex items-center space-x-2">

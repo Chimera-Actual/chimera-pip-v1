@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MoreVertical, GripVertical, Settings, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
-import WidgetResizer from "@/components/ui/widget-resizer";
 
 interface WidgetFrameProps {
   title: string;
@@ -12,7 +11,7 @@ interface WidgetFrameProps {
   style?: React.CSSProperties;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
-  widgetId?: string;
+  widgetInstanceId?: string;  // Renamed for consistency
   onCollapseChange?: (widgetId: string, collapsed: boolean) => void;
 }
 
@@ -25,15 +24,15 @@ export default function WidgetFrame({
   style,
   collapsible = true,
   defaultCollapsed = false,
-  widgetId,
+  widgetInstanceId,
   onCollapseChange
 }: WidgetFrameProps) {
-  // Generate unique storage key for this widget - require widgetId for proper uniqueness
-  const storageKey = `widget-${widgetId}-collapsed`;
+  // Generate unique storage key for this widget
+  const storageKey = `widget-${widgetInstanceId}-collapsed`;
   
   // Load initial state from localStorage or use default
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== 'undefined' && widgetId) {
+    if (typeof window !== 'undefined' && widgetInstanceId) {
       const saved = localStorage.getItem(storageKey);
       return saved !== null ? JSON.parse(saved) : defaultCollapsed;
     }
@@ -42,37 +41,33 @@ export default function WidgetFrame({
 
   // Save collapse state to localStorage whenever it changes
   useEffect(() => {
-    if (typeof window !== 'undefined' && widgetId) {
+    if (typeof window !== 'undefined' && widgetInstanceId) {
       localStorage.setItem(storageKey, JSON.stringify(isCollapsed));
     }
-  }, [isCollapsed, storageKey, widgetId]);
+  }, [isCollapsed, storageKey, widgetInstanceId]);
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
     // Notify parent grid about collapse state change
-    if (widgetId && onCollapseChange) {
-      onCollapseChange(widgetId, !isCollapsed);
+    if (widgetInstanceId && onCollapseChange) {
+      onCollapseChange(widgetInstanceId, !isCollapsed);
     }
   };
   return (
-    <WidgetResizer 
-      collapsed={isCollapsed}
-      className="widget-frame"
+    <motion.div 
+      className={`crt-card flex flex-col widget-container ${
+        isCollapsed ? 'collapsed' : 'expanded'
+      } ${className}`}
+      style={{
+        ...style,
+        height: isCollapsed ? '48px' : 'auto',
+        minHeight: isCollapsed ? '48px' : '200px',
+        maxHeight: isCollapsed ? '48px' : 'none'
+      }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
     >
-      <motion.div 
-        className={`crt-card flex flex-col ${
-          isCollapsed ? 'widget-collapsed' : 'widget-expanded'
-        } ${className}`}
-        style={{
-          ...style,
-          height: isCollapsed ? '48px' : 'auto',
-          minHeight: isCollapsed ? '48px' : '200px',
-          maxHeight: isCollapsed ? '48px' : 'none'
-        }}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2 }}
-      >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b crt-border bg-gradient-to-r from-transparent to-[var(--crt-border)]/10 flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -117,7 +112,6 @@ export default function WidgetFrame({
           </div>
         </div>
       )}
-      </motion.div>
-    </WidgetResizer>
+    </motion.div>
   );
 }

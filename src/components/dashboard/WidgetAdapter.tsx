@@ -25,7 +25,7 @@ export default function WidgetAdapter({
   return (
     <WidgetFrame
       title={widgetName || title}
-      widgetId={widgetInstanceId}
+      widgetInstanceId={widgetInstanceId}
       onSettings={onSettings}
       onCollapseChange={onCollapseChange}
       right={icon}

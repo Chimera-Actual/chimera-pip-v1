@@ -741,15 +741,12 @@ All colors MUST be HSL - Monochrome Green Theme
     @apply container-responsive;
   }
 
-  /* Widget Collapse Styles - Apply to widget content */
+  /* Clean widget collapse styles - simplified from complex layered system */
   .widget-collapsed {
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
     overflow: hidden !important;
-    transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1), 
-                min-height 300ms cubic-bezier(0.4, 0, 0.2, 1), 
-                max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .widget-expanded {
@@ -757,9 +754,6 @@ All colors MUST be HSL - Monochrome Green Theme
     min-height: auto;
     max-height: none;
     overflow: visible;
-    transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1), 
-                min-height 300ms cubic-bezier(0.4, 0, 0.2, 1), 
-                max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .widget-text-auto {
