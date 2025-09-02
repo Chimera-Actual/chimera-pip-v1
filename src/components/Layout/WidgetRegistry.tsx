@@ -3,9 +3,19 @@
 import React, { Suspense } from 'react';
 import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
 
-// Base widget - the only widget in the standardized system
+// All available widgets for the dashboard system
 const BaseWidget = React.lazy(() => import('@/components/Applets/BaseWidget'));
 const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget'));
+
+// Dashboard native widgets
+const SampleClock = React.lazy(() => import('@/components/widgets/SampleClock'));
+const SampleNote = React.lazy(() => import('@/components/widgets/SampleNote'));
+const SampleChart = React.lazy(() => import('@/components/widgets/SampleChart'));
+
+// Applet adapters for dashboard
+const AnalyticsWidget = React.lazy(() => import('@/components/widgets/AnalyticsWidget'));
+const ChatWidget = React.lazy(() => import('@/components/widgets/ChatWidget'));
+const AudioWidget = React.lazy(() => import('@/components/widgets/AudioWidget'));
 
 // Create wrapped components with suspense and optimized skeletons
 const createLazyWidget = (
@@ -20,8 +30,19 @@ const createLazyWidget = (
 };
 
 export const WIDGET_COMPONENTS = {
+  // Core widgets
   BaseWidget: createLazyWidget(BaseWidget, 'card'),
   MapWidget: createLazyWidget(MapWidget, 'card'),
+  
+  // Dashboard native widgets
+  SampleClock: createLazyWidget(SampleClock, 'minimal'),
+  SampleNote: createLazyWidget(SampleNote, 'card'),
+  SampleChart: createLazyWidget(SampleChart, 'chart'),
+  
+  // Applet widgets
+  AnalyticsWidget: createLazyWidget(AnalyticsWidget, 'chart'),
+  ChatWidget: createLazyWidget(ChatWidget, 'list'),
+  AudioWidget: createLazyWidget(AudioWidget, 'media'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;

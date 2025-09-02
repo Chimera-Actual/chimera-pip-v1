@@ -150,15 +150,6 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button
-              onClick={() => window.location.href = '/dashboard'}
-              variant="ghost"
-              size="sm"
-              className="h-8 px-3 font-mono text-xs text-primary hover:bg-primary/10 border border-primary/30 hover:border-primary/50 transition-all"
-              title="Dashboard Kit"
-            >
-              📊 DASHBOARD
-            </Button>
             <UserAvatar />
           </div>
         </div>

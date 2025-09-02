@@ -1,0 +1,34 @@
+import React from 'react';
+import WidgetFrame from './WidgetFrame';
+import { BaseWidgetProps } from '@/types/widget';
+
+interface WidgetAdapterProps extends BaseWidgetProps {
+  title: string;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  onSettings?: () => void;
+  className?: string;
+}
+
+export default function WidgetAdapter({
+  title,
+  children,
+  widgetInstanceId,
+  settings = {},
+  onSettingsChange,
+  widgetName,
+  icon,
+  onSettings,
+  className = ""
+}: WidgetAdapterProps) {
+  return (
+    <WidgetFrame
+      title={widgetName || title}
+      onSettings={onSettings}
+      right={icon}
+      className={className}
+    >
+      {children}
+    </WidgetFrame>
+  );
+}

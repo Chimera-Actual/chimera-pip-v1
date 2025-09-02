@@ -29,10 +29,14 @@ const App = () => (
                 <BrowserRouter>
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/" element={
+                    <Route path="/pipboy" element={
                       <ProtectedRoute>
                         <Index />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/" element={
+                      <ProtectedRoute>
+                        <Dashboard />
                       </ProtectedRoute>
                     } />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

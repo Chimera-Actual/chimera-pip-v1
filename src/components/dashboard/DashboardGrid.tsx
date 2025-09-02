@@ -7,8 +7,10 @@ import "@/styles/crt.css";
 
 const Grid = WidthProvider(RGL);
 
+// Enhanced GridItem type to support widget types
 export type GridItem = {
   id: string;
+  widgetType?: string;
   w?: number;
   h?: number;
   x?: number;
