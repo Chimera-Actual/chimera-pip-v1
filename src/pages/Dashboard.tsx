@@ -238,7 +238,7 @@ function DashboardContent() {
         onTabReorder={reorderTabs}
       />
 
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 overflow-y-auto">
         <motion.div 
           className="flex items-center space-x-3 mb-6"
           initial={{ opacity: 0, x: 20 }}
