@@ -249,15 +249,6 @@ function DashboardContent() {
       />
 
       <div className="flex-1 p-6 overflow-y-auto">
-        <div className="flex justify-end mb-4">
-          <Button
-            onClick={() => setShowWidgetLibrary(true)}
-            className="crt-button px-4 py-2 rounded flex items-center space-x-2 text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Widget</span>
-          </Button>
-        </div>
 
 
         <motion.div
