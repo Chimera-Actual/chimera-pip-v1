@@ -32,7 +32,6 @@ interface DashboardGridProps {
   margin?: [number, number];
   containerPadding?: [number, number];
   onLayoutChange?: (layout: Layout[]) => void;
-  onEmptySpaceDoubleClick?: () => void;
   className?: string;
 }
 
@@ -46,7 +45,6 @@ export default function DashboardGrid({
   margin = [8, 8],
   containerPadding = [0, 0],
   onLayoutChange,
-  onEmptySpaceDoubleClick,
   className = ""
 }: DashboardGridProps) {
   const [layout, setLayout] = useState<Layout[]>(() => {
@@ -116,18 +114,8 @@ export default function DashboardGrid({
     onLayoutChange?.(newLayout);
   }, [onLayoutChange]);
 
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    // Only trigger if clicking on the grid itself, not on a widget
-    if (e.target === e.currentTarget && onEmptySpaceDoubleClick) {
-      onEmptySpaceDoubleClick();
-    }
-  }, [onEmptySpaceDoubleClick]);
-
   return (
-    <div 
-      className={classNames("dashboard-grid", className)}
-      onDoubleClick={handleDoubleClick}
-    >
+    <div className={classNames("dashboard-grid", className)}>
       <Grid
         className="layout"
         layout={memoizedLayoutData}
