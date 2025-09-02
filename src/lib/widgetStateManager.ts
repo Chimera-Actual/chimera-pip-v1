@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { logger } from './logger';
 
 export interface WidgetStateConfig {
   widgetInstanceId: string;
@@ -37,7 +38,7 @@ export function saveWidgetState<T>(
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
-    console.warn(`Failed to save widget state for ${widgetInstanceId}:${stateKey}`, error);
+    logger.warn('Failed to save widget state', { widgetInstanceId, stateKey, error }, 'WidgetStateManager');
     return false;
   }
 }
@@ -58,7 +59,7 @@ export function loadWidgetState<T>(
       return JSON.parse(saved);
     }
   } catch (error) {
-    console.warn(`Failed to load widget state for ${widgetInstanceId}:${stateKey}`, error);
+    logger.warn('Failed to load widget state', { widgetInstanceId, stateKey, error }, 'WidgetStateManager');
   }
   return defaultValue;
 }
@@ -85,9 +86,9 @@ export function clearWidgetState(
     // Remove all found keys
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
-    console.log(`Cleared ${keysToRemove.length} state entries for widget ${widgetInstanceId}`);
+    logger.info('Cleared widget state entries', { widgetInstanceId, count: keysToRemove.length }, 'WidgetStateManager');
   } catch (error) {
-    console.warn(`Failed to clear widget state for ${widgetInstanceId}`, error);
+    logger.warn('Failed to clear widget state', { widgetInstanceId, error }, 'WidgetStateManager');
   }
 }
 
@@ -129,7 +130,7 @@ export function getWidgetStateKeys(
       }
     }
   } catch (error) {
-    console.warn(`Failed to get widget state keys for ${widgetInstanceId}`, error);
+    logger.warn('Failed to get widget state keys', { widgetInstanceId, error }, 'WidgetStateManager');
   }
   
   return keys;

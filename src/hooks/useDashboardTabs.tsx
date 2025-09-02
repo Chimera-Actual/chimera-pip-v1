@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { GridItem } from '@/components/dashboard/DashboardGrid';
 import { LucideIcon, Monitor } from 'lucide-react';
 import { type Layout } from "react-grid-layout";
+import { logger } from '@/lib/logger';
 
 export interface DashboardTab {
   id: string;
@@ -25,7 +26,7 @@ export function useDashboardTabs() {
         return parsedTabs.length > 0 ? parsedTabs : getDefaultTabs();
       }
     } catch (error) {
-      console.warn('Failed to load saved tabs:', error);
+      logger.warn('Failed to load saved tabs', error, 'DashboardTabs');
     }
     return getDefaultTabs();
   });
@@ -37,7 +38,7 @@ export function useDashboardTabs() {
         return saved;
       }
     } catch (error) {
-      console.warn('Failed to load active tab:', error);
+      logger.warn('Failed to load active tab', error, 'DashboardTabs');
     }
     return tabs[0]?.id || '';
   });
@@ -47,7 +48,7 @@ export function useDashboardTabs() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tabs));
     } catch (error) {
-      console.warn('Failed to save tabs:', error);
+      logger.warn('Failed to save tabs', error, 'DashboardTabs');
     }
   }, [tabs]);
 
@@ -56,7 +57,7 @@ export function useDashboardTabs() {
     try {
       localStorage.setItem(ACTIVE_TAB_KEY, activeTabId);
     } catch (error) {
-      console.warn('Failed to save active tab:', error);
+      logger.warn('Failed to save active tab', error, 'DashboardTabs');
     }
   }, [activeTabId]);
 

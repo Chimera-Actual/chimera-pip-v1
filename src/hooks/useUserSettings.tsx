@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { logger } from '@/lib/logger';
 
 interface LocationData {
   latitude: number;
@@ -63,7 +64,7 @@ export const useUserSettings = () => {
         });
       }
     } catch (error) {
-      console.error('Error loading settings:', error);
+      logger.error('Error loading settings', error, 'UserSettings');
       // Provide safe fallback settings
       setSettings({
         location_enabled: false,
@@ -116,7 +117,7 @@ export const useUserSettings = () => {
         });
       }
     } catch (error) {
-      console.error('Error updating settings:', error);
+      logger.error('Error updating settings', error, 'UserSettings');
       throw error;
     }
   };

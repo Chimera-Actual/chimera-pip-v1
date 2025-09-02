@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useLocation } from '@/contexts/LocationContext';
+import { logger } from '@/lib/logger';
 
 export interface Placemark {
   id: string;
@@ -70,7 +71,7 @@ export const useMapState = (config?: {
         };
       }
     } catch (error) {
-      console.warn('Failed to load map state from localStorage:', error);
+      logger.warn('Failed to load map state from localStorage', error, 'MapState');
     }
 
     return defaultState;
@@ -94,7 +95,7 @@ export const useMapState = (config?: {
     try {
       localStorage.setItem(`widget-${config.widgetInstanceId}-mapState`, JSON.stringify(stateToSave));
     } catch (error) {
-      console.warn('Failed to save map state to localStorage:', error);
+      logger.warn('Failed to save map state to localStorage', error, 'MapState');
     }
   }, [mapState.center, mapState.zoom, mapState.layer, mapState.placemarks, mapState.showCenterpoint, mapState.followUser, config?.widgetInstanceId]);
 
@@ -183,7 +184,7 @@ export const useMapState = (config?: {
           isSearching: false
         }));
       } catch (error) {
-        console.error('Search error:', error);
+        logger.error('Search error', error, 'MapState');
         setMapState(prev => ({
           ...prev,
           searchResults: [],
@@ -226,7 +227,7 @@ export const useMapState = (config?: {
         navigateToLocation(location.latitude, location.longitude);
       }
     } catch (error) {
-      console.error('Failed to center on user:', error);
+      logger.error('Failed to center on user', error, 'MapState');
     }
   }, [getCurrentLocation, location, navigateToLocation]);
 

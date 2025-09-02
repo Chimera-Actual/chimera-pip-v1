@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { locationService, LocationData, LocationStatus } from '@/lib/locationService';
+import { logger } from '@/lib/logger';
 
 interface LocationSearchResult {
   display_name: string;
@@ -65,11 +66,12 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   useEffect(() => {
     if (!settings || !isInitialized) return;
 
-    console.log('Settings changed, updating location service:', {
+    // Settings changed, updating location service
+    logger.info('Settings changed, updating location service', {
       enabled: settings.location_enabled,
       hasCoordinates: !!(settings.location_latitude && settings.location_longitude),
       frequency: settings.location_polling_frequency
-    });
+    }, 'LocationContext');
 
     // Use async function to handle the service update properly
     const updateLocationService = async () => {

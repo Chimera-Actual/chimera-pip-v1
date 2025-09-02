@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { logAuth } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -73,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Force page reload for clean state
       window.location.href = '/auth';
     } catch (error) {
-      console.error('Error signing out:', error);
+      logAuth.error(error as Error);
     }
   };
 

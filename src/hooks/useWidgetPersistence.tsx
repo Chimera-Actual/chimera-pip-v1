@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Custom hook for widget-specific localStorage persistence
@@ -30,7 +31,7 @@ export function useWidgetPersistence<T>(
       const saved = localStorage.getItem(getStorageKey());
       return saved ? deserialize(saved) : defaultValue;
     } catch (error) {
-      console.warn(`Failed to load ${stateKey} for widget ${widgetInstanceId}:`, error);
+      logger.warn('Failed to load widget state', { widgetInstanceId, stateKey, error }, 'WidgetPersistence');
       return defaultValue;
     }
   });
@@ -43,7 +44,7 @@ export function useWidgetPersistence<T>(
       try {
         localStorage.setItem(getStorageKey(), serialize(value));
       } catch (error) {
-        console.warn(`Failed to save ${stateKey} for widget ${widgetInstanceId}:`, error);
+        logger.warn('Failed to save widget state', { widgetInstanceId, stateKey, error }, 'WidgetPersistence');
       }
     };
     
@@ -113,9 +114,9 @@ export function clearWidgetPersistence(widgetInstanceId: string) {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.warn(`Failed to remove localStorage key ${key}:`, error);
+      logger.warn('Failed to remove localStorage key', { key, error }, 'WidgetPersistence');
     }
   });
   
-  console.log(`Cleared ${keys.length} localStorage entries for widget ${widgetInstanceId}`);
+  logger.info('Cleared localStorage entries for widget', { widgetInstanceId, count: keys.length }, 'WidgetPersistence');
 }

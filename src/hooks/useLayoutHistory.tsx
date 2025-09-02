@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Layout } from 'react-grid-layout';
+import { logger } from '@/lib/logger';
 
 const MAX_HISTORY_SIZE = 10;
 
@@ -12,7 +13,7 @@ export function useLayoutHistory(storageKey: string) {
     try {
       localStorage.setItem(storageKey, JSON.stringify(layout));
     } catch (error) {
-      console.warn('Failed to save layout to localStorage:', error);
+      logger.warn('Failed to save layout to localStorage', error, 'LayoutHistory');
     }
 
     // Update history
@@ -41,7 +42,7 @@ export function useLayoutHistory(storageKey: string) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(previousLayout));
       } catch (error) {
-        console.warn('Failed to save layout to localStorage:', error);
+        logger.warn('Failed to save layout to localStorage', error, 'LayoutHistory');
       }
       
       return previousLayout;

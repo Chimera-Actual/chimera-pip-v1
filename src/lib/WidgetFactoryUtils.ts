@@ -1,5 +1,6 @@
 // Widget Factory utilities and helper functions
 import { WidgetConfig, WidgetDefinition } from './WidgetFactory';
+import { logger } from './logger';
 
 export interface WidgetBulkCreateOptions {
   widgets: Array<{
@@ -52,10 +53,10 @@ export class WidgetFactoryUtils {
 
     widgets.forEach((widgetOptions, index) => {
       const widgetDefinition = availableWidgets.find(w => w.id === widgetOptions.widgetId);
-      if (!widgetDefinition) {
-        console.warn(`Widget definition not found for ID: ${widgetOptions.widgetId}`);
-        return;
-      }
+    if (!widgetDefinition) {
+      logger.warn('Widget definition not found for ID', { widgetId: widgetOptions.widgetId }, 'WidgetFactoryUtils');
+      return;
+    }
 
       const widgetConfig: WidgetConfig = {
         instanceId: crypto.randomUUID(),

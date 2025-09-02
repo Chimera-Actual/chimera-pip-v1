@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { logger } from '@/lib/logger';
 
 export type ColorScheme = 'green' | 'amber' | 'blue' | 'red' | 'cyan' | 'purple';
 
@@ -61,12 +62,12 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
           .single();
 
         if (error && error.code !== 'PGRST116') {
-          console.error('Error loading theme:', error);
+          logger.error('Error loading theme', error, 'Theme');
         } else if (data?.color_scheme) {
           setColorSchemeState(data.color_scheme as ColorScheme);
         }
       } catch (error) {
-        console.error('Error loading theme:', error);
+        logger.error('Error loading theme', error, 'Theme');
       } finally {
         setLoading(false);
       }
@@ -95,13 +96,13 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
         });
 
       if (error) {
-        console.error('Error saving theme:', error);
+        logger.error('Error saving theme', error, 'Theme');
         return;
       }
 
       setColorSchemeState(scheme);
     } catch (error) {
-      console.error('Error saving theme:', error);
+      logger.error('Error saving theme', error, 'Theme');
     }
   };
 

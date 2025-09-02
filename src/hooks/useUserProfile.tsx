@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface UserProfile {
   display_name: string;
@@ -52,7 +53,7 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({ childr
         setProfile(data);
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      logger.error('Error loading profile', error, 'UserProfile');
     } finally {
       setLoading(false);
     }
@@ -71,7 +72,7 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({ childr
 
       setProfile(prev => prev ? { ...prev, ...updates } : null);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      logger.error('Error updating profile', error, 'UserProfile');
       throw error;
     }
   };
