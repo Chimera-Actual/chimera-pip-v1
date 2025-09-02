@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { optimizedSupabase } from '@/lib/optimizedSupabaseClient';
+import { batchOperationManager } from '@/lib/batchOperations';
+import { cacheManager } from '@/lib/cacheManager';
 import { useAuth } from './useAuth';
+import { logger } from '@/utils/logger';
 import type { 
   WidgetDefinition, 
   UserWidgetInstance, 
@@ -22,26 +25,31 @@ export const queryKeys = {
 // Optimized query hooks
 export const useOptimizedSupabaseQueries = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const queryClient = cacheManager.client;
 
   // Widget Definitions (public, cached globally)
   const widgetDefinitionsQuery = useQuery({
     queryKey: queryKeys.widgetDefinitions,
     queryFn: async (): Promise<WidgetDefinition[]> => {
-      const { data, error } = await supabase
-        .from('widget_definitions')
-        .select('*')
-        .order('category', { ascending: true });
-
-      if (error) throw error;
+      logger.time('fetch-widget-definitions');
       
-      return (data || []).map(w => ({
+      const result = await optimizedSupabase.query(
+        optimizedSupabase.raw
+          .from('widget_definitions')
+          .select('*')
+          .order('category', { ascending: true })
+      );
+
+      logger.timeEnd('fetch-widget-definitions');
+
+      if (result.error) throw result.error;
+      
+      return (result.data || []).map(w => ({
         ...w,
         default_settings: (w.default_settings as WidgetSettings) || {}
       }));
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    ...cacheManager.getCacheConfig(queryKeys.widgetDefinitions),
   });
 
   // User Widget Instances with join optimization
@@ -50,18 +58,24 @@ export const useOptimizedSupabaseQueries = () => {
     queryFn: async (): Promise<UserWidgetInstance[]> => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
-        .from('user_widget_instances')
-        .select(`
-          *,
-          widget_definition:widget_definitions(*)
-        `)
-        .eq('user_id', user.id)
-        .order('position', { ascending: true });
-
-      if (error) throw error;
+      logger.time('fetch-user-widget-instances');
       
-      return (data || []).map(i => ({
+      const result = await optimizedSupabase.query(
+        optimizedSupabase.raw
+          .from('user_widget_instances')
+          .select(`
+            *,
+            widget_definition:widget_definitions(*)
+          `)
+          .eq('user_id', user.id)
+          .order('position', { ascending: true })
+      );
+
+      logger.timeEnd('fetch-user-widget-instances');
+
+      if (result.error) throw result.error;
+      
+      return (result.data || []).map(i => ({
         ...i,
         widget_definition: i.widget_definition ? {
           ...i.widget_definition,
@@ -70,8 +84,7 @@ export const useOptimizedSupabaseQueries = () => {
       }));
     },
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    ...cacheManager.getCacheConfig(queryKeys.userWidgetInstances(user?.id)),
   });
 
   // User Widget Settings
@@ -193,25 +206,40 @@ export const useOptimizedSupabaseQueries = () => {
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
-        .from('user_widget_settings')
-        .upsert({
-          user_id: user.id,
-          widget_instance_id: widgetInstanceId,
-          settings: settings,
-        }, {
-          onConflict: 'user_id,widget_instance_id'
-        })
-        .select()
-        .single();
+      const result = await optimizedSupabase.query(
+        optimizedSupabase.raw
+          .from('user_widget_settings')
+          .upsert({
+            user_id: user.id,
+            widget_instance_id: widgetInstanceId,
+            settings: settings,
+          }, {
+            onConflict: 'user_id,widget_instance_id'
+          })
+          .select()
+          .single()
+      );
 
-      if (error) throw error;
-      return data;
+      if (result.error) throw result.error;
+      return result.data;
+    },
+    onSuccess: (data, variables) => {
+      cacheManager.handleMutation('widget-settings-updated', user?.id!, {
+        widgetInstanceId: variables.widgetInstanceId,
+        settings: variables.settings,
+      });
+    },
+  });
+
+  // Enhanced batch settings update
+  const batchUpdateWidgetSettingsMutation = useMutation({
+    mutationFn: async (updates: { widgetInstanceId: string; settings: WidgetSettings }[]) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      await batchOperationManager.batchUpdateWidgetSettings(user.id, updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.userWidgetSettings(user?.id) 
-      });
+      cacheManager.handleMutation('widget-settings-updated', user?.id!);
     },
   });
 
@@ -254,24 +282,23 @@ export const useOptimizedSupabaseQueries = () => {
     // Mutations
     addWidgetToTab: addWidgetMutation.mutate,
     updateWidgetSettings: updateWidgetSettingsMutation.mutate,
+    batchUpdateWidgetSettings: batchUpdateWidgetSettingsMutation.mutate,
     removeWidgetFromTab: removeWidgetMutation.mutate,
     
     // Mutation states
     isAddingWidget: addWidgetMutation.isPending,
     isUpdatingSettings: updateWidgetSettingsMutation.isPending,
+    isBatchUpdatingSettings: batchUpdateWidgetSettingsMutation.isPending,
     isRemovingWidget: removeWidgetMutation.isPending,
+
+    // Cache management
+    prefetchWidgetData: () => cacheManager.prefetchWidgetData(user?.id!),
+    invalidateUserData: () => cacheManager.invalidateUserData(user?.id!),
+    getCacheMetrics: () => cacheManager.getMetrics(),
 
     // Manual refresh
     refetchAll: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.userWidgetInstances(user?.id) 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.userWidgetSettings(user?.id) 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.userWidgetTags(user?.id) 
-      });
+      cacheManager.invalidateUserData(user?.id!);
     },
   };
 };
