@@ -1,6 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { clearWidgetState } from './widgetStateManager';
-import { logger } from './logger';
 
 export const cleanupWidgetFiles = async (instanceId: string) => {
   try {
@@ -48,9 +46,9 @@ export const cleanupWidgetFiles = async (instanceId: string) => {
         .eq('widget_instance_id', instanceId);
     }
 
-    logger.info('Cleaned up files for widget instance', { instanceId }, 'WidgetCleanup');
+    console.log(`Cleaned up files for widget instance: ${instanceId}`);
   } catch (error) {
-    logger.error('Error cleaning up widget files', error, 'WidgetCleanup');
+    console.error('Error cleaning up widget files:', error);
   }
 };
 
@@ -69,39 +67,6 @@ export const cleanupTabFiles = async (tabId: string) => {
       );
     }
   } catch (error) {
-    logger.error('Error cleaning up tab files', error, 'WidgetCleanup');
+    console.error('Error cleaning up tab files:', error);
   }
 };
-
-/**
- * Comprehensive widget state cleanup including localStorage
- */
-export async function cleanupWidgetState(widgetInstanceId: string, userId: string) {
-  logger.info('Starting widget state cleanup', { widgetInstanceId, userId }, 'WidgetCleanup');
-  
-  try {
-    // Clear localStorage state for this widget
-    clearWidgetState(widgetInstanceId);
-    
-    // Also clean up files
-    await cleanupWidgetFiles(widgetInstanceId);
-
-    // Clean up any widget-specific settings
-    const { error: settingsError } = await supabase
-      .from('user_widget_settings')
-      .delete()
-      .eq('widget_instance_id', widgetInstanceId)
-      .eq('user_id', userId);
-
-    if (settingsError) {
-      logger.warn('Failed to clean up widget settings', settingsError, 'WidgetCleanup');
-    } else {
-      logger.info('Widget settings cleaned up successfully', { widgetInstanceId }, 'WidgetCleanup');
-    }
-
-    logger.info('Widget state cleanup completed', { widgetInstanceId }, 'WidgetCleanup');
-  } catch (error) {
-    logger.error('Widget state cleanup failed', error, 'WidgetCleanup');
-    throw error;
-  }
-}

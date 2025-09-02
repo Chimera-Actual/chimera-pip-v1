@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { logger } from '@/lib/logger';
 
 const bootMessages = [
   "CHIMERA INDUSTRIES UNIFIED OPERATING SYSTEM",
@@ -38,7 +37,7 @@ export const BootSequence: React.FC = () => {
 
   useEffect(() => {
     if (currentMessageIndex >= bootMessages.length) {
-      logger.debug('Boot sequence complete - calling completeBootSequence', undefined, 'BootSequence');
+      console.log('Boot sequence complete - calling completeBootSequence');
       completeBootSequence();
       return;
     }
@@ -58,7 +57,7 @@ export const BootSequence: React.FC = () => {
             setDisplayedText('');
           } else {
             setIsTyping(false);
-            logger.debug('Finished typing last message - calling completeBootSequence', undefined, 'BootSequence');
+            console.log('Finished typing last message - calling completeBootSequence');
             completeBootSequence(); // Go directly to main app
           }
         }, 100);

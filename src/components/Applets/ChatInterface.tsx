@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Send, User, Bot } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { logger } from '@/lib/logger';
 
 interface Assistant {
   id: string;
@@ -26,35 +25,11 @@ interface Message {
 
 interface ChatInterfaceProps {
   selectedAssistant: Assistant;
-  widgetInstanceId?: string;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant, widgetInstanceId }) => {
-  // Widget-specific localStorage keys
-  const getStorageKey = (key: string) => widgetInstanceId ? `widget-${widgetInstanceId}-${key}` : `chat-${key}`;
-  
-  // State with localStorage persistence
-  const [messages, setMessages] = useState<Message[]>(() => {
-    if (!widgetInstanceId) return [];
-    try {
-      const saved = localStorage.getItem(getStorageKey('messages'));
-      return saved ? JSON.parse(saved).map((msg: any) => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      })) : [];
-    } catch {
-      return [];
-    }
-  });
-  
-  const [inputValue, setInputValue] = useState(() => {
-    try {
-      return localStorage.getItem(getStorageKey('inputValue')) || '';
-    } catch {
-      return '';
-    }
-  });
-  
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState(selectedAssistant.webhookUrl);
@@ -65,29 +40,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Save messages to localStorage when they change
-  useEffect(() => {
-    if (widgetInstanceId && messages.length > 0) {
-      try {
-        localStorage.setItem(getStorageKey('messages'), JSON.stringify(messages));
-      } catch (error) {
-        logger.warn('Failed to save messages', error, 'ChatInterface');
-      }
-    }
-  }, [messages, widgetInstanceId]);
-
-  // Save input value to localStorage (debounced)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      try {
-        localStorage.setItem(getStorageKey('inputValue'), inputValue);
-      } catch (error) {
-        logger.warn('Failed to save input value', error, 'ChatInterface');
-      }
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [inputValue, widgetInstanceId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -114,7 +66,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
         .single();
 
       if (error) {
-        logger.error('Error creating conversation', error, 'ChatInterface');
+        console.error('Error creating conversation:', error);
         toast({
           title: "Database Error",
           description: "Failed to initialize conversation. Messages will not be saved.",
@@ -147,7 +99,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
       });
 
     if (error) {
-      logger.error('Error saving message', error, 'ChatInterface');
+      console.error('Error saving message:', error);
     }
   };
 
@@ -185,7 +137,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
         description: "Speak your message...",
       });
     } catch (error) {
-      logger.error('Error starting recording', error, 'ChatInterface');
+      console.error('Error starting recording:', error);
       toast({
         title: "Error",
         description: "Could not access microphone. Please check permissions.",
@@ -262,7 +214,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
           throw new Error('Failed to send audio message');
         }
       } catch (error) {
-        logger.error('Error sending audio', error, 'ChatInterface');
+        console.error('Error sending audio:', error);
         toast({
           title: "Error",
           description: "Failed to send audio message. Please try again.",
@@ -320,7 +272,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
 
       if (response.ok) {
         const result = await response.json();
-        logger.debug('Webhook response', result, 'ChatInterface');
+        console.log('Webhook response:', result);
         
         // Handle different possible response formats from n8n
         let assistantResponse = '';
@@ -371,10 +323,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
               // Remove any whitespace
               assistantResponse = cleanBase64.replace(/\s/g, '');
               contentType = 'image';
-              logger.debug('Image detected and processed', { base64Length: assistantResponse.length }, 'ChatInterface');
+              console.log('Image detected and processed, base64 length:', assistantResponse.length);
             } else {
               assistantResponse = 'Invalid image data format received from webhook.';
-              logger.error('Invalid base64 data received from webhook', undefined, 'ChatInterface');
+              console.error('Invalid base64 data received');
             }
           }
         }
@@ -410,7 +362,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
         // Save assistant message to database
         await saveMessageToDatabase(assistantMessage, 'assistant');
         
-        logger.debug('Assistant message added', assistantMessage, 'ChatInterface');
+        console.log('Assistant message added:', assistantMessage);
       } else {
         const errorText = await response.text();
         if (response.status === 404 && errorText.includes('GET request')) {
@@ -419,7 +371,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedAssistant,
         throw new Error(`Webhook error (${response.status}): ${errorText}`);
       }
     } catch (error) {
-      logger.error('Error sending message', error, 'ChatInterface');
+      console.error('Error sending message:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to send message. Please check your webhook configuration.';
       toast({
         title: "Webhook Configuration Error",

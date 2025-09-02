@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { cleanupWidgetFiles } from '@/lib/widgetCleanup';
-import { WidgetFactory, WidgetDefinition as FactoryWidgetDefinition, WidgetConfig } from '@/lib/WidgetFactory';
-import { logger } from '@/lib/logger';
 
 export interface WidgetDefinition {
   id: string;
@@ -12,7 +9,7 @@ export interface WidgetDefinition {
   icon: string;
   category: string;
   component_name: string;
-  default_settings: Record<string, any>;
+  default_settings?: Record<string, any>;
   user_tags?: string[];
 }
 
@@ -41,6 +38,8 @@ export interface UserWidgetSettings {
   settings: Record<string, any>;
 }
 
+import { cleanupWidgetFiles } from '@/lib/widgetCleanup';
+
 export const useWidgetManager = () => {
   const [availableWidgets, setAvailableWidgets] = useState<WidgetDefinition[]>([]);
   const [userWidgetInstances, setUserWidgetInstances] = useState<UserWidgetInstance[]>([]);
@@ -60,7 +59,7 @@ export const useWidgetManager = () => {
   }, [user]);
 
   const loadWidgetData = async () => {
-    if (!user) return null;
+    if (!user) return;
     
     setLoading(true);
     try {
@@ -71,6 +70,10 @@ export const useWidgetManager = () => {
         .order('category', { ascending: true });
 
       if (widgetsError) throw widgetsError;
+      setAvailableWidgets((widgets || []).map(w => ({
+        ...w,
+        default_settings: (w.default_settings as Record<string, any>) || {}
+      })));
 
       // Load user widget instances
       const { data: instances, error: instancesError } = await supabase
@@ -83,29 +86,6 @@ export const useWidgetManager = () => {
         .order('position', { ascending: true });
 
       if (instancesError) throw instancesError;
-
-      // Load user widget settings
-      const { data: settings, error: settingsError } = await supabase
-        .from('user_widget_settings')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (settingsError) throw settingsError;
-
-      // Load user widget tags
-      const { data: tags, error: tagsError } = await supabase
-        .from('user_widget_tags')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (tagsError) throw tagsError;
-
-      // Process and set state
-      setAvailableWidgets((widgets || []).map(w => ({
-        ...w,
-        default_settings: (w.default_settings as Record<string, any>) || {}
-      })));
-
       setUserWidgetInstances((instances || []).map(i => ({
         ...i,
         widget_definition: i.widget_definition ? {
@@ -114,11 +94,25 @@ export const useWidgetManager = () => {
         } : undefined
       })));
 
+      // Load user widget settings
+      const { data: settings, error: settingsError } = await supabase
+        .from('user_widget_settings')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (settingsError) throw settingsError;
       setUserWidgetSettings((settings || []).map(s => ({
         ...s,
         settings: (s.settings as Record<string, any>) || {}
       })));
 
+      // Load user widget tags
+      const { data: tags, error: tagsError } = await supabase
+        .from('user_widget_tags')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (tagsError) throw tagsError;
       setUserWidgetTags(tags || []);
 
       // Merge tags with available widgets
@@ -131,17 +125,8 @@ export const useWidgetManager = () => {
         setAvailableWidgets(widgetsWithTags);
       }
 
-      // Return data for React Query
-      return {
-        availableWidgets: widgets || [],
-        userWidgetInstances: instances || [],
-        userWidgetSettings: settings || [],
-        userWidgetTags: tags || []
-      };
-
     } catch (error) {
-      logger.error('Error loading widget data', error, 'WidgetManager');
-      throw error;
+      console.error('Error loading widget data:', error);
     } finally {
       setLoading(false);
     }
@@ -151,51 +136,66 @@ export const useWidgetManager = () => {
     if (!user) return;
 
     try {
-      // Get widget definition for factory creation
-      const widgetDefinition = availableWidgets.find(w => w.id === widgetId);
-      if (!widgetDefinition) {
-        throw new Error(`Widget definition not found for ID: ${widgetId}`);
+      // First check if there's already an active widget instance of this type in this tab
+      const existingWidget = userWidgetInstances.find(
+        w => w.widget_id === widgetId && w.tab_id === tabId && w.is_active
+      );
+
+      if (existingWidget) {
+        // Widget already exists and is active, no need to create a new one
+        return existingWidget;
       }
 
-      // Get the highest position in this tab for proper positioning
+      // Check if there's an inactive widget instance we can reactivate
+      const inactiveWidget = userWidgetInstances.find(
+        w => w.widget_id === widgetId && w.tab_id === tabId && !w.is_active
+      );
+
+      if (inactiveWidget) {
+        // Reactivate the existing widget instance
+        const { data, error } = await supabase
+          .from('user_widget_instances')
+          .update({ is_active: true })
+          .eq('id', inactiveWidget.id)
+          .eq('user_id', user.id)
+          .select(`
+            *,
+            widget_definition:widget_definitions(*)
+          `)
+          .single();
+
+        if (error) throw error;
+        
+        if (data) {
+          const transformedData = {
+            ...data,
+            widget_definition: data.widget_definition ? {
+              ...data.widget_definition,
+              default_settings: (data.widget_definition.default_settings as Record<string, any>) || {}
+            } : undefined
+          };
+          setUserWidgetInstances(prev =>
+            prev.map(w => w.id === inactiveWidget.id ? transformedData : w)
+          );
+          return transformedData;
+        }
+      }
+
+      // No existing widget found, create a new one
+      // Get the highest position in this tab
       const existingWidgets = userWidgetInstances.filter(
         w => w.tab_id === tabId && w.is_active
       );
       const maxPosition = Math.max(...existingWidgets.map(w => w.position), -1);
 
-      // Convert to factory-compatible definition
-      const factoryDefinition: FactoryWidgetDefinition = {
-        id: widgetDefinition.id,
-        name: widgetDefinition.name,
-        category: widgetDefinition.category,
-        icon: widgetDefinition.icon,
-        component_name: widgetDefinition.component_name,
-        description: widgetDefinition.description,
-        default_settings: widgetDefinition.default_settings || {}
-      };
-
-      // Use WidgetFactory to create proper widget configuration
-      const widgetConfig = WidgetFactory.fromWidgetDefinition(factoryDefinition, tabId, {
-        position: maxPosition + 1
-      });
-
-      // Validate the widget configuration
-      const validation = WidgetFactory.validateWidgetConfig(widgetConfig);
-      if (!validation.valid) {
-        throw new Error(`Invalid widget configuration: ${validation.errors.join(', ')}`);
-      }
-
-      // Insert the widget instance into the database
       const { data, error } = await supabase
         .from('user_widget_instances')
         .insert({
-          id: widgetConfig.instanceId,
           user_id: user.id,
-          widget_id: widgetConfig.widgetId,
-          tab_id: widgetConfig.tabId,
-          position: widgetConfig.position,
+          widget_id: widgetId,
+          tab_id: tabId,
+          position: maxPosition + 1,
           is_active: true,
-          custom_name: widgetConfig.name !== widgetDefinition.name ? widgetConfig.name : null,
         })
         .select(`
           *,
@@ -219,7 +219,7 @@ export const useWidgetManager = () => {
       
       return data;
     } catch (error) {
-      logger.error('Error adding widget', error, 'WidgetManager');
+      console.error('Error adding widget:', error);
       throw error;
     }
   };
@@ -243,7 +243,7 @@ export const useWidgetManager = () => {
         prev.map(w => w.id === instanceId ? { ...w, is_active: false } : w)
       );
     } catch (error) {
-      logger.error('Error removing widget', error, 'WidgetManager');
+      console.error('Error removing widget:', error);
       throw error;
     }
   };
@@ -279,7 +279,7 @@ export const useWidgetManager = () => {
       
       return data;
     } catch (error) {
-      logger.error('Error updating widget settings', error, 'WidgetManager');
+      console.error('Error updating widget settings:', error);
       throw error;
     }
   };
@@ -323,7 +323,7 @@ export const useWidgetManager = () => {
         prev.map(w => w.id === instanceId ? { ...w, position: newPosition } : w)
       );
     } catch (error) {
-      logger.error('Error updating widget position', error, 'WidgetManager');
+      console.error('Error updating widget position:', error);
       throw error;
     }
   };
@@ -350,7 +350,7 @@ export const useWidgetManager = () => {
 
       return data;
     } catch (error) {
-      logger.error('Error updating widget name', error, 'WidgetManager');
+      console.error('Error updating widget name:', error);
       throw error;
     }
   };
@@ -376,7 +376,7 @@ export const useWidgetManager = () => {
         )
       );
     } catch (error) {
-      logger.error('Error moving widget to tab', error, 'WidgetManager');
+      console.error('Error moving widget to tab:', error);
       throw error;
     }
   };
@@ -408,7 +408,7 @@ export const useWidgetManager = () => {
 
       return data;
     } catch (error) {
-      logger.error('Error adding tag to widget', error, 'WidgetManager');
+      console.error('Error adding tag to widget:', error);
       throw error;
     }
   };
@@ -435,7 +435,7 @@ export const useWidgetManager = () => {
           : widget
       ));
     } catch (error) {
-      logger.error('Error removing tag from widget', error, 'WidgetManager');
+      console.error('Error removing tag from widget:', error);
       throw error;
     }
   };

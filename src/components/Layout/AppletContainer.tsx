@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { AppletType } from './PipBoyLayout';
 import { Settings, X, Plus, Menu } from 'lucide-react';
-import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -13,8 +13,8 @@ import {
 import { useWidgetManager, UserWidgetInstance } from '@/hooks/useWidgetManager';
 import { WIDGET_COMPONENTS, WidgetComponentName } from './WidgetRegistry';
 import { WidgetLibrary } from './WidgetLibrary';
+import { WidgetSettings } from './WidgetSettings';
 import { useToast } from '@/hooks/use-toast';
-import { logger } from '@/lib/logger';
 
 interface AppletContainerProps {
   activeApplet: string;
@@ -49,6 +49,8 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
   
   const { toast } = useToast();
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
+  const [showWidgetSettings, setShowWidgetSettings] = useState(false);
+  const [selectedWidgetForSettings, setSelectedWidgetForSettings] = useState<UserWidgetInstance | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
 
@@ -117,6 +119,16 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
     }
   };
 
+  const handleOpenWidgetSettings = (widget: UserWidgetInstance) => {
+    setSelectedWidgetForSettings(widget);
+    setShowWidgetSettings(true);
+  };
+
+  const handleCloseWidgetSettings = () => {
+    setShowWidgetSettings(false);
+    setSelectedWidgetForSettings(null);
+  };
+
   const handleDragStart = (e: React.DragEvent, widget: UserWidgetInstance) => {
     // Disable drag on mobile
     if (isMobile) {
@@ -166,7 +178,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
         description: `"${dragData.widgetName}" has been moved to this tab`,
       });
     } catch (error) {
-      logger.error('Error moving widget', error, 'AppletContainer');
+      console.error('Error moving widget:', error);
       toast({
         title: "Error",
         description: "Failed to move widget between tabs",
@@ -218,7 +230,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
         }
       }
     } catch (error) {
-      logger.error('Error reordering widget', error, 'AppletContainer');
+      console.error('Error reordering widget:', error);
       toast({
         title: "Error",
         description: "Failed to reorder widget",
@@ -274,7 +286,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
           settings={widgetSettings} 
           widgetName={widgetName}
           widgetInstanceId={activeWidget.id}
-          onSettingsChange={(newSettings: Record<string, any>) => updateWidgetSettings(activeWidget.id, newSettings)}
+          onSettingsUpdate={(newSettings: Record<string, any>) => updateWidgetSettings(activeWidget.id, newSettings)}
         />
       </div>
     );
@@ -334,21 +346,7 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
                 }}
               >
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
-                  <span className={`${isMobile ? 'text-xl' : 'text-lg'}`}>
-                    {(() => {
-                      const widgetSettings = getWidgetSettings(widget.id);
-                      const customIconName = widgetSettings?.customIcon;
-                      if (customIconName && typeof customIconName === 'string') {
-                        const IconComponent = (Icons as any)[customIconName] as React.ComponentType<any>;
-                        if (IconComponent && typeof IconComponent === 'function') {
-                          return React.createElement(IconComponent, { 
-                            className: `${isMobile ? 'w-5 h-5' : 'w-4 h-4'}` 
-                          });
-                        }
-                      }
-                      return widget.widget_definition?.icon;
-                    })()}
-                  </span>
+                  <span className={`${isMobile ? 'text-xl' : 'text-lg'}`}>{widget.widget_definition?.icon}</span>
                   <div className="min-w-0 flex-1">
                     <div className={`${isMobile ? 'text-sm' : 'text-responsive-sm'} font-mono font-medium text-foreground truncate`}>
                       {widget.custom_name || widget.widget_definition?.name}
@@ -359,6 +357,17 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
                   </div>
                 </div>
                 <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenWidgetSettings(widget);
+                    }}
+                    className={`opacity-70 hover:opacity-100 ${isMobile ? 'p-2 h-8 w-8 touch-target' : 'p-1 h-6 w-6'}`}
+                  >
+                    <Settings className={`${isMobile ? 'h-4 w-4' : 'h-3 w-3'}`} />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -468,6 +477,16 @@ export const AppletContainer: React.FC<AppletContainerProps> = React.memo(({
         onAddTag={addTagToWidget}
         onRemoveTag={removeTagFromWidget}
         allUserTags={getAllUserTags()}
+      />
+
+      {/* Widget Settings Dialog */}
+      <WidgetSettings
+        isOpen={showWidgetSettings}
+        onClose={handleCloseWidgetSettings}
+        widget={selectedWidgetForSettings}
+        onSettingsUpdate={updateWidgetSettings}
+        onWidgetNameUpdate={updateWidgetName}
+        currentSettings={selectedWidgetForSettings ? getWidgetSettings(selectedWidgetForSettings.id) : {}}
       />
     </div>
   );

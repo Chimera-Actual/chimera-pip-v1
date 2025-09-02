@@ -7,7 +7,6 @@ import { SimpleWaveform } from './SimpleWaveform';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { logger } from '@/lib/logger';
 
 interface AudioTrack {
   id: string;
@@ -27,89 +26,26 @@ interface SimpleAudioPlayerProps {
     waveformSize?: string;
     showWaveform?: boolean;
   };
-  onSettingsChange?: (settings: any) => void;
+  onSettingsUpdate?: (settings: any) => void;
 }
 
 export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({ 
   widgetInstanceId, 
   settings = {},
-  onSettingsChange
+  onSettingsUpdate 
 }) => {
   const { user } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Local state with localStorage persistence
+  // Local state - no complex context
   const [playlist, setPlaylist] = useState<AudioTrack[]>([]);
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null);
-  
-  // Playback state with localStorage persistence
-  const [isPlaying, setIsPlaying] = useState(() => {
-    if (!widgetInstanceId) return false;
-    try {
-      const saved = localStorage.getItem(`widget-${widgetInstanceId}-isPlaying`);
-      return saved ? JSON.parse(saved) : false;
-    } catch {
-      return false;
-    }
-  });
-  
-  const [currentTime, setCurrentTime] = useState(() => {
-    if (!widgetInstanceId) return 0;
-    try {
-      const saved = localStorage.getItem(`widget-${widgetInstanceId}-currentTime`);
-      return saved ? JSON.parse(saved) : 0;
-    } catch {
-      return 0;
-    }
-  });
-  
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  
-  const [volume, setVolume] = useState(() => {
-    if (!widgetInstanceId) return settings.volume || 75;
-    try {
-      const saved = localStorage.getItem(`widget-${widgetInstanceId}-volume`);
-      return saved ? JSON.parse(saved) : (settings.volume || 75);
-    } catch {
-      return settings.volume || 75;
-    }
-  });
-  
-  const [waveformSize, setWaveformSize] = useState(() => {
-    if (!widgetInstanceId) return settings.waveformSize || 'medium';
-    try {
-      const saved = localStorage.getItem(`widget-${widgetInstanceId}-waveformSize`);
-      return saved ? JSON.parse(saved) : (settings.waveformSize || 'medium');
-    } catch {
-      return settings.waveformSize || 'medium';
-    }
-  });
-
-  // Save playback state to localStorage
-  useEffect(() => {
-    if (widgetInstanceId) {
-      localStorage.setItem(`widget-${widgetInstanceId}-isPlaying`, JSON.stringify(isPlaying));
-    }
-  }, [isPlaying, widgetInstanceId]);
-
-  useEffect(() => {
-    if (widgetInstanceId) {
-      localStorage.setItem(`widget-${widgetInstanceId}-currentTime`, JSON.stringify(currentTime));
-    }
-  }, [currentTime, widgetInstanceId]);
-
-  useEffect(() => {
-    if (widgetInstanceId) {
-      localStorage.setItem(`widget-${widgetInstanceId}-volume`, JSON.stringify(volume));
-    }
-  }, [volume, widgetInstanceId]);
-
-  useEffect(() => {
-    if (widgetInstanceId) {
-      localStorage.setItem(`widget-${widgetInstanceId}-waveformSize`, JSON.stringify(waveformSize));
-    }
-  }, [waveformSize, widgetInstanceId]);
+  const [volume, setVolume] = useState(settings.volume || 75);
+  const [waveformSize, setWaveformSize] = useState(settings.waveformSize || 'medium');
 
   // Load playlist from database
   const loadPlaylist = async () => {
@@ -130,7 +66,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
         }
       }
     } catch (error) {
-      logger.error('Error loading playlist', error, 'SimpleAudioPlayer');
+      console.error('Error loading playlist:', error);
     }
   };
 
@@ -156,7 +92,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
 
       if (error) throw error;
     } catch (error) {
-      logger.error('Error saving playlist', error, 'SimpleAudioPlayer');
+      console.error('Error saving playlist:', error);
     }
   };
 
@@ -206,15 +142,15 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
     if (!audioRef.current) return;
 
     try {
-      logger.debug('Playing track', { title: track.title }, 'SimpleAudioPlayer');
+      console.log('Playing track:', track.title);
       setCurrentTrack(track);
       audioRef.current.src = track.url;
       audioRef.current.volume = volume / 100;
       
       await audioRef.current.play();
-      logger.debug('Track playing successfully', undefined, 'SimpleAudioPlayer');
+      console.log('Track playing successfully');
     } catch (error) {
-      logger.error('Error playing track', error, 'SimpleAudioPlayer');
+      console.error('Error playing track:', error);
       toast.error('Could not play audio file');
     }
   };
@@ -229,7 +165,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
         await audioRef.current.play();
       }
     } catch (error) {
-      logger.error('Error toggling playback', error, 'SimpleAudioPlayer');
+      console.error('Error toggling playback:', error);
       toast.error('Playback error');
     }
   };
@@ -265,15 +201,15 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
     }
     
     // Update settings
-    if (onSettingsChange) {
-      onSettingsChange({ ...settings, volume: vol });
+    if (onSettingsUpdate) {
+      onSettingsUpdate({ ...settings, volume: vol });
     }
   };
 
   const handleWaveformSizeChange = (size: string) => {
     setWaveformSize(size);
-    if (onSettingsChange) {
-      onSettingsChange({ ...settings, waveformSize: size });
+    if (onSettingsUpdate) {
+      onSettingsUpdate({ ...settings, waveformSize: size });
     }
   };
 
@@ -308,7 +244,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
       
       toast.success('Audio file uploaded successfully!');
     } catch (error) {
-      logger.error('Upload error', error, 'SimpleAudioPlayer');
+      console.error('Upload error:', error);
       toast.error('Failed to upload audio file');
     }
   };

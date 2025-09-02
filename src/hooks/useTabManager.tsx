@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+
 import { cleanupTabFiles } from '@/lib/widgetCleanup';
-import { logger } from '@/lib/logger';
 
 export interface UserTab {
   id: string;
@@ -56,7 +56,7 @@ export const useTabManager = () => {
 
       setUserTabs(tabs);
     } catch (error) {
-      logger.error('Error loading tabs', error, 'TabManager');
+      console.error('Error loading tabs:', error);
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export const useTabManager = () => {
         setUserTabs(data);
       }
     } catch (error) {
-      logger.error('Error creating default tabs', error, 'TabManager');
+      console.error('Error creating default tabs:', error);
     }
   };
 
@@ -120,7 +120,7 @@ export const useTabManager = () => {
         return data;
       }
     } catch (error) {
-      logger.error('Error creating tab', error, 'TabManager');
+      console.error('Error creating tab:', error);
       throw error;
     }
     return null;
@@ -147,7 +147,7 @@ export const useTabManager = () => {
         return data;
       }
     } catch (error) {
-      logger.error('Error updating tab', error, 'TabManager');
+      console.error('Error updating tab:', error);
       throw error;
     }
   };
@@ -177,7 +177,7 @@ export const useTabManager = () => {
 
       setUserTabs(prev => prev.filter(tab => tab.id !== tabId));
     } catch (error) {
-      logger.error('Error deleting tab', error, 'TabManager');
+      console.error('Error deleting tab:', error);
       throw error;
     }
   };
@@ -202,7 +202,7 @@ export const useTabManager = () => {
       // Reload tabs to get updated positions
       await loadTabs();
     } catch (error) {
-      logger.error('Error reordering tabs', error, 'TabManager');
+      console.error('Error reordering tabs:', error);
       throw error;
     }
   };

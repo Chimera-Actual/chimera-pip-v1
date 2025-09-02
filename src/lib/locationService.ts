@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { logger } from './logger';
 
 // Types
 export interface LocationData {
@@ -68,7 +67,7 @@ export class LocationService {
   // Settings management with proper async handling
   async updateSettings(newSettings: LocationSettings) {
     if (this.serviceLock) {
-      logger.debug('Service update already in progress, skipping', undefined, 'LocationService');
+      console.log('Service update already in progress, skipping...');
       return;
     }
 
@@ -76,12 +75,12 @@ export class LocationService {
     const oldFrequency = this.settings?.location_polling_frequency;
     this.settings = newSettings;
 
-    logger.info('Updating location service settings', { 
+    console.log('Updating location service settings:', { 
       wasEnabled, 
       nowEnabled: newSettings.location_enabled,
       oldFrequency,
       newFrequency: newSettings.location_polling_frequency
-    }, 'LocationService');
+    });
 
     // Always initialize location from settings if available - this ensures widgets have data immediately
     if (newSettings.location_latitude && newSettings.location_longitude) {
@@ -93,23 +92,23 @@ export class LocationService {
         accuracy: 1000, // Mark as stored location
       };
       this.lastLocationRef = locationData;
-      logger.info('Providing stored location to widgets immediately', locationData, 'LocationService');
+      console.log('Providing stored location to widgets immediately:', locationData);
       this.notifyListeners(locationData, newSettings.location_enabled ? 'active' : 'inactive');
     }
 
     // Handle service state changes
     if (newSettings.location_enabled && !wasEnabled) {
       // Service was disabled, now enabled
-      logger.info('Starting location service (was disabled)', undefined, 'LocationService');
+      console.log('Starting location service (was disabled)');
       await this.startLocationService();
     } else if (!newSettings.location_enabled && wasEnabled) {
       // Service was enabled, now disabled
-      logger.info('Stopping location service (now disabled)', undefined, 'LocationService');
+      console.log('Stopping location service (now disabled)');
       this.stopLocationService();
     } else if (newSettings.location_enabled && wasEnabled && 
                oldFrequency !== newSettings.location_polling_frequency) {
       // Frequency changed, restart polling
-      logger.info('Restarting location service (frequency changed)', undefined, 'LocationService');
+      console.log('Restarting location service (frequency changed)');
       await this.restartLocationService();
     }
   }
@@ -177,7 +176,7 @@ export class LocationService {
           return data.location_name;
         }
       } catch (supabaseError) {
-        logger.debug('Supabase geocoding failed, falling back to OpenStreetMap', supabaseError, 'LocationService');
+        console.log('Supabase geocoding failed, falling back to OpenStreetMap');
       }
 
       // Fallback to OpenStreetMap Nominatim
@@ -206,7 +205,7 @@ export class LocationService {
       
       return data.display_name || null;
     } catch (error) {
-      logger.warn('Reverse geocoding failed', error, 'LocationService');
+      console.warn('Reverse geocoding failed:', error);
       return null;
     }
   }
@@ -228,7 +227,7 @@ export class LocationService {
           return data.results;
         }
       } catch (supabaseError) {
-        logger.debug('Supabase search failed, falling back to OpenStreetMap', supabaseError, 'LocationService');
+        console.log('Supabase search failed, falling back to OpenStreetMap');
       }
 
       // Fallback to OpenStreetMap Nominatim
@@ -250,7 +249,7 @@ export class LocationService {
         importance: item.importance || 0,
       }));
     } catch (error) {
-      logger.error('Location search failed', error, 'LocationService');
+      console.error('Location search failed:', error);
       throw error;
     }
   }
@@ -297,10 +296,10 @@ export class LocationService {
               }
             } catch (geocodeError) {
               // Silently ignore geocoding errors
-              logger.debug('Reverse geocoding failed, continuing with coordinates only', geocodeError, 'LocationService');
+              console.log('Reverse geocoding failed, continuing with coordinates only');
             }
           } catch (error) {
-            logger.error('Failed to update location settings', error, 'LocationService');
+            console.error('Failed to update location settings:', error);
           }
         };
 
@@ -315,7 +314,7 @@ export class LocationService {
       }
 
     } catch (error) {
-      logger.error('Failed to update location data', error, 'LocationService');
+      console.error('Failed to update location data:', error);
       this.notifyListeners(this.lastLocationRef, 'error');
     }
   }
@@ -332,7 +331,7 @@ export class LocationService {
                          60000; // 1 minute for initial failures
       
       if (timeSinceLastFailure > backoffTime) {
-        logger.debug('Circuit breaker: Attempting to close circuit breaker after backoff', { failureCount: this.failureCount, backoffTime }, 'LocationService');
+        console.log('Circuit breaker: Attempting to close circuit breaker after backoff');
         this.isCircuitBreakerOpen = false;
         // Don't reset failure count completely - keep some memory
         this.failureCount = Math.max(0, this.failureCount - 1);
@@ -349,7 +348,7 @@ export class LocationService {
     this.lastFailureTime = Date.now();
     
     if (this.failureCount >= this.maxFailures) {
-      logger.warn('Circuit breaker: Opening circuit breaker', { failureCount: this.failureCount, maxFailures: this.maxFailures }, 'LocationService');
+      console.log(`Circuit breaker: Opening circuit breaker after ${this.failureCount} failures`);
       this.isCircuitBreakerOpen = true;
       
       // Only show error toast once when circuit breaker first opens
@@ -362,7 +361,7 @@ export class LocationService {
   private handleLocationSuccess() {
     // Only fully reset on success after circuit breaker was open
     if (this.isCircuitBreakerOpen || this.failureCount > 0) {
-      logger.info('Circuit breaker: Location success, resetting failure count', { previousFailureCount: this.failureCount }, 'LocationService');
+      console.log('Circuit breaker: Location success, resetting failure count');
       this.failureCount = 0;
       this.isCircuitBreakerOpen = false;
     }
@@ -397,7 +396,7 @@ export class LocationService {
       this.handleLocationSuccess();
       await this.updateLocationData(locationData, updateSettings);
     } catch (error: any) {
-      logger.warn('Location polling failed', error, 'LocationService');
+      console.warn('Location polling failed:', error);
       this.handleLocationFailure();
       
       // Use stored location as fallback
@@ -420,14 +419,14 @@ export class LocationService {
   // Service lifecycle with proper async handling
   async startLocationService(updateSettings?: (settings: Partial<LocationSettings>) => Promise<void>) {
     if (!this.settings?.location_enabled || this.serviceLock) {
-      logger.debug('Location service start skipped - disabled or locked', { enabled: this.settings?.location_enabled, locked: this.serviceLock }, 'LocationService');
+      console.log('Location service start skipped - disabled or locked');
       return;
     }
     
     this.serviceLock = true;
     
     try {
-      logger.info('Starting location service', undefined, 'LocationService');
+      console.log('Starting location service...');
       
       // Stop any existing service first
       this.stopLocationService(false); // Don't release lock yet
@@ -445,7 +444,7 @@ export class LocationService {
         };
         this.lastLocationRef = storedLocation;
         this.notifyListeners(storedLocation, 'active');
-        logger.info('Emitted stored location to widgets on service start', storedLocation, 'LocationService');
+        console.log('Emitted stored location to widgets on service start');
       }
       
       // Get initial location (this will try to get fresh GPS data)
@@ -454,16 +453,16 @@ export class LocationService {
       // Set up polling interval if service is still running and not in circuit breaker
       if (this.isServiceRunning && !this.isCircuitBreakerOpen) {
         const pollFrequency = (this.settings.location_polling_frequency || 5) * 60 * 1000;
-        logger.info('Setting up location polling', { frequencySeconds: pollFrequency / 1000 }, 'LocationService');
+        console.log(`Setting up location polling every ${pollFrequency / 1000} seconds`);
         
         this.intervalRef = setInterval(() => {
           this.pollLocation(updateSettings);
         }, pollFrequency);
       }
 
-      logger.info('Location service started successfully', undefined, 'LocationService');
+      console.log('Location service started successfully');
     } catch (error) {
-      logger.error('Failed to start location service', error, 'LocationService');
+      console.error('Failed to start location service:', error);
     } finally {
       this.serviceLock = false;
     }
@@ -474,7 +473,7 @@ export class LocationService {
       return;
     }
     
-    logger.info('Restarting location service', undefined, 'LocationService');
+    console.log('Restarting location service...');
     this.stopLocationService();
     // Add small delay to prevent race conditions
     setTimeout(() => {
@@ -485,7 +484,7 @@ export class LocationService {
   }
 
   stopLocationService(releaseLock: boolean = true) {
-    logger.info('Stopping location service', { releaseLock }, 'LocationService');
+    console.log('Stopping location service...');
 
     this.isServiceRunning = false;
 
@@ -504,7 +503,7 @@ export class LocationService {
     }
 
     this.notifyListeners(this.lastLocationRef, this.settings?.location_enabled ? 'inactive' : 'inactive');
-    logger.info('Location service stopped', undefined, 'LocationService');
+    console.log('Location service stopped');
   }
 
   // Manual refresh with proper error handling

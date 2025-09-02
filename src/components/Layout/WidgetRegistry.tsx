@@ -1,23 +1,21 @@
-
-// Standardized widget component registry with optimized lazy loading
+// Widget component registry with lazy loading
 import React, { Suspense } from 'react';
 import { WidgetSkeleton } from '@/components/ui/widget-skeleton';
-import { createLazyComponent, preloadComponent, getWidgetBundlePriority } from '@/lib/bundleSplitting';
 
-// Core widgets - using standard React.lazy for reliability
-const SampleClock = React.lazy(() => import('@/components/widgets/SampleClock'));
-const SampleNote = React.lazy(() => import('@/components/widgets/SampleNote'));
-const SampleChart = React.lazy(() => import('@/components/widgets/SampleChart'));
-
-// Dashboard widgets
-const AddWidgetWidget = React.lazy(() => import('@/components/widgets/AddWidgetWidget'));
-const DashboardSettingsWidget = React.lazy(() => import('@/components/widgets/DashboardSettingsWidget'));
-
-// Preload high-priority widgets
-if (typeof window !== 'undefined') {
-  preloadComponent(() => import('@/components/widgets/SampleClock'), 'SampleClock');
-  preloadComponent(() => import('@/components/widgets/SampleNote'), 'SampleNote');
-}
+// Lazy load widget components for better performance - import named exports directly
+const MapWidget = React.lazy(() => import('@/components/Applets/MapWidget').then(m => ({ default: m.MapWidget })));
+const WeatherWidget = React.lazy(() => import('@/components/Applets/WeatherWidget').then(m => ({ default: m.WeatherWidget })));
+const ClockWidget = React.lazy(() => import('@/components/Applets/ClockWidget'));
+const UserInfoWidget = React.lazy(() => import('@/components/Applets/UserInfoWidget').then(m => ({ default: m.UserInfoWidget })));
+const EmailWidget = React.lazy(() => import('@/components/Applets/EmailWidget').then(m => ({ default: m.EmailWidget })));
+const CalendarWidget = React.lazy(() => import('@/components/Applets/CalendarWidget').then(m => ({ default: m.CalendarWidget })));
+const BrowserWidget = React.lazy(() => import('@/components/Applets/BrowserWidget').then(m => ({ default: m.BrowserWidget })));
+const SystemSettingsWidget = React.lazy(() => import('@/components/Applets/SystemSettingsWidget').then(m => ({ default: m.SystemSettingsWidget })));
+const CustomAssistantWidget = React.lazy(() => import('@/components/Applets/CustomAssistantWidget').then(m => ({ default: m.CustomAssistantWidget })));
+const TextDisplayWidget = React.lazy(() => import('@/components/Applets/TextDisplayWidget').then(m => ({ default: m.TextDisplayWidget })));
+const ImageDisplayWidget = React.lazy(() => import('@/components/Applets/ImageDisplayWidget').then(m => ({ default: m.ImageDisplayWidget })));
+const AudioPlayer = React.lazy(() => import('@/components/Applets/AudioPlayer').then(m => ({ default: m.AudioPlayer })));
+const VoiceAgentWidget = React.lazy(() => import('@/components/Applets/VoiceAgentWidget').then(m => ({ default: m.VoiceAgentWidget })));
 
 // Create wrapped components with suspense and optimized skeletons
 const createLazyWidget = (
@@ -32,18 +30,19 @@ const createLazyWidget = (
 };
 
 export const WIDGET_COMPONENTS = {
-  // Essential system widgets only
-  SampleClock: createLazyWidget(SampleClock, 'minimal'),
-  SampleNote: createLazyWidget(SampleNote, 'card'),
-  SampleChart: createLazyWidget(SampleChart, 'chart'),
-  
-  // Dashboard widgets
-  AddWidgetWidget: createLazyWidget(AddWidgetWidget, 'card'),
-  DashboardSettingsWidget: createLazyWidget(DashboardSettingsWidget, 'card'),
-  
-  // Demo and development widgets (lowest priority)
-  WidgetFactoryDemo: createLazyWidget(React.lazy(() => import('@/components/widgets/WidgetFactoryDemo')), 'card'),
-  ModernCSSDemo: createLazyWidget(React.lazy(() => import('@/components/demo/ModernCSSDemo')), 'card'),
+  MapWidget: createLazyWidget(MapWidget, 'card'),
+  WeatherWidget: createLazyWidget(WeatherWidget, 'chart'),
+  ClockWidget: createLazyWidget(ClockWidget, 'minimal'),
+  UserInfoWidget: createLazyWidget(UserInfoWidget, 'card'),
+  EmailWidget: createLazyWidget(EmailWidget, 'list'),
+  CalendarWidget: createLazyWidget(CalendarWidget, 'list'),
+  BrowserWidget: createLazyWidget(BrowserWidget, 'card'),
+  SystemSettingsWidget: createLazyWidget(SystemSettingsWidget, 'list'),
+  CustomAssistantWidget: createLazyWidget(CustomAssistantWidget, 'card'),
+  TextDisplayWidget: createLazyWidget(TextDisplayWidget, 'card'),
+  ImageDisplayWidget: createLazyWidget(ImageDisplayWidget, 'media'),
+  AudioPlayerWidget: createLazyWidget(AudioPlayer, 'media'),
+  VoiceAgentWidget: createLazyWidget(VoiceAgentWidget, 'card'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;

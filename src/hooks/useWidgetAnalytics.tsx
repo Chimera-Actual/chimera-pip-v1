@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/lib/logger';
 
 export interface WidgetUsageStats {
   widget_type: string;
@@ -52,7 +51,7 @@ export const useWidgetAnalytics = () => {
         loadActivityPatterns(),
       ]);
     } catch (error) {
-      logger.error('Error loading analytics', error, 'WidgetAnalytics');
+      console.error('Error loading analytics:', error);
     } finally {
       setLoading(false);
     }
@@ -75,7 +74,7 @@ export const useWidgetAnalytics = () => {
 
       setWidgetStats(mockStats);
     } catch (error) {
-      logger.error('Error loading widget stats', error, 'WidgetAnalytics');
+      console.error('Error loading widget stats:', error);
     }
   };
 
@@ -94,7 +93,7 @@ export const useWidgetAnalytics = () => {
 
       setPerformanceStats(mockStats);
     } catch (error) {
-      logger.error('Error loading performance stats', error, 'WidgetAnalytics');
+      console.error('Error loading performance stats:', error);
     }
   };
 
@@ -111,7 +110,7 @@ export const useWidgetAnalytics = () => {
 
       setActivityPatterns(mockPatterns);
     } catch (error) {
-      logger.error('Error loading activity patterns', error, 'WidgetAnalytics');
+      console.error('Error loading activity patterns:', error);
     }
   };
 
@@ -120,9 +119,9 @@ export const useWidgetAnalytics = () => {
 
     try {
       // For now, just console log the usage (could store in user_settings later)
-      logger.info('Widget usage tracked', { widgetType, widgetName, sessionDuration }, 'WidgetAnalytics');
+      console.log('Widget usage tracked:', { widgetType, widgetName, sessionDuration });
     } catch (error) {
-      logger.error('Error tracking widget usage', error, 'WidgetAnalytics');
+      console.error('Error tracking widget usage:', error);
     }
   };
 
@@ -131,9 +130,9 @@ export const useWidgetAnalytics = () => {
 
     try {
       // For now, just console log the metric (could store in user_settings later)
-      logger.debug('Performance metric tracked', { metric, value }, 'WidgetAnalytics');
+      console.log('Performance metric tracked:', { metric, value });
     } catch (error) {
-      logger.error('Error tracking performance metric', error, 'WidgetAnalytics');
+      console.error('Error tracking performance metric:', error);
     }
   };
 

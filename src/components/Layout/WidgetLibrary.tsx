@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Package, Hash, Settings } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Search, Plus, Package, Tags, Hash } from 'lucide-react';
 import { WidgetDefinition } from '@/hooks/useWidgetManager';
 import { WidgetTagManager } from './WidgetTagManager';
-import WidgetLibraryCard from './WidgetLibraryCard';
-import { useWidgetIconManager } from '@/hooks/useWidgetIconManager';
-import { toast } from '@/hooks/use-toast';
-import { logger } from '@/lib/logger';
 
 interface WidgetLibraryProps {
   isOpen: boolean;
@@ -34,8 +33,6 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [tagManagerWidget, setTagManagerWidget] = useState<WidgetDefinition | null>(null);
-  const [editMode, setEditMode] = useState(false);
-  const { updateWidgetIcon } = useWidgetIconManager();
 
   const availableTags = ['all', ...allUserTags];
 
@@ -59,23 +56,6 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
 
   const closeTagManager = () => {
     setTagManagerWidget(null);
-  };
-
-  const handleUpdateIcon = async (widgetId: string, newIcon: string) => {
-    try {
-      await updateWidgetIcon(widgetId, newIcon);
-      toast({
-        title: "Icon Updated",
-        description: `Widget icon changed to ${newIcon}`,
-      });
-    } catch (error) {
-      logger.error('Failed to update widget icon', error, 'WidgetLibrary');
-      toast({
-        title: "Update Failed", 
-        description: "Cannot modify widget definitions (admin only)",
-        variant: "destructive"
-      });
-    }
   };
 
   return (
@@ -132,32 +112,65 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
                 {filteredWidgets.map(widget => (
-                  <WidgetLibraryCard
-                    key={widget.id}
-                    widget={widget}
-                    onAddWidget={handleAddWidget}
-                    onUpdateIcon={handleUpdateIcon}
-                    onOpenTagManager={openTagManager}
-                    showIconEdit={editMode}
-                  />
+                  <Card key={widget.id} className="bg-background/30 border-border hover:border-primary/50 transition-colors">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="text-2xl">{widget.icon}</div>
+                          <div className="flex-1">
+                            <CardTitle className="text-sm font-mono text-primary">
+                              {widget.name}
+                            </CardTitle>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {widget.user_tags && widget.user_tags.length > 0 ? (
+                                widget.user_tags.map(tag => (
+                                  <Badge 
+                                    key={tag}
+                                    variant="secondary" 
+                                    className="text-xs font-mono"
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <Badge variant="outline" className="text-xs font-mono text-muted-foreground">
+                                  No tags
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openTagManager(widget)}
+                          className="text-muted-foreground hover:text-primary p-1"
+                        >
+                          <Tags className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent className="pt-0">
+                      {widget.description && (
+                        <CardDescription className="text-xs font-mono text-muted-foreground mb-3">
+                          {widget.description}
+                        </CardDescription>
+                      )}
+                      
+                      <Button
+                        onClick={() => handleAddWidget(widget.id)}
+                        size="sm"
+                        className="w-full font-mono text-xs"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        ADD WIDGET
+                      </Button>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          <Button
-            variant={editMode ? "default" : "outline"}
-            size="sm"
-            onClick={() => setEditMode(!editMode)}
-            className="font-mono text-xs"
-          >
-            <Settings className="w-3 h-3 mr-1" />
-            {editMode ? 'EXIT EDIT' : 'EDIT MODE'}
-          </Button>
-          <div className="text-xs font-mono text-muted-foreground">
-            {editMode && 'Double-click widget icons to edit'}
           </div>
         </div>
 

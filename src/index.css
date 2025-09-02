@@ -1,169 +1,85 @@
-/* Import Google Fonts first */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=VT323:wght@400&family=Share+Tech+Mono:wght@400&display=swap');
-
-/* Import modern CSS architecture */
-@import "./styles/modern-css-architecture.css";
-@import "./styles/widget-system.css";
-@import "./styles/crt.css";
-@import "./styles/accessibility.css";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Pip-Boy Retro CRT Design System 
+All colors MUST be HSL - Monochrome Green Theme
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=VT323:wght@400&family=Share+Tech+Mono:wght@400&display=swap');
+
 @layer base {
   :root {
-    /* PipBoy-Inspired CRT Color Scheme */
-    --theme-hue: 120; /* Emerald Green Base */
+    /* Dynamic Theme Hue - Will be updated by theme context */
+    --theme-hue: 120; /* Default: green */
     
-    /* Core CRT Colors - Exact PipBoy Palette */
-    --crt-emerald-primary: 120 100% 50%;      /* Main CRT green */
-    --crt-emerald-glow: 120 100% 65%;         /* Bright glow variant */
-    --crt-emerald-dim: 120 100% 35%;          /* Dimmed variant */
-    --crt-emerald-muted: 120 40% 60%;         /* Secondary text */
-    --crt-emerald-border: 120 30% 25%;        /* Subtle borders */
+    /* Core CRT Color Palette (using dynamic hue) */
+    --background: var(--theme-hue) 100% 3%;        /* Very dark themed-black */
+    --foreground: var(--theme-hue) 100% 75%;       /* Bright terminal color */
     
-    --crt-background: 200 20% 8%;             /* Deep black with blue tint */
-    --crt-panel: 200 15% 12%;                 /* Dark panel background */
-    --crt-amber: 45 100% 60%;                 /* Warning/accent amber */
-    --crt-cyan: 200 100% 60%;                 /* Special highlights */
-    --crt-red: 0 100% 60%;                    /* Alert/error states */
+    --card: var(--theme-hue) 100% 4%;              /* Slightly lighter dark color */
+    --card-foreground: var(--theme-hue) 100% 70%;  /* Card text color */
     
-    /* Base Colors using CRT palette */
-    --background: var(--crt-background);
-    --foreground: var(--crt-emerald-glow);
+    --popover: var(--theme-hue) 100% 5%;
+    --popover-foreground: var(--theme-hue) 100% 75%;
     
-    --card: var(--crt-panel);
-    --card-foreground: var(--crt-emerald-glow);
+    --primary: var(--theme-hue) 100% 50%;          /* Electric terminal color */
+    --primary-foreground: var(--theme-hue) 100% 3%;
     
-    --popover: var(--crt-panel);
-    --popover-foreground: var(--crt-emerald-glow);
+    --secondary: var(--theme-hue) 50% 15%;         /* Darker color for secondary elements */
+    --secondary-foreground: var(--theme-hue) 100% 65%;
     
-    --primary: var(--crt-emerald-primary);
-    --primary-foreground: var(--crt-background);
+    --muted: var(--theme-hue) 30% 10%;             /* Muted dark color */
+    --muted-foreground: var(--theme-hue) 50% 45%;  /* Muted text */
     
-    --secondary: var(--crt-emerald-border);
-    --secondary-foreground: var(--crt-emerald-glow);
+    --accent: var(--theme-hue) 100% 40%;           /* Accent bright color */
+    --accent-foreground: var(--theme-hue) 100% 5%;
     
-    --muted: var(--crt-panel);
-    --muted-foreground: var(--crt-emerald-muted);
+    --destructive: 0 100% 45%;        /* Red for errors (always red) */
+    --destructive-foreground: var(--theme-hue) 100% 95%;
     
-    --accent: var(--crt-emerald-glow);
-    --accent-foreground: var(--crt-background);
+    --border: var(--theme-hue) 50% 20%;            /* Border color */
+    --input: var(--theme-hue) 50% 12%;             /* Input background */
+    --ring: var(--theme-hue) 100% 50%;             /* Focus ring */
     
-    --destructive: var(--crt-red);
-    --destructive-foreground: 0 0% 100%;
+    --radius: 0.25rem;                /* Sharp corners for retro feel */
     
-    --border: var(--crt-emerald-border);
-    --input: var(--crt-panel);
-    --ring: var(--crt-emerald-primary);
+    /* CRT Effects */
+    --scanline-opacity: 0.1;
+    --flicker-intensity: 0.98;
+    --glow-size: 2px;
     
-    --radius: 1rem;                /* Rounded corners for modern feel */
-    
-    /* Enhanced CRT Effects */
-    --scanline-opacity: 0.08;
-    --flicker-intensity: 0.97;
-    --glow-size: 3px;
-    --panel-glow: 0 0 20px hsl(var(--crt-emerald-primary) / 0.15);
-    --text-glow: 0 0 8px hsl(var(--crt-emerald-primary)), 0 0 16px hsl(var(--crt-emerald-primary) / 0.5);
-    --border-glow: 0 0 4px hsl(var(--crt-emerald-primary) / 0.3), inset 0 0 4px hsl(var(--crt-emerald-primary) / 0.1);
-    
-    /* Enhanced PipBoy Gradients */
+    /* Custom gradients (using dynamic hue) */
     --gradient-crt: linear-gradient(180deg, 
-      hsl(var(--crt-panel)), 
-      hsl(var(--crt-background)), 
-      hsl(var(--crt-panel)));
+      hsl(var(--theme-hue) 100% 5%), 
+      hsl(var(--theme-hue) 100% 3%), 
+      hsl(var(--theme-hue) 100% 5%));
     --gradient-screen: radial-gradient(ellipse at center,
-      hsl(var(--crt-panel)) 0%,
-      hsl(var(--crt-background)) 100%);
-    --gradient-sliding: linear-gradient(90deg,
-      transparent 0%,
-      hsl(var(--crt-emerald-primary) / 0.2) 30%,
-      hsl(var(--crt-emerald-glow) / 0.4) 50%,
-      hsl(var(--crt-emerald-primary) / 0.2) 70%,
-      transparent 100%);
+      hsl(var(--theme-hue) 100% 4%) 0%,
+      hsl(var(--theme-hue) 100% 2%) 100%);
       
-    /* Sidebar colors updated to match PipBoy scheme */
-    --sidebar-background: var(--crt-panel);
-    --sidebar-foreground: var(--crt-emerald-glow);
-    --sidebar-primary: var(--crt-emerald-primary);
-    --sidebar-primary-foreground: var(--crt-background);
-    --sidebar-accent: var(--crt-emerald-border);
-    --sidebar-accent-foreground: var(--crt-emerald-glow);
-    --sidebar-border: var(--crt-emerald-border);
-    --sidebar-ring: var(--crt-emerald-primary);
+    /* Sidebar specific */
+    --sidebar-background: var(--theme-hue) 100% 4%;
+    --sidebar-foreground: var(--theme-hue) 100% 70%;
+    --sidebar-primary: var(--theme-hue) 100% 50%;
+    --sidebar-primary-foreground: var(--theme-hue) 100% 3%;
+    --sidebar-accent: var(--theme-hue) 50% 15%;
+    --sidebar-accent-foreground: var(--theme-hue) 100% 65%;
+    --sidebar-border: var(--theme-hue) 50% 20%;
+    --sidebar-ring: var(--theme-hue) 100% 50%;
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* Enhanced Responsive Typography System */
-    --text-scale-factor: clamp(0.85, 2.5cqw + 0.5rem, 1.25);
-    --text-responsive-xs: clamp(0.75rem, 1.5cqw + 0.5rem, 0.875rem);
-    --text-responsive-sm: clamp(0.875rem, 2cqw + 0.5rem, 1rem);
-    --text-responsive-md: clamp(1rem, 2.5cqw + 0.5rem, 1.125rem);
-    --text-responsive-lg: clamp(1.125rem, 3cqw + 0.5rem, 1.25rem);
-    --text-responsive-xl: clamp(1.25rem, 3.5cqw + 0.5rem, 1.5rem);
-    --text-responsive-2xl: clamp(1.5rem, 4cqw + 0.5rem, 1.875rem);
-    --text-responsive-3xl: clamp(1.875rem, 5cqw + 0.5rem, 2.25rem);
-
-    /* Enhanced Spacing System */
-    --space-xs: clamp(0.25rem, 1cqw, 0.5rem);
-    --space-sm: clamp(0.5rem, 1.5cqw, 0.75rem);
-    --space-md: clamp(0.75rem, 2cqw, 1rem);
-    --space-lg: clamp(1rem, 2.5cqw, 1.5rem);
-    --space-xl: clamp(1.5rem, 3cqw, 2rem);
-    --space-2xl: clamp(2rem, 4cqw, 3rem);
-    --space-3xl: clamp(3rem, 5cqw, 4rem);
-
-    /* Container System */
-    --container-xs: 20rem;
-    --container-sm: 24rem;
-    --container-md: 28rem;
-    --container-lg: 32rem;
-    --container-xl: 36rem;
-    --container-2xl: 42rem;
-    --container-3xl: 48rem;
-
-    /* Border Radius System */
-    --radius-xs: 0.125rem;
-    --radius-sm: 0.25rem;
-    --radius-md: 0.375rem;
-    --radius-lg: 0.5rem;
-    --radius-xl: 0.75rem;
-    --radius-2xl: 1rem;
-    --radius-full: 9999px;
-
-    /* Enhanced Shadow System */
-    --shadow-xs: 0 1px 2px 0 hsl(var(--crt-background) / 0.5);
-    --shadow-sm: 0 1px 3px 0 hsl(var(--crt-background) / 0.5), 0 1px 2px -1px hsl(var(--crt-background) / 0.5);
-    --shadow-md: 0 4px 6px -1px hsl(var(--crt-background) / 0.5), 0 2px 4px -2px hsl(var(--crt-background) / 0.5);
-    --shadow-lg: 0 10px 15px -3px hsl(var(--crt-background) / 0.5), 0 4px 6px -4px hsl(var(--crt-background) / 0.5);
-    --shadow-xl: 0 20px 25px -5px hsl(var(--crt-background) / 0.5), 0 8px 10px -6px hsl(var(--crt-background) / 0.5);
-
-    /* Widget System Shadows */
-    --widget-shadow: 0 4px 12px hsl(var(--crt-emerald-primary) / 0.15), 0 0 0 1px hsl(var(--crt-emerald-border) / 0.8);
-    --widget-shadow-hover: 0 8px 24px hsl(var(--crt-emerald-primary) / 0.25), 0 0 0 1px hsl(var(--crt-emerald-primary) / 0.5);
-    --widget-shadow-focus: 0 0 0 2px hsl(var(--crt-emerald-primary) / 0.8), 0 8px 24px hsl(var(--crt-emerald-primary) / 0.25);
-
-    /* Animation Timing System */
-    --duration-instant: 0ms;
-    --duration-fast: 150ms;
-    --duration-base: 250ms;
-    --duration-slow: 350ms;
-    --duration-slower: 500ms;
-
-    /* Enhanced Easing Functions */
-    --easing-linear: linear;
-    --easing-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    --easing-emphasis: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-    /* Widget System Properties */
-    --widget-accent: var(--crt-emerald-primary);
-    --widget-text: var(--crt-emerald-glow);
-    --widget-muted: var(--crt-emerald-muted);
-    --widget-border: var(--crt-emerald-border);
-    --widget-collapsed-block-size: 3rem;
+    /* Responsive Typography System */
+    --text-scale-factor: clamp(0.8, 2cqw, 1.2);
+    --text-xs: calc(0.75rem * var(--text-scale-factor));
+    --text-sm: calc(0.875rem * var(--text-scale-factor));
+    --text-base: calc(1rem * var(--text-scale-factor));
+    --text-lg: calc(1.125rem * var(--text-scale-factor));
+    --text-xl: calc(1.25rem * var(--text-scale-factor));
+    --text-2xl: calc(1.5rem * var(--text-scale-factor));
+    --text-3xl: calc(1.875rem * var(--text-scale-factor));
 
     /* CRT-aware line height for better readability */
     --line-height-tight: 1.1;
@@ -211,122 +127,10 @@
   }
 
   .crt-glow {
-    text-shadow: var(--text-glow);
-  }
-
-  /* PipBoy Enhanced Typography Effects */
-  .pipboy-heading {
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
-    text-shadow: var(--text-glow);
-    color: hsl(var(--crt-emerald-glow));
-    letter-spacing: 0.05em;
-  }
-
-  .pipboy-title {
-    font-family: 'Orbitron', monospace;
-    font-weight: 400;
     text-shadow: 
-      0 0 4px hsl(var(--crt-emerald-primary)),
-      0 0 8px hsl(var(--crt-emerald-primary) / 0.3);
-    color: hsl(var(--crt-emerald-primary));
-  }
-
-  .terminal-text {
-    font-family: 'Share Tech Mono', monospace;
-    text-shadow: 0 0 2px hsl(var(--crt-emerald-primary) / 0.5);
-  }
-
-  /* Terminal Blink Effect */
-  .terminal-cursor::after {
-    content: '█';
-    animation: blink 1s infinite;
-    color: hsl(var(--crt-emerald-glow));
-  }
-
-  @keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
-  }
-
-  /* Enhanced Panel Glow Effects */
-  .pipboy-panel {
-    background: hsl(var(--crt-panel));
-    border: 1px solid hsl(var(--crt-emerald-border));
-    box-shadow: var(--panel-glow);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .pipboy-panel::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, 
-      transparent 30%, 
-      hsl(var(--crt-emerald-primary) / 0.1) 50%, 
-      transparent 70%);
-    z-index: -1;
-    border-radius: inherit;
-  }
-
-  /* Border Illumination */
-  .border-glow {
-    border: 1px solid hsl(var(--crt-emerald-border));
-    box-shadow: var(--border-glow);
-  }
-
-  .border-glow:hover {
-    border-color: hsl(var(--crt-emerald-primary));
-    box-shadow: 
-      0 0 8px hsl(var(--crt-emerald-primary) / 0.5),
-      inset 0 0 8px hsl(var(--crt-emerald-primary) / 0.1);
-  }
-
-  /* Hover Enhancement with Sliding Gradient */
-  .pipboy-hover {
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-  }
-
-  .pipboy-hover::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: var(--gradient-sliding);
-    transition: left 0.5s ease;
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  .pipboy-hover:hover::before {
-    left: 100%;
-  }
-
-  .pipboy-hover:hover {
-    background-color: hsl(var(--crt-emerald-border) / 0.2);
-    box-shadow: 
-      var(--panel-glow),
-      inset 0 0 20px hsl(var(--crt-emerald-primary) / 0.1);
-  }
-
-  /* Enhanced Flicker Animation */
-  .pipboy-flicker {
-    animation: pipboyFlicker 3s infinite ease-in-out;
-  }
-
-  @keyframes pipboyFlicker {
-    0%, 96%, 100% { opacity: 1; }
-    97% { opacity: 0.92; }
-    98% { opacity: 1; }
-    99% { opacity: 0.96; }
+      0 0 var(--glow-size) hsl(var(--primary)),
+      0 0 calc(var(--glow-size) * 2) hsl(var(--primary)),
+      0 0 calc(var(--glow-size) * 3) hsl(var(--primary));
   }
 
   /* Icon Color Utilities */
@@ -348,61 +152,6 @@
 
   .icon-destructive {
     color: hsl(var(--destructive));
-  }
-
-  /* Monochrome System - Theme-aware icons */
-  .icon-monochrome,
-  .lucide,
-  svg[class*="lucide"],
-  button svg,
-  .icon {
-    filter: 
-      sepia(100%) 
-      hue-rotate(calc(var(--theme-hue, 120) * 1deg)) 
-      saturate(1.2) 
-      brightness(0.9) 
-      contrast(1.1)
-      drop-shadow(0 0 2px hsl(var(--primary) / 0.3)) !important;
-    transition: filter 0.3s ease;
-  }
-
-  .icon-monochrome:hover,
-  .lucide:hover,
-  svg[class*="lucide"]:hover,
-  button:hover svg,
-  .icon:hover {
-    filter: 
-      sepia(100%) 
-      hue-rotate(calc(var(--theme-hue, 120) * 1deg)) 
-      saturate(1.4) 
-      brightness(1.1) 
-      contrast(1.2)
-      drop-shadow(0 0 4px hsl(var(--primary) / 0.5)) !important;
-  }
-
-  /* Monochrome images */
-  .image-monochrome {
-    filter: 
-      sepia(50%) 
-      hue-rotate(calc(var(--theme-hue, 120) * 1deg)) 
-      saturate(0.8) 
-      brightness(0.9)
-      contrast(1.1);
-    transition: filter 0.3s ease;
-  }
-
-  /* Force monochrome on specific icon containers */
-  .widget-header svg,
-  .tab-item svg,
-  .sidebar svg,
-  [data-icon] svg {
-    filter: 
-      sepia(100%) 
-      hue-rotate(calc(var(--theme-hue, 120) * 1deg)) 
-      saturate(1.2) 
-      brightness(0.9) 
-      contrast(1.1)
-      drop-shadow(0 0 2px hsl(var(--primary) / 0.3)) !important;
   }
 
   /* Icon CRT Glow Effects */
@@ -435,63 +184,42 @@
     50% { opacity: var(--flicker-intensity); }
   }
 
-  /* Enhanced PipBoy Scrollbar Styling */
+  /* Custom Scrollbar Styling */
   /* Webkit browsers (Chrome, Safari, Edge) */
   ::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--crt-background));
-    border: 1px solid hsl(var(--crt-emerald-border));
-    border-radius: 0;
-    box-shadow: inset 0 0 8px hsl(var(--crt-emerald-primary) / 0.1);
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    border-radius: 6px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-      180deg,
-      hsl(var(--crt-emerald-primary) / 0.8) 0%,
-      hsl(var(--crt-emerald-primary) / 0.6) 50%,
-      hsl(var(--crt-emerald-primary) / 0.8) 100%
-    );
-    border-radius: 0;
-    border: 1px solid hsl(var(--crt-emerald-primary) / 0.5);
-    box-shadow: 
-      0 0 6px hsl(var(--crt-emerald-primary) / 0.4),
-      inset 0 0 4px hsl(var(--crt-emerald-primary) / 0.2);
-    transition: all 0.3s ease;
+    background: hsl(var(--primary) / 0.6);
+    border-radius: 6px;
+    border: 2px solid hsl(var(--background));
+    transition: background-color 0.2s ease;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-      180deg,
-      hsl(var(--crt-emerald-glow)) 0%,
-      hsl(var(--crt-emerald-primary)) 50%,
-      hsl(var(--crt-emerald-glow)) 100%
-    );
-    box-shadow: 
-      0 0 12px hsl(var(--crt-emerald-primary) / 0.6),
-      inset 0 0 8px hsl(var(--crt-emerald-primary) / 0.3);
+    background: hsl(var(--primary) / 0.8);
   }
 
   ::-webkit-scrollbar-thumb:active {
-    background: hsl(var(--crt-emerald-glow));
-    box-shadow: 
-      0 0 16px hsl(var(--crt-emerald-primary)),
-      inset 0 0 12px hsl(var(--crt-emerald-primary) / 0.4);
+    background: hsl(var(--primary));
   }
 
   ::-webkit-scrollbar-corner {
-    background: hsl(var(--crt-background));
-    border: 1px solid hsl(var(--crt-emerald-border));
+    background: hsl(var(--background));
   }
 
   /* Firefox scrollbar styling */
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--crt-emerald-primary) / 0.8) hsl(var(--crt-background));
+    scrollbar-color: hsl(var(--primary) / 0.6) hsl(var(--background));
   }
 
   /* Custom scrollbar for specific containers with CRT theme */
@@ -718,18 +446,6 @@
     }
   }
 
-  /* Retro button styling for consistency */
-  .retro-button {
-    @apply transition-all duration-200 hover:shadow-lg rounded-none border-2 font-bold tracking-wider;
-    border: 1px solid hsl(var(--border));
-    background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--background)));
-  }
-  
-  .retro-button:hover {
-    background: linear-gradient(180deg, hsl(var(--accent) / 0.2), hsl(var(--card)));
-    box-shadow: 0 0 8px hsl(var(--primary) / 0.3);
-  }
-
   /* High contrast mode optimizations */
   @media (prefers-contrast: high) {
     .crt-screen::before {
@@ -799,21 +515,6 @@
   .widget-container {
     container-type: inline-size;
     @apply container-responsive;
-  }
-
-  /* Clean widget collapse styles - simplified from complex layered system */
-  .widget-collapsed {
-    height: 48px !important;
-    min-height: 48px !important;
-    max-height: 48px !important;
-    overflow: hidden !important;
-  }
-
-  .widget-expanded {
-    height: auto;
-    min-height: auto;
-    max-height: none;
-    overflow: visible;
   }
 
   .widget-text-auto {

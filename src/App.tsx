@@ -4,52 +4,46 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { SecurityProvider } from "@/hooks/useSecurity";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { UserProfileProvider } from "@/hooks/useUserProfile";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ProtectedRoute } from "@/components/Layout/ProtectedRoute";
-import { ComprehensiveErrorBoundary } from "@/components/ui/ComprehensiveErrorBoundary";
-import Dashboard from "./pages/Dashboard";
+import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ComprehensiveErrorBoundary showErrorDetails={process.env.NODE_ENV === 'development'}>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SecurityProvider>
-          <UserProfileProvider>
-            <ThemeProvider>
-              <AudioProvider>
-                <LocationProvider>
-                  <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/auth" element={<Auth />} />
-                        <Route path="/" element={
-                          <ProtectedRoute>
-                            <Dashboard />
-                          </ProtectedRoute>
-                        } />
-                        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                  </TooltipProvider>
-                </LocationProvider>
-              </AudioProvider>
-            </ThemeProvider>
-          </UserProfileProvider>
-        </SecurityProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </ComprehensiveErrorBoundary>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <UserProfileProvider>
+        <ThemeProvider>
+          <AudioProvider>
+            <LocationProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/" element={
+                      <ProtectedRoute>
+                        <Index />
+                      </ProtectedRoute>
+                    } />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </TooltipProvider>
+            </LocationProvider>
+          </AudioProvider>
+        </ThemeProvider>
+      </UserProfileProvider>
+    </AuthProvider>
+  </QueryClientProvider>
 );
 
 export default App;

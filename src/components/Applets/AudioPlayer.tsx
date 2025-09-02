@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { OscilloscopeWaveform } from './OscilloscopeWaveform';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { logger } from '@/lib/logger';
 
 interface Track {
   id: string;
@@ -25,76 +24,27 @@ interface AudioPlayerProps {
     volume?: number;
     showWaveform?: boolean;
   };
-  onSettingsChange?: (settings: any) => void;
+  onSettingsUpdate?: (settings: any) => void;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   widgetInstanceId,
   settings = {},
-  onSettingsChange
+  onSettingsUpdate
 }) => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Local state with localStorage persistence
+  // State
   const [playlist, setPlaylist] = useState<Track[]>([]);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  
-  // Playback state with localStorage persistence
-  const [isPlaying, setIsPlaying] = useState(() => {
-    if (!widgetInstanceId) return false;
-    try {
-      const saved = localStorage.getItem(`widget-${widgetInstanceId}-isPlaying`);
-      return saved ? JSON.parse(saved) : false;
-    } catch {
-      return false;
-    }
-  });
-  
-  const [currentTime, setCurrentTime] = useState(() => {
-    if (!widgetInstanceId) return 0;
-    try {
-      const saved = localStorage.getItem(`widget-${widgetInstanceId}-currentTime`);
-      return saved ? JSON.parse(saved) : 0;
-    } catch {
-      return 0;
-    }
-  });
-  
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  
-  const [volume, setVolume] = useState(() => {
-    if (!widgetInstanceId) return settings.volume || 75;
-    try {
-      const saved = localStorage.getItem(`widget-${widgetInstanceId}-volume`);
-      return saved ? JSON.parse(saved) : (settings.volume || 75);
-    } catch {
-      return settings.volume || 75;
-    }
-  });
-  
+  const [volume, setVolume] = useState(settings.volume || 75);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Save playback state to localStorage
-  useEffect(() => {
-    if (widgetInstanceId) {
-      localStorage.setItem(`widget-${widgetInstanceId}-isPlaying`, JSON.stringify(isPlaying));
-    }
-  }, [isPlaying, widgetInstanceId]);
-
-  useEffect(() => {
-    if (widgetInstanceId) {
-      localStorage.setItem(`widget-${widgetInstanceId}-currentTime`, JSON.stringify(currentTime));
-    }
-  }, [currentTime, widgetInstanceId]);
-
-  useEffect(() => {
-    if (widgetInstanceId) {
-      localStorage.setItem(`widget-${widgetInstanceId}-volume`, JSON.stringify(volume));
-    }
-  }, [volume, widgetInstanceId]);
 
   // Load playlist from database
   useEffect(() => {
@@ -126,7 +76,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       const settingsData = data.settings as any;
       if (settingsData.playlist && Array.isArray(settingsData.playlist) && settingsData.playlist.length > 0) {
-        logger.info('Migrating legacy audio playlist for widget instance', { widgetInstanceId }, 'AudioPlayer');
+        console.log('Migrating legacy audio playlist for widget instance:', widgetInstanceId);
 
         // Check if we already have audio files in the new table
         const { data: existingAudio } = await supabase
@@ -160,11 +110,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             .eq('user_id', user.id)
             .eq('widget_instance_id', widgetInstanceId);
 
-          logger.info('Legacy playlist migration completed', undefined, 'AudioPlayer');
+          console.log('Legacy playlist migration completed');
         }
       }
     } catch (error) {
-      logger.error('Error migrating legacy playlist', error, 'AudioPlayer');
+      console.error('Error migrating legacy playlist:', error);
     }
   };
 
@@ -184,7 +134,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       nextTrack();
     };
     const handleError = (e: Event) => {
-      logger.error('Audio error', e, 'AudioPlayer');
+      console.error('Audio error:', e);
       setIsLoading(false);
       setIsPlaying(false);
       toast.error('Audio playback error');
@@ -224,7 +174,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         .order('position', { ascending: true });
 
       if (error) {
-        logger.error('Error loading audio files', error, 'AudioPlayer');
+        console.error('Error loading audio files:', error);
         return;
       }
 
@@ -249,7 +199,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 };
               }
             } catch (error) {
-              logger.error('Error refreshing URL for track', { title: audioFile.audio_title, error }, 'AudioPlayer');
+              console.error('Error refreshing URL for track:', audioFile.audio_title, error);
             }
             
             // Return track with empty URL if refresh failed
@@ -269,7 +219,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         setPlaylist([]);
       }
     } catch (error) {
-      logger.error('Error loading playlist', error, 'AudioPlayer');
+      console.error('Error loading playlist:', error);
     }
   };
 
@@ -291,7 +241,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           onConflict: 'user_id,widget_instance_id'
         });
     } catch (error) {
-      logger.error('Error saving volume settings', error, 'AudioPlayer');
+      console.error('Error saving volume settings:', error);
     }
   };
 
@@ -304,7 +254,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       audioRef.current.volume = volume / 100;
       await audioRef.current.play();
     } catch (error) {
-      logger.error('Error playing track', error, 'AudioPlayer');
+      console.error('Error playing track:', error);
       toast.error('Could not play audio file');
     }
   };
@@ -319,7 +269,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         await audioRef.current.play();
       }
     } catch (error) {
-      logger.error('Playback error', error, 'AudioPlayer');
+      console.error('Playback error:', error);
       toast.error('Playback error');
     }
   };
@@ -351,8 +301,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       audioRef.current.volume = newVolume / 100;
     }
     saveVolumeSettings(newVolume);
-    if (onSettingsChange) {
-      onSettingsChange({ ...settings, volume: newVolume });
+    if (onSettingsUpdate) {
+      onSettingsUpdate({ ...settings, volume: newVolume });
     }
   };
 
@@ -422,7 +372,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       
       toast.success('Audio file uploaded successfully!');
     } catch (error) {
-      logger.error('Upload error', error, 'AudioPlayer');
+      console.error('Upload error:', error);
       toast.error('Failed to upload audio file');
     } finally {
       setIsLoading(false);
@@ -455,7 +405,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       
       toast.success('Track removed successfully');
     } catch (error) {
-      logger.error('Error removing track', error, 'AudioPlayer');
+      console.error('Error removing track:', error);
       toast.error('Failed to remove track');
     }
   };

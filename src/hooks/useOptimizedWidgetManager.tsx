@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useWidgetManager } from './useWidgetManager';
 import { useAuth } from './useAuth';
-import { WidgetSettings } from '@/types/common';
 
 export const useOptimizedWidgetManager = () => {
   const { user } = useAuth();
@@ -37,7 +36,7 @@ export const useOptimizedWidgetManager = () => {
   });
 
   const updateSettingsMutation = useMutation({
-    mutationFn: async ({ instanceId, settings }: { instanceId: string; settings: WidgetSettings }) => {
+    mutationFn: async ({ instanceId, settings }: { instanceId: string; settings: Record<string, any> }) => {
       return widgetManager.updateWidgetSettings(instanceId, settings);
     },
     onSuccess: () => {

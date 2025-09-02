@@ -1,16 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { locationService, LocationData, LocationStatus } from '@/lib/locationService';
-import { logger } from '@/lib/logger';
-
-interface LocationSearchResult {
-  display_name: string;
-  lat: number;
-  lon: number;
-  formatted_name: string;
-  type: string;
-  importance: number;
-}
 
 interface LocationContextType {
   location: LocationData | null;
@@ -21,7 +11,7 @@ interface LocationContextType {
   setAutoFollow: (enabled: boolean) => void;
   getCurrentLocation: () => Promise<LocationData>;
   refreshLocation: () => Promise<void>;
-  searchLocations: (query: string, limit?: number) => Promise<LocationSearchResult[]>;
+  searchLocations: (query: string, limit?: number) => Promise<any[]>;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -66,12 +56,11 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   useEffect(() => {
     if (!settings || !isInitialized) return;
 
-    // Settings changed, updating location service
-    logger.info('Settings changed, updating location service', {
+    console.log('Settings changed, updating location service:', {
       enabled: settings.location_enabled,
       hasCoordinates: !!(settings.location_latitude && settings.location_longitude),
       frequency: settings.location_polling_frequency
-    }, 'LocationContext');
+    });
 
     // Use async function to handle the service update properly
     const updateLocationService = async () => {
