@@ -9,7 +9,7 @@ import { useOptimizedWidgetManager } from "@/hooks/useOptimizedWidgetManager";
 import { useLayoutHistory } from "@/hooks/useLayoutHistory";
 import { useDashboardTabs } from "@/hooks/useDashboardTabs";
 import { useToast } from "@/hooks/use-toast";
-import { useErrorHandler } from "@/hooks/useErrorHandler";
+// import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { motion } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import debounce from "lodash.debounce";
@@ -17,7 +17,7 @@ import { WidgetSettings } from "@/types/common";
 
 const DashboardContent = React.memo(() => {
   const { toast } = useToast();
-  const { handleError } = useErrorHandler();
+  // const { handleError } = useErrorHandler();
   
   // Initialize dashboard tab manager
   const {
@@ -114,7 +114,11 @@ const DashboardContent = React.memo(() => {
         description: "Widget has been added to your dashboard.",
       });
     } catch (error) {
-      handleError(error as Error, 'Add Widget');
+      toast({
+        title: "Error",
+        description: "Failed to add widget to dashboard.",
+        variant: "destructive",
+      });
     }
   };
 
