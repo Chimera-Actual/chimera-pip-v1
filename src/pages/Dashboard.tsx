@@ -247,7 +247,52 @@ function DashboardContent() {
     }
   };
 
+  // Permanent widgets that appear on every tab
+  const permanentWidgets = [
+    {
+      id: 'permanent-add-widget',
+      widgetType: 'AddWidgetWidget',
+      w: 4,
+      h: 6,
+      x: 0,
+      y: 0,
+      static: true,
+      minW: 3,
+      minH: 4,
+    },
+    {
+      id: 'permanent-dashboard-settings',
+      widgetType: 'DashboardSettingsWidget', 
+      w: 4,
+      h: 6,
+      x: 4,
+      y: 0,
+      static: true,
+      minW: 3,
+      minH: 4,
+    }
+  ];
+
+  // Combine permanent widgets with tab widgets, offsetting tab widgets to avoid overlap
+  const allWidgets = [
+    ...permanentWidgets,
+    ...(activeTab?.widgets.map(widget => ({
+      ...widget,
+      y: (widget.y || 0) + 7 // Offset regular widgets below permanent ones
+    })) || [])
+  ];
+
   const renderWidget = (id: string) => {
+    // Check if it's a permanent widget first
+    const permanentWidget = permanentWidgets.find(w => w.id === id);
+    if (permanentWidget) {
+      const WidgetComponent = WIDGET_COMPONENTS[permanentWidget.widgetType as WidgetComponentName];
+      if (WidgetComponent) {
+        return <WidgetComponent widgetInstanceId={id} widgetName={permanentWidget.widgetType === 'AddWidgetWidget' ? 'Add Widget' : 'Dashboard Settings'} />;
+      }
+    }
+
+    // Handle regular tab widgets
     const widget = activeTab?.widgets.find(item => item.id === id);
     if (!widget || !widget.widgetType) {
       return (
@@ -362,7 +407,7 @@ function DashboardContent() {
           transition={{ delay: 0.1 }}
         >
           <DashboardGrid
-            items={activeTab?.widgets || []}
+            items={allWidgets}
             renderItem={renderWidget}
             editable={true}
             storageKey={`dashboard:layout:${activeTabId}`}
