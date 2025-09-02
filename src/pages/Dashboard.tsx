@@ -144,7 +144,6 @@ function DashboardHeader() {
 
 function DashboardContent() {
   const { toast } = useToast();
-  const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false);
   
   // Initialize dashboard tab manager
