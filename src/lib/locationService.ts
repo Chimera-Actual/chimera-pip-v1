@@ -156,7 +156,7 @@ export class LocationService {
         },
         {
           enableHighAccuracy: false,
-          timeout: 30000, // 30 second timeout for better GPS acquisition
+          timeout: 8000, // 8 second timeout to prevent Cloudflare timeouts
           maximumAge: 300000, // Accept 5-minute old position
         }
       );

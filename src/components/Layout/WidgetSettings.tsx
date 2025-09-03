@@ -10,6 +10,9 @@ import { ImageDisplaySettings } from '@/components/Applets/Settings/ImageDisplay
 import { MapWidgetSettings } from '@/components/Applets/Settings/MapWidgetSettings';
 import { AudioPlayerSettings } from '@/components/Applets/Settings/AudioPlayerSettings';
 import { WeatherSettings } from '@/components/Applets/Settings/WeatherSettings';
+import { SampleClockSettings } from '@/components/Applets/Settings/SampleClockSettings';
+import { SampleChartSettings } from '@/components/Applets/Settings/SampleChartSettings';
+import { SampleNoteSettings } from '@/components/Applets/Settings/SampleNoteSettings';
 
 interface WidgetSettingsProps {
   isOpen: boolean;
@@ -106,6 +109,33 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({
       case 'WeatherWidget':
         return (
           <WeatherSettings
+            settings={currentSettings}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
+            onClose={onClose}
+          />
+        );
+
+      case 'SampleClock':
+        return (
+          <SampleClockSettings
+            settings={currentSettings}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
+            onClose={onClose}
+          />
+        );
+
+      case 'SampleChart':
+        return (
+          <SampleChartSettings
+            settings={currentSettings}
+            onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
+            onClose={onClose}
+          />
+        );
+
+      case 'SampleNote':
+        return (
+          <SampleNoteSettings
             settings={currentSettings}
             onSettingsChange={(settings) => onSettingsUpdate(widget.id, settings)}
             onClose={onClose}
