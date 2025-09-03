@@ -17,6 +17,12 @@ const ImageDisplayWidget = React.lazy(() => import('@/components/Applets/ImageDi
 const AudioPlayer = React.lazy(() => import('@/components/Applets/AudioPlayer').then(m => ({ default: m.AudioPlayer })));
 const VoiceAgentWidget = React.lazy(() => import('@/components/Applets/VoiceAgentWidget').then(m => ({ default: m.VoiceAgentWidget })));
 
+// Missing widgets that need to be restored
+const SampleClock = React.lazy(() => import('@/components/Applets/SampleClock'));
+const SampleChart = React.lazy(() => import('@/components/Applets/SampleChart'));
+const SampleNote = React.lazy(() => import('@/components/Applets/SampleNote'));
+const DashboardSettingsWidget = React.lazy(() => import('@/components/Applets/DashboardSettingsWidget'));
+
 // Create wrapped components with suspense and optimized skeletons
 const createLazyWidget = (
   Component: React.LazyExoticComponent<React.ComponentType<any>>, 
@@ -43,6 +49,11 @@ export const WIDGET_COMPONENTS = {
   ImageDisplayWidget: createLazyWidget(ImageDisplayWidget, 'media'),
   AudioPlayerWidget: createLazyWidget(AudioPlayer, 'media'),
   VoiceAgentWidget: createLazyWidget(VoiceAgentWidget, 'card'),
+  // Restored missing widgets
+  SampleClock: createLazyWidget(SampleClock, 'minimal'),
+  SampleChart: createLazyWidget(SampleChart, 'chart'),
+  SampleNote: createLazyWidget(SampleNote, 'card'),
+  DashboardSettingsWidget: createLazyWidget(DashboardSettingsWidget, 'list'),
 } as const;
 
 export type WidgetComponentName = keyof typeof WIDGET_COMPONENTS;
