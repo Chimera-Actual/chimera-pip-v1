@@ -165,7 +165,7 @@ export default function Auth() {
                   <Input
                     id="signin-email"
                     type="email"
-                    placeholder="vault-dweller@pip-boy.com"
+                    placeholder="agent@chimera-tec.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
@@ -203,7 +203,7 @@ export default function Auth() {
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="vault-dweller@pip-boy.com"
+                    placeholder="agent@chimera-tec.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}

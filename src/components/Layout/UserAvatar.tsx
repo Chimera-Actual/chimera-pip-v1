@@ -85,7 +85,7 @@ export const UserAvatar: React.FC = () => {
       
       <DropdownMenuContent align="end" className="w-56 bg-card border-border">
         <DropdownMenuLabel className="text-primary font-mono">
-          {profile?.display_name || 'Vault Dweller'}
+          {profile?.display_name || 'Chimera Agent'}
         </DropdownMenuLabel>
         <DropdownMenuLabel className="text-xs text-muted-foreground font-mono font-normal">
           {user?.email}

@@ -350,7 +350,7 @@ export const UserInfoWidget: React.FC = () => {
               ) : (
                 <>
                   <h2 className="text-2xl font-display text-primary crt-glow">
-                    {profile?.display_name || 'VAULT.DWELLER'}
+                    {profile?.display_name || 'CHIMERA.DWELLER'}
                   </h2>
                   <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
                     <Edit3 className="w-4 h-4" />

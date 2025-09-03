@@ -27,7 +27,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             INITIALIZING...
           </div>
           <div className="text-muted-foreground">
-            Pip-Boy System Boot Sequence
+            CHIMERA-PIP System Boot Sequence
           </div>
         </div>
       </div>
