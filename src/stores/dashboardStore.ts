@@ -21,6 +21,7 @@ interface DashboardActions {
   removeWidget: (widgetId: string) => void;
   updateWidget: (widgetId: string, updates: Partial<Widget>) => void;
   updateWidgetSettings: (widgetId: string, settings: WidgetSettings) => void;
+  updateWidgetPosition: (widgetId: string, position: GridPosition, panelId?: string) => void;
   moveWidget: (widgetId: string, position: GridPosition, panelId?: string) => void;
   resizeWidget: (widgetId: string, size: { w: number; h: number }) => void;
   toggleWidgetCollapse: (widgetId: string) => void;
@@ -38,6 +39,10 @@ interface DashboardActions {
   updateGridLayout: (panelId: string, layout: Layout[]) => void;
   getWidgetsByPanel: (panelId: string) => Widget[];
   getGridLayout: (panelId: string) => Layout[];
+  
+  // Enhanced layout functions
+  autoArrangeWidgets: (panelId: string) => void;
+  setGridDensity: (density: 'compact' | 'comfortable' | 'spacious') => void;
 
   // Selection and UI
   setSelectedWidget: (widgetId: string | null) => void;
@@ -146,9 +151,10 @@ export const useDashboardStore = create<DashboardStore>()(
     immer((set, get) => ({
       // State
       widgets: new Map<string, Widget>(),
-      layouts: [],
-      activeLayoutId: null,
-      selectedWidgetId: null,
+  layouts: [],
+  activeLayoutId: null,
+  selectedWidgetId: null,
+  gridDensity: 'comfortable',
       history: [],
       historyIndex: -1,
       isLoading: false,
@@ -218,6 +224,17 @@ export const useDashboardStore = create<DashboardStore>()(
         const widget = state.widgets.get(widgetId);
         if (widget) {
           state.widgets.set(widgetId, { ...widget, settings });
+        }
+      }),
+
+      updateWidgetPosition: (widgetId: string, position: GridPosition, panelId?: string) => set((state) => {
+        const widget = state.widgets.get(widgetId);
+        if (widget) {
+          state.widgets.set(widgetId, {
+            ...widget,
+            position,
+            panelId: panelId || widget.panelId,
+          });
         }
       }),
 
@@ -603,14 +620,48 @@ export const useDashboardStore = create<DashboardStore>()(
         state.isLoading = loading;
       }),
 
-      clearAllWidgets: () => set((state) => {
-        state.widgets.clear();
-        state.selectedWidgetId = null;
-        state.selectedWidget = null;
-        state.createSnapshot('Cleared all widgets');
-      }),
+      clearAllWidgets: () => {
+        set((state) => {
+          state.widgets.clear();
+          state.selectedWidgetId = null;
+        });
+      },
 
-      getWidget: (widgetId: string) => get().widgets.get(widgetId),
+      getWidget: (id: string) => {
+        return get().widgets.get(id);
+      },
+
+      // Enhanced layout functions
+      autoArrangeWidgets: (panelId: string) => {
+        set((state) => {
+          const panelWidgets = Array.from(state.widgets.values())
+            .filter(w => w.panelId === panelId)
+            .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x);
+
+          let currentX = 0;
+          let currentY = 0;
+          const maxCols = 12;
+
+          panelWidgets.forEach((widget) => {
+            // Simple auto-arrangement in a grid pattern
+            if (currentX + widget.position.w > maxCols) {
+              currentX = 0;
+              currentY += 3; // Standard row height
+            }
+
+            widget.position.x = currentX;
+            widget.position.y = currentY;
+
+            currentX += widget.position.w;
+          });
+        });
+      },
+
+      setGridDensity: (density: 'compact' | 'comfortable' | 'spacious') => {
+        set((state) => {
+          state.gridDensity = density;
+        });
+      },
     }))
   )
 );

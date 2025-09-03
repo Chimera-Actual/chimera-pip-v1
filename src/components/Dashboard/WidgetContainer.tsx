@@ -80,13 +80,14 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
       style={style}
       onClick={handleSelect}
     >
-      {/* Widget Header - Always visible */}
-      <div className={cn(
-        "flex items-center justify-between px-2 py-1.5",
-        "border-b border-border/30",
-        "bg-card/50 backdrop-blur-sm",
-        "cursor-pointer min-h-[2.5rem]"
-      )}>
+        {/* Widget Header - Reduced height */}
+        <div 
+          className={cn(
+            "flex items-center justify-between gap-2 px-3 py-2 border-b border-border/50",
+            "bg-card/30 backdrop-blur-sm min-h-[2rem]",
+            "transition-colors duration-200"
+          )}
+        >
         {/* Drag Handle + Title */}
         <div 
           className={cn(
@@ -142,9 +143,9 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
         </div>
       </div>
 
-      {/* Widget Content - Only when not collapsed */}
+      {/* Widget Content - Improved padding */}
       {!widget.collapsed && (
-        <div className="p-2 h-[calc(100%-2.5rem)] overflow-hidden">
+        <div className="flex-1 overflow-hidden p-2">
           <WidgetRenderer
             widgetInstanceId={widgetId} // Use widget ID as instance ID
             widgetType={widget.type}

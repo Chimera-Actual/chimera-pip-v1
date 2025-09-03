@@ -659,6 +659,8 @@ All colors MUST be HSL - Monochrome Green Theme
   position: relative;
   min-height: calc(100vh - 4rem);
   background: hsl(var(--background));
+  padding: 16px;
+  overflow: auto;
 }
 
 /* Better widget spacing and sizing */
@@ -678,26 +680,33 @@ All colors MUST be HSL - Monochrome Green Theme
 
 .react-grid-item > .react-resizable-handle {
   position: absolute;
-  width: 20px;
-  height: 20px;
-  bottom: 0;
-  right: 0;
-  background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZG90cyBmaWxsPSIjODg4IiBkPSJtMSA1IDQtNE0wIDZsNi02TTE1IDFsLTQgNCIvPgo8L3N2Zz4K') no-repeat;
-  background-position: bottom right;
-  padding: 0 3px 3px 0;
+  width: 16px;
+  height: 16px;
+  bottom: -2px;
+  right: -2px;
+  background: hsl(var(--primary) / 0.8);
+  border: 2px solid hsl(var(--background));
+  border-radius: 50%;
   cursor: se-resize;
-  box-sizing: border-box;
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
 }
 
 .react-grid-item > .react-resizable-handle::after {
   content: '';
   position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 5px;
-  height: 5px;
-  border-right: 2px solid hsl(var(--primary));
-  border-bottom: 2px solid hsl(var(--primary));
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: hsl(var(--background));
+  border-radius: 1px;
 }
 
 /* Mobile Responsive Adjustments */

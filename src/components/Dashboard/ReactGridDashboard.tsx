@@ -69,9 +69,9 @@ export const ReactGridDashboard: React.FC<ReactGridDashboardProps> = ({
     setSelectedWidget(null);
   }, [setSelectedWidget]);
 
-  // Grid configuration - responsive breakpoints with more columns
+  // Grid configuration - optimized for better widget proportions
   const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
-  const cols = { lg: 24, md: 18, sm: 12, xs: 8, xxs: 4 };
+  const cols = { lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 };
 
   // Show empty state if no widgets
   if (panelWidgets.length === 0) {
@@ -109,19 +109,20 @@ export const ReactGridDashboard: React.FC<ReactGridDashboardProps> = ({
         layouts={{ lg: gridLayout }}
         breakpoints={breakpoints}
         cols={cols}
-        rowHeight={50}
+        rowHeight={80}
         onLayoutChange={handleLayoutChange}
         onDragStart={handleDragStart}
         isDraggable={true}
         isResizable={true}
-        margin={[4, 4]} // Gap between widgets
-        containerPadding={[8, 8]} // Padding around grid
+        margin={[8, 8]} // Increased gap between widgets
+        containerPadding={[16, 16]} // Increased padding around grid
         useCSSTransforms={true}
-        preventCollision={true}
+        preventCollision={false}
         autoSize={true}
-        compactType="vertical"
+        compactType={null} // Disable vertical compaction to prevent crushing
         dragHandleClassName="react-grid-dragHandleClassName" // Only drag by handle
         resizeHandles={['se', 'sw', 'ne', 'nw']} // Corner resize handles
+        allowOverlap={false}
       >
         {panelWidgets.map((widget) => (
           <div key={widget.id}>

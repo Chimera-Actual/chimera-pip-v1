@@ -61,6 +61,7 @@ export interface DashboardState {
   
   // UI state
   selectedWidgetId: string | null;
+  gridDensity: 'compact' | 'comfortable' | 'spacious';
   
   // History for undo/redo
   history: DashboardSnapshot[];
