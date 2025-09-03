@@ -21,7 +21,7 @@ interface TabManagerProps {
   canDeleteTab: (tabId: string) => boolean;
 }
 
-export const TabManager: React.FC<TabManagerProps> = React.memo(({
+export const TabManager: React.FC<TabManagerProps> = ({
   isOpen,
   onClose,
   tabs,
@@ -42,19 +42,15 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
   const [draggedTab, setDraggedTab] = useState<UserTab | null>(null);
   const { toast } = useToast();
 
-  const fontSizeOptions = React.useMemo(() => [
+  const fontSizeOptions = [
     { value: 'text-xs', label: 'Extra Small' },
     { value: 'text-sm', label: 'Small' },
     { value: 'text-base', label: 'Medium' },
     { value: 'text-lg', label: 'Large' },
     { value: 'text-xl', label: 'Extra Large' },
-  ], []);
+  ];
 
-  const commonIcons = React.useMemo(() => 
-    ['◉', '◈', '◎', '◐', '◔', '☰', '⚙', '✉', '♫', '⌘', '🚀', '⭐', '🔧', '📊'], 
-  []);
-
-  const handleCreateTab = React.useCallback(async () => {
+  const handleCreateTab = async () => {
     if (!newTabName.trim()) {
       toast({
         title: "Error",
@@ -83,16 +79,16 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
     } finally {
       setCreating(false);
     }
-  }, [newTabName, newTabIcon, newTabFontSize, onCreateTab, toast]);
+  };
 
-  const handleStartEdit = React.useCallback((tab: UserTab) => {
+  const handleStartEdit = (tab: UserTab) => {
     setEditingTab(tab);
     setEditName(tab.name);
     setEditIcon(tab.icon);
     setEditFontSize(tab.font_size || 'text-sm');
-  }, []);
+  };
 
-  const handleSaveEdit = React.useCallback(async () => {
+  const handleSaveEdit = async () => {
     if (!editingTab || !editName.trim()) return;
 
     try {
@@ -118,16 +114,16 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
         variant: "destructive"
       });
     }
-  }, [editingTab, editName, editIcon, editFontSize, onUpdateTab, toast]);
+  };
 
-  const handleCancelEdit = React.useCallback(() => {
+  const handleCancelEdit = () => {
     setEditingTab(null);
     setEditName('');
     setEditIcon('');
     setEditFontSize('text-sm');
-  }, []);
+  };
 
-  const handleDeleteTab = React.useCallback(async (tab: UserTab) => {
+  const handleDeleteTab = async (tab: UserTab) => {
     if (!canDeleteTab(tab.id)) {
       toast({
         title: "Cannot Delete",
@@ -150,19 +146,19 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
         variant: "destructive"
       });
     }
-  }, [canDeleteTab, onDeleteTab, toast]);
+  };
 
-  const handleDragStart = React.useCallback((e: React.DragEvent, tab: UserTab) => {
+  const handleDragStart = (e: React.DragEvent, tab: UserTab) => {
     setDraggedTab(tab);
     e.dataTransfer.effectAllowed = 'move';
-  }, []);
+  };
 
-  const handleDragOver = React.useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-  }, []);
+  };
 
-  const handleDrop = React.useCallback((e: React.DragEvent, targetTab: UserTab) => {
+  const handleDrop = (e: React.DragEvent, targetTab: UserTab) => {
     e.preventDefault();
     
     if (!draggedTab || draggedTab.id === targetTab.id) return;
@@ -178,53 +174,51 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
     // Update order
     onReorderTabs(newTabs.map(t => t.id));
     setDraggedTab(null);
-  }, [draggedTab, tabs, onReorderTabs]);
+  };
+
+  const commonIcons = ['◉', '◈', '◎', '◐', '◔', '☰', '⚙', '✉', '♫', '⌘', '🚀', '⭐', '🔧', '📊'];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-4xl h-[90vh] max-h-[90vh] bg-card border-border p-0">
-        <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-lg md:text-xl font-mono text-primary uppercase tracking-wider crt-glow">
+      <DialogContent className="max-w-3xl max-h-[85vh] bg-card border-border">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-mono text-primary uppercase tracking-wider crt-glow">
             TAB MANAGEMENT
           </DialogTitle>
         </DialogHeader>
 
-        <div className="overflow-y-auto flex-1 px-4 pb-4">
-          <div className="space-y-4 md:space-y-6 py-2">
+        <div className="overflow-y-auto max-h-[70vh] pr-2">
+          <div className="space-y-6 py-2">
           {/* Create New Tab */}
           <Card className="bg-background/30 border-border">
-            <CardContent className="p-3 md:p-4">
-              <div className="space-y-3 md:space-y-4">
+            <CardContent className="p-4">
+              <div className="space-y-4">
                 <div className="text-sm font-mono text-primary uppercase tracking-wider">
                   CREATE NEW TAB
                 </div>
                 
-                <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-4 md:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="md:col-span-2">
                     <Label className="text-xs font-mono text-muted-foreground">TAB NAME</Label>
                     <Input
                       value={newTabName}
                       onChange={(e) => setNewTabName(e.target.value)}
                       placeholder="Enter tab name..."
-                      className="font-mono bg-background/50 border-border h-10 md:h-9"
+                      className="font-mono bg-background/50 border-border"
                       maxLength={20}
-                      aria-label="New tab name"
                     />
                   </div>
                   
                   <div>
                     <Label className="text-xs font-mono text-muted-foreground">ICON</Label>
-                    <div className="flex gap-1 flex-wrap mb-2" role="radiogroup" aria-label="Select tab icon">
+                    <div className="flex gap-1 flex-wrap mb-2">
                       {commonIcons.slice(0, 8).map(icon => (
                         <Button
                           key={icon}
                           variant={newTabIcon === icon ? "default" : "outline"}
                           size="sm"
-                          className="w-9 h-9 md:w-8 md:h-8 p-0 text-sm touch-target"
+                          className="w-8 h-8 p-0 text-sm"
                           onClick={() => setNewTabIcon(icon)}
-                          role="radio"
-                          aria-checked={newTabIcon === icon}
-                          aria-label={`Icon ${icon}`}
                         >
                           {icon}
                         </Button>
@@ -233,21 +227,20 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
                     <Input
                       value={newTabIcon}
                       onChange={(e) => setNewTabIcon(e.target.value)}
-                      className="font-mono bg-background/50 border-border text-center h-10 md:h-9"
+                      className="font-mono bg-background/50 border-border text-center"
                       maxLength={2}
-                      aria-label="Custom tab icon"
                     />
                   </div>
 
                   <div>
                     <Label className="text-xs font-mono text-muted-foreground">FONT SIZE</Label>
                     <Select value={newTabFontSize} onValueChange={setNewTabFontSize}>
-                      <SelectTrigger className="font-mono bg-background/50 border-border h-10 md:h-9" aria-label="Select font size">
+                      <SelectTrigger className="font-mono bg-background/50 border-border">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {fontSizeOptions.map(option => (
-                          <SelectItem key={option.value} value={option.value} className="font-mono min-h-10 md:min-h-8">
+                          <SelectItem key={option.value} value={option.value} className="font-mono">
                             {option.label}
                           </SelectItem>
                         ))}
@@ -259,8 +252,7 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
                 <Button
                   onClick={handleCreateTab}
                   disabled={!newTabName.trim() || creating}
-                  className="font-mono h-10 md:h-9 w-full md:w-auto"
-                  aria-label="Create new tab"
+                  className="font-mono"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   {creating ? 'CREATING...' : 'CREATE TAB'}
@@ -275,8 +267,8 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
               EXISTING TABS ({tabs.length})
             </div>
             
-            <div className="max-h-96 md:max-h-64 overflow-y-auto" role="list" aria-label="Existing tabs">
-              <div className="space-y-2 pr-2">
+            <ScrollArea className="h-64">
+              <div className="space-y-2">
                 {tabs.map((tab, index) => (
                   <Card
                     key={tab.id}
@@ -285,20 +277,18 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
                     onDragStart={(e) => handleDragStart(e, tab)}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, tab)}
-                    role="listitem"
                   >
-                    <CardContent className="p-3 md:p-3">
+                    <CardContent className="p-3">
                       {editingTab?.id === tab.id ? (
-                        <div className="space-y-3" role="form" aria-label="Edit tab form">
-                          <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-4 md:gap-3">
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                             <div className="md:col-span-2">
                               <Label className="text-xs font-mono text-muted-foreground">TAB NAME</Label>
                               <Input
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
-                                className="font-mono bg-background/50 border-border h-10 md:h-9"
+                                className="font-mono bg-background/50 border-border"
                                 maxLength={20}
-                                aria-label="Edit tab name"
                               />
                             </div>
                             <div>
@@ -306,20 +296,19 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
                               <Input
                                 value={editIcon}
                                 onChange={(e) => setEditIcon(e.target.value)}
-                                className="font-mono bg-background/50 border-border text-center h-10 md:h-9"
+                                className="font-mono bg-background/50 border-border text-center"
                                 maxLength={2}
-                                aria-label="Edit tab icon"
                               />
                             </div>
                             <div>
                               <Label className="text-xs font-mono text-muted-foreground">FONT SIZE</Label>
                               <Select value={editFontSize} onValueChange={setEditFontSize}>
-                                <SelectTrigger className="font-mono bg-background/50 border-border h-10 md:h-9" aria-label="Edit font size">
+                                <SelectTrigger className="font-mono bg-background/50 border-border">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {fontSizeOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value} className="font-mono min-h-10 md:min-h-8">
+                                    <SelectItem key={option.value} value={option.value} className="font-mono">
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -327,12 +316,12 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
                               </Select>
                             </div>
                           </div>
-                          <div className="flex gap-2 flex-col md:flex-row">
-                            <Button onClick={handleSaveEdit} size="sm" className="font-mono h-10 md:h-8" aria-label="Save changes">
+                          <div className="flex gap-2">
+                            <Button onClick={handleSaveEdit} size="sm" className="font-mono">
                               <Save className="w-3 h-3 mr-1" />
                               SAVE
                             </Button>
-                            <Button onClick={handleCancelEdit} variant="outline" size="sm" className="font-mono h-10 md:h-8" aria-label="Cancel editing">
+                            <Button onClick={handleCancelEdit} variant="outline" size="sm" className="font-mono">
                               <X className="w-3 h-3 mr-1" />
                               CANCEL
                             </Button>
@@ -341,11 +330,8 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
                       ) : (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <GripVertical 
-                              className="w-4 h-4 text-muted-foreground cursor-grab" 
-                              aria-label="Drag to reorder tab"
-                            />
-                            <span className="text-lg" role="img" aria-label={`Tab icon: ${tab.icon}`}>{tab.icon}</span>
+                            <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
+                            <span className="text-lg">{tab.icon}</span>
                             <div>
                               <div className={`font-mono text-foreground font-medium ${tab.font_size || 'text-sm'}`}>
                                 {tab.name}
@@ -356,25 +342,23 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
                             </div>
                           </div>
                           
-                          <div className="flex gap-1 md:gap-1" role="group" aria-label="Tab actions">
+                          <div className="flex gap-1">
                             <Button
                               onClick={() => handleStartEdit(tab)}
                               variant="ghost"
                               size="sm"
-                              className="h-10 w-10 md:h-8 md:w-8 p-0 opacity-70 hover:opacity-100 touch-target"
-                              aria-label={`Edit ${tab.name} tab`}
+                              className="h-8 w-8 p-0 opacity-70 hover:opacity-100"
                             >
-                              <Edit className="h-4 w-4 md:h-3 md:w-3" />
+                              <Edit className="h-3 w-3" />
                             </Button>
                             <Button
                               onClick={() => handleDeleteTab(tab)}
                               disabled={!canDeleteTab(tab.id)}
                               variant="ghost"
                               size="sm"
-                              className="h-10 w-10 md:h-8 md:w-8 p-0 opacity-70 hover:opacity-100 hover:text-destructive disabled:opacity-30 touch-target"
-                              aria-label={`Delete ${tab.name} tab`}
+                              className="h-8 w-8 p-0 opacity-70 hover:opacity-100 hover:text-destructive disabled:opacity-30"
                             >
-                              <Trash2 className="h-4 w-4 md:h-3 md:w-3" />
+                              <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>
@@ -383,12 +367,12 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
                   </Card>
                 ))}
               </div>
-            </div>
+            </ScrollArea>
           </div>
 
           {/* Help text moved inside the dialog content */}
-          <div className="text-xs text-muted-foreground font-mono space-y-1 bg-background/20 border border-border rounded p-3 mt-4" role="note">
-            <div>• Drag tabs to reorder them (desktop only)</div>
+          <div className="text-xs text-muted-foreground font-mono space-y-1 bg-background/20 border border-border rounded p-3 mt-4">
+            <div>• Drag tabs to reorder them</div>
             <div>• Tab names must be unique</div>
             <div>• Font size affects tab title display</div>
             <div>• At least one tab must remain</div>
@@ -399,4 +383,4 @@ export const TabManager: React.FC<TabManagerProps> = React.memo(({
       </DialogContent>
     </Dialog>
   );
-});
+};

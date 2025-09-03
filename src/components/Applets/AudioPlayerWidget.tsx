@@ -2,11 +2,9 @@ import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Play, Pause, Square, SkipForward, SkipBack, Volume2, Trash2, GripVertical } from 'lucide-react';
 import { AudioWaveform } from './AudioWaveform';
 import { useAudio } from '@/contexts/AudioContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DndContext,
   closestCenter,
@@ -122,7 +120,6 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
   settings,
   onSettingsUpdate 
 }) => {
-  const isMobile = useIsMobile();
   const {
     isPlaying,
     currentTrack,
@@ -202,214 +199,207 @@ export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-card">
+
       {/* Header */}
-      <div className={`flex-shrink-0 bg-card border-b border-border px-3 md:px-4 flex items-center justify-between ${
-        isMobile ? 'h-12' : 'h-16'
-      }`}>
-        <span className={`font-mono text-primary uppercase tracking-wider crt-glow ${
-          isMobile ? 'text-sm' : 'text-lg'
-        }`}>
-          ♪ AUDIO PLAYER
+      <div className="flex-shrink-0 h-16 bg-background/50 border-b border-border px-4 flex items-center justify-between">
+        <span className="text-lg font-mono text-primary uppercase tracking-wider crt-glow">
+          🎵 AUDIO PLAYER
         </span>
         <div className="flex items-center gap-2">
           <Volume2 size={16} className="text-muted-foreground" />
           <Slider
             value={volume}
-            onValueChange={setVolume}
+            onValueChange={(newValue) => {
+              console.log('Volume slider moved to:', newValue);
+              setVolume(newValue);
+            }}
             max={100}
             step={1}
-            className={isMobile ? 'w-16' : 'w-20'}
+            className="w-20"
           />
-          <span className={`font-mono text-muted-foreground ${isMobile ? 'text-xs w-6' : 'text-xs w-8'}`}>
-            {Math.round(volume[0] || 0)}%
-          </span>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">{/* Waveform Section */}
-
-        {settings?.showWaveform !== false && (
-          <div className={`flex-shrink-0 bg-card border-b border-border relative ${
-            currentWaveformSize === 'small' ? 'h-20' :
-            currentWaveformSize === 'large' ? 'h-60' :
-            'h-32'
-          }`}>
-            {/* Waveform Size Controls */}
-            <div className="absolute top-2 right-2 z-10 flex gap-1">
-              <Button
-                onClick={() => handleWaveformSizeChange('small')}
-                size="sm"
-                variant={currentWaveformSize === 'small' ? 'default' : 'ghost'}
-                className="h-6 px-2 text-xs font-mono"
-              >
-                S
-              </Button>
-              <Button
-                onClick={() => handleWaveformSizeChange('medium')}
-                size="sm"
-                variant={currentWaveformSize === 'medium' ? 'default' : 'ghost'}
-                className="h-6 px-2 text-xs font-mono"
-              >
-                M
-              </Button>
-              <Button
-                onClick={() => handleWaveformSizeChange('large')}
-                size="sm"
-                variant={currentWaveformSize === 'large' ? 'default' : 'ghost'}
-                className="h-6 px-2 text-xs font-mono"
-              >
-                L
-              </Button>
-            </div>
-            {/* Waveform container */}
-            <div className="absolute inset-0">
-              <AudioWaveform 
-                audioElement={audioRef.current}
-                isPlaying={isPlaying}
-                className="w-full h-full border border-border"
-                style={settings?.waveformStyle || 'bars'}
-                color={settings?.waveformColor || 'primary'}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Current Track & Controls */}
-        <div className={`flex-shrink-0 bg-card border-b border-border ${isMobile ? 'p-2' : 'p-4'}`}>
-          <div className="text-center space-y-3">
-            {/* Track Info */}
-            <div className="space-y-1">
-              <div className={`font-mono text-primary truncate ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                {currentTrack ? currentTrack.title : 'NO TRACK SELECTED'}
-              </div>
-              <div className={`text-muted-foreground font-mono ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </div>
-              {duration > 0 && (
-                <Slider
-                  value={[currentTime]}
-                  onValueChange={(value) => {
-                    if (audioRef.current) {
-                      audioRef.current.currentTime = value[0];
-                    }
-                  }}
-                  max={duration}
-                  step={1}
-                  className="w-full"
-                />
-              )}
-            </div>
-
-            {/* Controls */}
-            <div className={`flex items-center justify-center ${isMobile ? 'gap-2' : 'gap-4'}`}>
-              <Button
-                onClick={prevTrack}
-                size="sm"
-                variant="ghost"
-                disabled={playlist.length === 0}
-                className={isMobile ? 'h-8 w-8 p-0' : 'h-10 w-10 p-0'}
-              >
-                <SkipBack size={isMobile ? 16 : 20} />
-              </Button>
-              
-              <Button
-                onClick={togglePlayPause}
-                size={isMobile ? 'default' : 'lg'}
-                disabled={playlist.length === 0}
-                className={`rounded-full ${isMobile ? 'h-10 w-10' : 'h-12 w-12'}`}
-              >
-                {isPlaying ? <Pause size={isMobile ? 20 : 24} /> : <Play size={isMobile ? 20 : 24} />}
-              </Button>
-              
-              <Button
-                onClick={stopPlayback}
-                size="sm"
-                variant="ghost"
-                disabled={!currentTrack}
-                className={isMobile ? 'h-8 w-8 p-0' : 'h-10 w-10 p-0'}
-              >
-                <Square size={isMobile ? 16 : 20} />
-              </Button>
-              
-              <Button
-                onClick={nextTrack}
-                size="sm"
-                variant="ghost"
-                disabled={playlist.length === 0}
-                className={isMobile ? 'h-8 w-8 p-0' : 'h-10 w-10 p-0'}
-              >
-                <SkipForward size={isMobile ? 16 : 20} />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Playlist Section */}
-        <div className="flex-1 overflow-hidden">
-          <div className={isMobile ? 'p-2 pb-1' : 'p-4 pb-2'}>
-            <Label className={`font-mono text-primary uppercase ${isMobile ? 'text-xs' : 'text-sm'}`}>
-              PLAYLIST ({playlist.length})
-            </Label>
-          </div>
-          
-          <ScrollArea className={`h-full ${isMobile ? 'px-2' : 'px-4'}`}>
-            {playlist.length === 0 ? (
-              <div className={`text-center py-8 text-muted-foreground font-mono ${isMobile ? 'text-xs py-4' : 'text-sm'}`}>
-                NO AUDIO FILES IN PLAYLIST
-                <br />
-                <span className={isMobile ? 'text-xs' : 'text-xs'}>Upload audio files to begin listening</span>
-              </div>
-            ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={playlist.map(track => track.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2 pb-4">
-                    {playlist.map((track) => (
-                      <SortableTrack
-                        key={track.id}
-                        track={track}
-                        isActive={currentTrack?.id === track.id}
-                        onPlay={playTrack}
-                        onRemove={(trackId) => removeTrack(trackId, widgetInstanceId)}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            )}
-          </ScrollArea>
-        </div>
-
-        {/* Upload Section */}
-        <div className={`flex-shrink-0 bg-card border-t border-border ${isMobile ? 'p-2' : 'p-4'}`}>
-          <div className="space-y-2">
-            <Label className={`font-mono text-primary uppercase ${isMobile ? 'text-xs' : 'text-xs'}`}>Upload Audio Files</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+      {/* Audio Waveform Visualization - At Top */}
+      {settings?.showWaveform !== false && (
+        <div className={`flex-shrink-0 bg-background/20 border-b border-border relative ${
+          currentWaveformSize === 'small' ? 'h-20' :
+          currentWaveformSize === 'large' ? 'h-60' :
+          'h-32'
+        }`}>
+          {/* Waveform Size Controls - Positioned absolutely to avoid layout interference */}
+          <div className="absolute top-2 right-2 z-10 flex gap-1">
             <Button
-              onClick={() => fileInputRef.current?.click()}
-              variant="outline"
+              onClick={() => handleWaveformSizeChange('small')}
               size="sm"
-              className="w-full text-xs font-mono"
+              variant={currentWaveformSize === 'small' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-xs font-mono"
             >
-              📁 Choose Audio Files
+              S
             </Button>
-            <div className={`text-muted-foreground text-center ${isMobile ? 'text-xs' : 'text-xs'}`}>
-              Supported: MP3, WAV, OGG, M4A
+            <Button
+              onClick={() => handleWaveformSizeChange('medium')}
+              size="sm"
+              variant={currentWaveformSize === 'medium' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-xs font-mono"
+            >
+              M
+            </Button>
+            <Button
+              onClick={() => handleWaveformSizeChange('large')}
+              size="sm"
+              variant={currentWaveformSize === 'large' ? 'default' : 'ghost'}
+              className="h-6 px-2 text-xs font-mono"
+            >
+              L
+            </Button>
+          </div>
+          {/* Waveform container with proper sizing */}
+          <div className="absolute inset-0 p-4">
+            <AudioWaveform 
+              audioElement={audioRef.current}
+              isPlaying={isPlaying}
+              className="w-full h-full"
+              style={settings?.waveformStyle || 'bars'}
+              color={settings?.waveformColor || 'primary'}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Current Track Display - Song Information */}
+      <div className="flex-shrink-0 bg-background/30 border-b border-border p-4">
+        <div className="text-center space-y-2">
+          <div className="text-sm font-mono text-primary truncate">
+            {currentTrack ? currentTrack.title : 'NO TRACK SELECTED'}
+          </div>
+          <div className="text-xs text-muted-foreground font-mono">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </div>
+          {duration > 0 && (
+            <Slider
+              value={[currentTime]}
+              onValueChange={(value) => {
+                if (audioRef.current) {
+                  audioRef.current.currentTime = value[0];
+                }
+              }}
+              max={duration}
+              step={1}
+              className="w-full"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Controls - Play Controls */}
+      <div className="flex-shrink-0 bg-background/20 border-b border-border p-4">
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            onClick={prevTrack}
+            size="sm"
+            variant="ghost"
+            disabled={playlist.length === 0}
+            className="h-10 w-10 p-0"
+          >
+            <SkipBack size={20} />
+          </Button>
+          
+          <Button
+            onClick={togglePlayPause}
+            size="lg"
+            disabled={playlist.length === 0}
+            className="h-12 w-12 rounded-full"
+          >
+            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+          </Button>
+          
+          <Button
+            onClick={stopPlayback}
+            size="sm"
+            variant="ghost"
+            disabled={!currentTrack}
+            className="h-10 w-10 p-0"
+          >
+            <Square size={20} />
+          </Button>
+          
+          <Button
+            onClick={nextTrack}
+            size="sm"
+            variant="ghost"
+            disabled={playlist.length === 0}
+            className="h-10 w-10 p-0"
+          >
+            <SkipForward size={20} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Playlist */}
+      <div className="flex-1 overflow-hidden">
+        <div className="p-4">
+          <Label className="text-sm font-mono text-primary uppercase">
+            PLAYLIST ({playlist.length})
+          </Label>
+        </div>
+        
+        <div className="px-4 pb-4 overflow-y-auto max-h-full">
+          {playlist.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm font-mono">
+              NO AUDIO FILES IN PLAYLIST
+              <br />
+              <span className="text-xs">Upload audio files to begin listening</span>
             </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={playlist.map(track => track.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {playlist.map((track) => (
+                    <SortableTrack
+                      key={track.id}
+                      track={track}
+                      isActive={currentTrack?.id === track.id}
+                      onPlay={playTrack}
+                      onRemove={(trackId) => removeTrack(trackId, widgetInstanceId)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
+      </div>
+
+      {/* Upload Audio Files - At Bottom */}
+      <div className="flex-shrink-0 bg-background/20 border-t border-border p-4">
+        <div className="space-y-2">
+          <Label className="text-xs font-mono text-primary uppercase">Upload Audio Files</Label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="sm"
+            className="w-full text-xs font-mono"
+          >
+            📁 Choose Audio Files
+          </Button>
+          <div className="text-xs text-muted-foreground text-center">
+            Supported: MP3, WAV, OGG, M4A
           </div>
         </div>
       </div>

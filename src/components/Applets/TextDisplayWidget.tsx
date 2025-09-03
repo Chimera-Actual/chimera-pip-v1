@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TextDisplayWidgetProps {
   settings?: Record<string, any>;
@@ -10,8 +9,6 @@ interface TextDisplayWidgetProps {
 }
 
 export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
-  const isMobile = useIsMobile();
-  
   // Get current settings with defaults
   const containerCount = settings?.containerCount || 1;
   const layoutPattern = settings?.layoutPattern || '1';
@@ -151,19 +148,6 @@ export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, 
     const config = layoutConfigs[layoutPattern] || layoutConfigs['1'];
     let containerIndex = 0;
 
-    // Force single column layout on mobile for better readability
-    if (isMobile) {
-      return (
-        <div className="space-y-3">
-          {containers.map((container, index) => (
-            <div key={container.id} className="w-full">
-              {renderContainer(container, index)}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
     return (
       <div className="space-y-4">
         {config.pattern.map((cols, rowIndex) => (
@@ -182,7 +166,7 @@ export const TextDisplayWidget: React.FC<TextDisplayWidgetProps> = ({ settings, 
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Content Display */}
-      <div className={`flex-1 overflow-auto ${isMobile ? 'p-2' : 'p-4'}`}>
+      <div className="flex-1 overflow-auto p-4">
         {getLayoutGrid()}
       </div>
     </div>

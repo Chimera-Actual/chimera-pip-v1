@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, Globe, Settings, Plus, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface WorldClock {
   id: string;
@@ -58,7 +57,6 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
   const [userTimezone, setUserTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [isAddingClock, setIsAddingClock] = useState(false);
   const [newTimezone, setNewTimezone] = useState('');
-  const isMobile = useIsMobile();
 
   // Use settings from props, with defaults
   const is24Hour = settings?.displayFormat === '24h' || false;
@@ -167,24 +165,24 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
   const getClockStyleClasses = (style: string, size: string) => {
     const sizeClasses = {
       small: {
-        container: isMobile ? "text-xl px-2 py-1" : "text-2xl lg:text-4xl px-3 py-2",
-        date: isMobile ? "text-xs mt-1" : "text-sm lg:text-base mt-1",
+        container: "text-2xl lg:text-4xl px-3 py-2",
+        date: "text-sm lg:text-base mt-1",
         timezone: "text-xs mt-1"
       },
       medium: {
-        container: isMobile ? "text-2xl px-3 py-2" : "text-4xl lg:text-6xl px-4 py-2",
-        date: isMobile ? "text-sm mt-1" : "text-base lg:text-lg mt-2",
+        container: "text-4xl lg:text-6xl px-4 py-2",
+        date: "text-base lg:text-lg mt-2",
         timezone: "text-xs mt-1"
       },
       large: {
-        container: isMobile ? "text-4xl px-4 py-2" : "text-6xl lg:text-8xl px-6 py-3",
-        date: isMobile ? "text-base mt-2" : "text-xl lg:text-2xl mt-3",
+        container: "text-6xl lg:text-8xl px-6 py-3",
+        date: "text-xl lg:text-2xl mt-3",
         timezone: "text-xs mt-1"
       },
       'extra-large': {
-        container: isMobile ? "text-5xl px-4 py-3" : "text-8xl lg:text-9xl px-8 py-4",
-        date: isMobile ? "text-lg mt-2" : "text-2xl lg:text-3xl mt-4",
-        timezone: isMobile ? "text-xs mt-1" : "text-sm mt-2"
+        container: "text-8xl lg:text-9xl px-8 py-4",
+        date: "text-2xl lg:text-3xl mt-4",
+        timezone: "text-sm mt-2"
       }
     };
 
@@ -269,7 +267,7 @@ const ClockWidget: React.FC<ClockWidgetProps> = ({ settings, widgetName, widgetI
 
       {/* World Clocks Strip */}
       <div className="flex-shrink-0 border-b border-border bg-background/50 p-3">
-        <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {worldClocks.map(clock => (
             <div key={clock.id} className="bg-background/20 border-2 border-primary/30 rounded p-3 text-center backdrop-blur-sm">
               <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-1">{clock.label}</div>

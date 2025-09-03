@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LocationStatusBar } from '@/components/ui/location-status-bar';
 import { useLocation } from '@/contexts/LocationContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 
 interface WeatherData {
@@ -121,7 +120,6 @@ interface WeatherWidgetProps {
 
 export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetName, widgetInstanceId, onSettingsUpdate }) => {
   const { location, status, lastUpdate, refreshLocation } = useLocation();
-  const isMobile = useIsMobile();
   const temperatureUnit = settings?.temperatureUnit || 'celsius';
   const showLocation = settings?.showLocation !== false;
   const showForecast = settings?.showForecast !== false;
@@ -251,15 +249,15 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
                 )}
               </div>
               
-              <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Temperature and Condition */}
-                <div className={`flex items-center ${isMobile ? 'justify-center' : ''} space-x-4`}>
-                  <div className={isMobile ? 'text-4xl' : 'text-6xl'}>{weather.current.icon}</div>
-                  <div className={isMobile ? 'text-center' : ''}>
-                    <div className={`font-mono text-primary crt-glow ${isMobile ? 'text-3xl' : 'text-4xl'}`}>
+                <div className="flex items-center space-x-4">
+                  <div className="text-6xl">{weather.current.icon}</div>
+                  <div>
+                    <div className="text-4xl font-mono text-primary crt-glow">
                       {weather.current.temperature}°{temperatureUnit === 'fahrenheit' ? 'F' : 'C'}
                     </div>
-                    <div className={`font-mono text-secondary-foreground ${isMobile ? 'text-base' : 'text-lg'}`}>
+                    <div className="text-lg font-mono text-secondary-foreground">
                       {weather.current.condition}
                     </div>
                   </div>
@@ -267,7 +265,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
                 
                 {/* Weather Details */}
                 {showDetails && (
-                  <div className={`grid gap-4 font-mono ${isMobile ? 'grid-cols-1 text-sm' : 'grid-cols-2 text-sm'}`}>
+                  <div className="grid grid-cols-2 gap-4 text-sm font-mono">
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">HUMIDITY:</span>
@@ -302,7 +300,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
                   3-DAY FORECAST
                 </h2>
                 
-                <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-3'}`}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {weather.forecast.map((day, index) => {
                     const dayTemp = temperatureUnit === 'fahrenheit' 
                       ? { high: Math.round((day.high * 9/5) + 32), low: Math.round((day.low * 9/5) + 32) }
@@ -355,7 +353,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ settings, widgetNa
           )}
 
           {/* System Status */}
-          <div className={`grid gap-4 text-xs font-mono ${isMobile ? 'grid-cols-1' : 'md:grid-cols-3'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
             <div className="bg-background/30 border border-border rounded p-3">
               <div className="text-muted-foreground mb-1">WEATHER RADAR:</div>
               <div className="text-accent animate-pulse">OPERATIONAL</div>

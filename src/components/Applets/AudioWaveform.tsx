@@ -305,7 +305,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   }, []);
 
   return (
-    <div className={`relative overflow-hidden bg-background/20 ${className}`}>
+    <div className={`relative overflow-hidden bg-background/20 border border-border rounded ${className}`}>
       <canvas
         ref={canvasRef}
         className="w-full h-full block"

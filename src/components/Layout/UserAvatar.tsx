@@ -13,14 +13,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export const UserAvatar: React.FC = React.memo(() => {
+export const UserAvatar: React.FC = () => {
   const { user, signOut } = useAuth();
   const { profile } = useUserProfile();
   const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = useState(false);
 
-  // Memoize avatar pixels to prevent recreation on every render
-  const avatarPixels = React.useMemo(() => [
+  // Create 8-bit style pixelated avatar
+  const avatarPixels = [
     [0, 0, 1, 1, 1, 1, 0, 0],
     [0, 1, 1, 1, 1, 1, 1, 0],
     [1, 1, 2, 1, 1, 2, 1, 1],
@@ -29,19 +29,16 @@ export const UserAvatar: React.FC = React.memo(() => {
     [1, 1, 2, 1, 1, 2, 1, 1],
     [0, 1, 1, 2, 2, 1, 1, 0],
     [0, 0, 1, 1, 1, 1, 0, 0],
-  ], []);
+  ];
 
-  const getPixelColor = React.useCallback((value: number) => {
+  const getPixelColor = (value: number) => {
     switch (value) {
       case 0: return 'transparent';
       case 1: return 'hsl(var(--primary))';
       case 2: return 'hsl(var(--accent))';
       default: return 'transparent';
     }
-  }, []);
-
-  const handleMouseEnter = React.useCallback(() => setIsHovered(true), []);
-  const handleMouseLeave = React.useCallback(() => setIsHovered(false), []);
+  };
 
   return (
     <DropdownMenu>
@@ -50,15 +47,14 @@ export const UserAvatar: React.FC = React.memo(() => {
           variant="ghost"
           size="icon"
           className={`relative ${isMobile ? 'w-8 h-8' : 'w-12 h-12'} p-1 hover:bg-primary/10 transition-colors touch-target`}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          aria-label="User menu"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
           {profile?.avatar_url ? (
             <div className={`relative w-full h-full transition-all duration-200 ${isHovered ? 'scale-110' : ''}`}>
               <img 
                 src={profile.avatar_url} 
-                alt="User avatar" 
+                alt="Avatar" 
                 className="w-full h-full object-cover rounded-sm border border-primary/50"
                 style={{ imageRendering: 'pixelated' }}
               />
@@ -105,4 +101,4 @@ export const UserAvatar: React.FC = React.memo(() => {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-});
+};

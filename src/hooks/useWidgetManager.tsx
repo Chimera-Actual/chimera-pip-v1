@@ -1,22 +1,44 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { cleanupWidgetFiles } from '@/lib/widgetCleanup';
-import type { 
-  WidgetDefinition, 
-  UserWidgetInstance, 
-  UserWidgetSettings, 
-  UserWidgetTag,
-  WidgetSettings 
-} from '@/types/widget';
 
-export type { 
-  WidgetDefinition, 
-  UserWidgetInstance, 
-  UserWidgetSettings, 
-  UserWidgetTag,
-  WidgetSettings 
-};
+export interface WidgetDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  category: string;
+  component_name: string;
+  default_settings?: Record<string, any>;
+  user_tags?: string[];
+}
+
+export interface UserWidgetTag {
+  id: string;
+  user_id: string;
+  widget_definition_id: string;
+  tag: string;
+}
+
+export interface UserWidgetInstance {
+  id: string;
+  user_id: string;
+  widget_id: string;
+  tab_id: string;
+  position: number;
+  is_active: boolean;
+  custom_name?: string;
+  widget_definition?: WidgetDefinition;
+}
+
+export interface UserWidgetSettings {
+  id: string;
+  user_id: string;
+  widget_instance_id: string;
+  settings: Record<string, any>;
+}
+
+import { cleanupWidgetFiles } from '@/lib/widgetCleanup';
 
 export const useWidgetManager = () => {
   const [availableWidgets, setAvailableWidgets] = useState<WidgetDefinition[]>([]);
@@ -50,7 +72,7 @@ export const useWidgetManager = () => {
       if (widgetsError) throw widgetsError;
       setAvailableWidgets((widgets || []).map(w => ({
         ...w,
-        default_settings: (w.default_settings as WidgetSettings) || {}
+        default_settings: (w.default_settings as Record<string, any>) || {}
       })));
 
       // Load user widget instances
@@ -145,13 +167,13 @@ export const useWidgetManager = () => {
         if (error) throw error;
         
         if (data) {
-        const transformedData = {
-          ...data,
-          widget_definition: data.widget_definition ? {
-            ...data.widget_definition,
-            default_settings: (data.widget_definition.default_settings as WidgetSettings) || {}
-          } : undefined
-        };
+          const transformedData = {
+            ...data,
+            widget_definition: data.widget_definition ? {
+              ...data.widget_definition,
+              default_settings: (data.widget_definition.default_settings as Record<string, any>) || {}
+            } : undefined
+          };
           setUserWidgetInstances(prev =>
             prev.map(w => w.id === inactiveWidget.id ? transformedData : w)
           );
@@ -226,7 +248,7 @@ export const useWidgetManager = () => {
     }
   };
 
-  const updateWidgetSettings = async (widgetInstanceId: string, settings: WidgetSettings) => {
+  const updateWidgetSettings = async (widgetInstanceId: string, settings: Record<string, any>) => {
     if (!user) return;
 
     try {
@@ -247,7 +269,7 @@ export const useWidgetManager = () => {
       if (data) {
         const transformedData = {
           ...data,
-          settings: (data.settings as WidgetSettings) || {}
+          settings: (data.settings as Record<string, any>) || {}
         };
         setUserWidgetSettings(prev => {
           const filtered = prev.filter(s => s.widget_instance_id !== widgetInstanceId);
@@ -262,7 +284,7 @@ export const useWidgetManager = () => {
     }
   };
 
-  const getWidgetSettings = (widgetInstanceId: string): WidgetSettings => {
+  const getWidgetSettings = (widgetInstanceId: string): Record<string, any> => {
     const widgetSettings = userWidgetSettings.find(s => s.widget_instance_id === widgetInstanceId);
     const widgetInstance = userWidgetInstances.find(i => i.id === widgetInstanceId);
     const widgetDefinition = availableWidgets.find(w => w.id === widgetInstance?.widget_id);

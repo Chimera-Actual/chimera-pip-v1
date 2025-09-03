@@ -1,8 +1,8 @@
 import React from 'react';
-import { PanelDashboardLayout } from '@/components/Dashboard/PanelDashboardLayout';
+import { PipBoyLayout } from '@/components/Layout/PipBoyLayout';
 
 const Index = () => {
-  return <PanelDashboardLayout />;
+  return <PipBoyLayout />;
 };
 
 export default Index;

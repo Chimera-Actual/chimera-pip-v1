@@ -68,36 +68,6 @@ export type Database = {
         }
         Relationships: []
       }
-      dashboard_layouts: {
-        Row: {
-          created_at: string
-          id: string
-          is_active: boolean | null
-          layout_data: Json
-          name: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          layout_data?: Json
-          name?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          layout_data?: Json
-          name?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       messages: {
         Row: {
           content: string
@@ -157,36 +127,6 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
-          id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_location_data: {
-        Row: {
-          created_at: string
-          encrypted_latitude: string | null
-          encrypted_location_name: string | null
-          encrypted_longitude: string | null
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          encrypted_latitude?: string | null
-          encrypted_location_name?: string | null
-          encrypted_longitude?: string | null
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          encrypted_latitude?: string | null
-          encrypted_location_name?: string | null
-          encrypted_longitude?: string | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -290,13 +230,8 @@ export type Database = {
         Row: {
           created_at: string
           custom_name: string | null
-          grid_height: number | null
-          grid_width: number | null
-          grid_x: number | null
-          grid_y: number | null
           id: string
           is_active: boolean | null
-          panel_id: string | null
           position: number | null
           tab_id: string
           updated_at: string
@@ -306,13 +241,8 @@ export type Database = {
         Insert: {
           created_at?: string
           custom_name?: string | null
-          grid_height?: number | null
-          grid_width?: number | null
-          grid_x?: number | null
-          grid_y?: number | null
           id?: string
           is_active?: boolean | null
-          panel_id?: string | null
           position?: number | null
           tab_id: string
           updated_at?: string
@@ -322,13 +252,8 @@ export type Database = {
         Update: {
           created_at?: string
           custom_name?: string | null
-          grid_height?: number | null
-          grid_width?: number | null
-          grid_x?: number | null
-          grid_y?: number | null
           id?: string
           is_active?: boolean | null
-          panel_id?: string | null
           position?: number | null
           tab_id?: string
           updated_at?: string
@@ -540,22 +465,10 @@ export type Database = {
       }
     }
     Views: {
-      widget_performance_stats: {
-        Row: {
-          active_instances: number | null
-          avg_position: number | null
-          category: string | null
-          instance_count: number | null
-          widget_name: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      batch_update_widget_positions: {
-        Args: { position_updates: Json; user_id: string }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

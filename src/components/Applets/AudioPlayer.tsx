@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { OscilloscopeWaveform } from './OscilloscopeWaveform';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Track {
   id: string;
@@ -33,7 +32,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   onSettingsUpdate
 }) => {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -419,12 +417,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
 
   return (
-    <div className={`w-full h-full flex bg-card border border-border rounded-lg overflow-hidden ${isMobile ? 'flex-col' : 'flex-row'}`}>
+    <div className="w-full h-full flex flex-row bg-card border border-border rounded-lg overflow-hidden">
       {/* Hidden audio element */}
       <audio ref={audioRef} preload="metadata" />
       
       {/* Left Side - Playlist Management */}
-      <div className={`flex flex-col overflow-hidden ${isMobile ? 'w-full h-1/2 border-b' : 'w-2/5 border-r'} border-border`}>
+      <div className="w-2/5 flex flex-col border-r border-border overflow-hidden">
         {/* Playlist Header */}
         <div className="flex-shrink-0 bg-background/50 border-b border-border p-4">
           <Label className="text-sm font-mono text-primary uppercase">
@@ -503,7 +501,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       </div>
 
       {/* Right Side - Player Controls */}
-      <div className={`flex flex-col overflow-hidden ${isMobile ? 'w-full h-1/2' : 'w-3/5'}`}>
+      <div className="w-3/5 flex flex-col overflow-hidden">
         {/* Header with Volume Control */}
         <div className="flex-shrink-0 bg-background/50 border-b border-border p-4">
           <div className="flex items-center justify-between">
@@ -515,14 +513,14 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 </div>
               )}
             </div>
-            <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'}`}>
+            <div className="flex items-center gap-2">
               <Volume2 size={16} className="text-muted-foreground" />
               <Slider
                 value={[volume]}
                 onValueChange={handleVolumeChange}
                 max={100}
                 step={1}
-                className={isMobile ? 'w-16' : 'w-20'}
+                className="w-20"
               />
             </div>
           </div>
@@ -530,7 +528,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
         {/* Waveform */}
         {settings?.showWaveform !== false && (
-          <div className={`flex-shrink-0 ${isMobile ? 'h-32' : 'h-48'}`}>
+          <div className="flex-shrink-0 h-48">
             <OscilloscopeWaveform 
               isPlaying={isPlaying} 
               className="h-full"
@@ -564,25 +562,25 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         </div>
 
         {/* Controls */}
-        <div className={`flex-1 flex items-center justify-center bg-background/20 ${isMobile ? 'p-2' : 'p-4'}`}>
-          <div className={`flex items-center justify-center ${isMobile ? 'gap-2' : 'gap-4'}`}>
+        <div className="flex-1 flex items-center justify-center bg-background/20 p-4">
+          <div className="flex items-center justify-center gap-4">
             <Button
               onClick={prevTrack}
               size="sm"
               variant="ghost"
               disabled={playlist.length === 0 || isLoading}
-              className={isMobile ? 'h-8 w-8 p-0' : 'h-10 w-10 p-0'}
+              className="h-10 w-10 p-0"
             >
-              <SkipBack size={isMobile ? 16 : 20} />
+              <SkipBack size={20} />
             </Button>
             
             <Button
               onClick={togglePlayPause}
-              size={isMobile ? 'default' : 'lg'}
+              size="lg"
               disabled={!currentTrack || isLoading}
-              className={isMobile ? 'h-10 w-10 rounded-full' : 'h-12 w-12 rounded-full'}
+              className="h-12 w-12 rounded-full"
             >
-              {isPlaying ? <Pause size={isMobile ? 20 : 24} /> : <Play size={isMobile ? 20 : 24} />}
+              {isPlaying ? <Pause size={24} /> : <Play size={24} />}
             </Button>
             
             <Button
@@ -590,9 +588,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
               size="sm"
               variant="ghost"
               disabled={!currentTrack || isLoading}
-              className={isMobile ? 'h-8 w-8 p-0' : 'h-10 w-10 p-0'}
+              className="h-10 w-10 p-0"
             >
-              <Square size={isMobile ? 16 : 20} />
+              <Square size={20} />
             </Button>
             
             <Button
@@ -600,9 +598,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
               size="sm"
               variant="ghost"
               disabled={playlist.length === 0 || isLoading}
-              className={isMobile ? 'h-8 w-8 p-0' : 'h-10 w-10 p-0'}
+              className="h-10 w-10 p-0"
             >
-              <SkipForward size={isMobile ? 16 : 20} />
+              <SkipForward size={20} />
             </Button>
           </div>
         </div>

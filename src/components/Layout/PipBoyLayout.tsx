@@ -165,17 +165,16 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
                   onDragOver={!isMobile ? (e) => handleTabDragOver(e, tab.id) : undefined}
                   onDragLeave={!isMobile ? handleTabDragLeave : undefined}
                   onDrop={!isMobile ? (e) => handleTabDrop(e, tab.id) : undefined}
-                  className={`${isMobile ? 'flex-shrink-0 min-w-12 px-2' : 'flex-1'} h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider hover:bg-muted/50 transition-all duration-200 ${isMobile ? 'text-xs' : tab.font_size || 'text-sm'} ${
+                  className={`${isMobile ? 'flex-shrink-0 min-w-24 px-3' : 'flex-1'} h-full rounded-none bg-transparent data-[state=active]:bg-primary/20 data-[state=active]:border-b-2 data-[state=active]:border-primary font-mono uppercase tracking-wider hover:bg-muted/50 transition-all duration-200 ${isMobile ? 'text-xs' : tab.font_size || 'text-sm'} ${
                     dragOverTab === tab.id && dragOverTab !== activeTab
                       ? 'bg-primary/10 border-b-2 border-primary/50 shadow-inner'
                       : ''
-                  } touch-target flex-col items-center justify-center`}
-                  title={isMobile ? tab.name : undefined}
+                  } touch-target`}
                 >
-                  <span className={`${isMobile ? 'text-lg' : 'mr-2 text-lg'}`}>{tab.icon}</span>
-                  {!isMobile && (
-                    <span>{tab.name}</span>
-                  )}
+                  <span className={`${isMobile ? 'mr-1' : 'mr-2'} ${isMobile ? 'text-sm' : 'text-lg'}`}>{tab.icon}</span>
+                  <span className={`${isMobile ? 'truncate max-w-16' : ''}`}>
+                    {isMobile && tab.name.length > 8 ? tab.name.substring(0, 8) : tab.name}
+                  </span>
                   {dragOverTab === tab.id && dragOverTab !== activeTab && !isMobile && (
                     <span className="ml-2 text-xs opacity-70">DROP HERE</span>
                   )}

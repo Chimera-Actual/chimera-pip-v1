@@ -20,7 +20,7 @@ interface WidgetLibraryProps {
   allUserTags: string[];
 }
 
-export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
+export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
   isOpen,
   onClose,
   availableWidgets,
@@ -34,29 +34,29 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [tagManagerWidget, setTagManagerWidget] = useState<WidgetDefinition | null>(null);
 
-  const availableTags = React.useMemo(() => ['all', ...allUserTags], [allUserTags]);
+  const availableTags = ['all', ...allUserTags];
 
-  const filteredWidgets = React.useMemo(() => availableWidgets.filter(widget => {
+  const filteredWidgets = availableWidgets.filter(widget => {
     const matchesSearch = widget.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          widget.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTag = selectedTag === 'all' || 
                       (widget.user_tags && widget.user_tags.includes(selectedTag));
     
     return matchesSearch && matchesTag;
-  }), [availableWidgets, searchQuery, selectedTag]);
+  });
 
-  const handleAddWidget = React.useCallback((widgetId: string) => {
+  const handleAddWidget = (widgetId: string) => {
     onAddWidget(widgetId);
     onClose();
-  }, [onAddWidget, onClose]);
+  };
 
-  const openTagManager = React.useCallback((widget: WidgetDefinition) => {
+  const openTagManager = (widget: WidgetDefinition) => {
     setTagManagerWidget(widget);
-  }, []);
+  };
 
-  const closeTagManager = React.useCallback(() => {
+  const closeTagManager = () => {
     setTagManagerWidget(null);
-  }, []);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -78,11 +78,10 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 font-mono bg-background/50 border-border"
-                aria-label="Search widgets by name or description"
               />
             </div>
             
-            <div className="flex gap-2 flex-wrap" role="tablist" aria-label="Filter widgets by tag">
+            <div className="flex gap-2 flex-wrap">
               {availableTags.map(tag => (
                 <Button
                   key={tag}
@@ -90,9 +89,6 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
                   size="sm"
                   onClick={() => setSelectedTag(tag)}
                   className="font-mono text-xs uppercase"
-                  role="tab"
-                  aria-selected={selectedTag === tag}
-                  aria-label={`Filter by ${tag} tag`}
                 >
                   <Hash className="w-3 h-3 mr-1" />
                   {tag}
@@ -114,13 +110,13 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1" role="grid" aria-label="Available widgets">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
                 {filteredWidgets.map(widget => (
-                  <Card key={widget.id} className="bg-background/30 border-border hover:border-primary/50 transition-colors" role="gridcell">
+                  <Card key={widget.id} className="bg-background/30 border-border hover:border-primary/50 transition-colors">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="text-2xl" role="img" aria-label={`${widget.name} icon`}>{widget.icon}</div>
+                          <div className="text-2xl">{widget.icon}</div>
                           <div className="flex-1">
                             <CardTitle className="text-sm font-mono text-primary">
                               {widget.name}
@@ -132,7 +128,6 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
                                     key={tag}
                                     variant="secondary" 
                                     className="text-xs font-mono"
-                                    aria-label={`Tag: ${tag}`}
                                   >
                                     {tag}
                                   </Badge>
@@ -150,7 +145,6 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
                           size="sm"
                           onClick={() => openTagManager(widget)}
                           className="text-muted-foreground hover:text-primary p-1"
-                          aria-label={`Manage tags for ${widget.name}`}
                         >
                           <Tags className="w-4 h-4" />
                         </Button>
@@ -168,7 +162,6 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
                         onClick={() => handleAddWidget(widget.id)}
                         size="sm"
                         className="w-full font-mono text-xs"
-                        aria-label={`Add ${widget.name} widget to current tab`}
                       >
                         <Plus className="w-3 h-3 mr-1" />
                         ADD WIDGET
@@ -191,4 +184,4 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = React.memo(({
       </DialogContent>
     </Dialog>
   );
-});
+};
