@@ -308,3 +308,5 @@ export const MapWidget: React.FC<MapWidgetProps> = ({ settings, widgetName, widg
     </div>
   );
 };
+
+export default MapWidget;
