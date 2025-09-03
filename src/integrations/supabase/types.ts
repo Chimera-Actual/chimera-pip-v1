@@ -68,6 +68,36 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_layouts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          layout_data: Json
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          layout_data?: Json
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          layout_data?: Json
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -127,6 +157,66 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tabs: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          order_index: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id: string
+          name: string
+          order_index?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_location_data: {
+        Row: {
+          created_at: string
+          encrypted_latitude: string | null
+          encrypted_location_name: string | null
+          encrypted_longitude: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_latitude?: string | null
+          encrypted_location_name?: string | null
+          encrypted_longitude?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_latitude?: string | null
+          encrypted_location_name?: string | null
+          encrypted_longitude?: string | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -230,8 +320,13 @@ export type Database = {
         Row: {
           created_at: string
           custom_name: string | null
+          grid_height: number | null
+          grid_width: number | null
+          grid_x: number | null
+          grid_y: number | null
           id: string
           is_active: boolean | null
+          panel_id: string | null
           position: number | null
           tab_id: string
           updated_at: string
@@ -241,8 +336,13 @@ export type Database = {
         Insert: {
           created_at?: string
           custom_name?: string | null
+          grid_height?: number | null
+          grid_width?: number | null
+          grid_x?: number | null
+          grid_y?: number | null
           id?: string
           is_active?: boolean | null
+          panel_id?: string | null
           position?: number | null
           tab_id: string
           updated_at?: string
@@ -252,8 +352,13 @@ export type Database = {
         Update: {
           created_at?: string
           custom_name?: string | null
+          grid_height?: number | null
+          grid_width?: number | null
+          grid_x?: number | null
+          grid_y?: number | null
           id?: string
           is_active?: boolean | null
+          panel_id?: string | null
           position?: number | null
           tab_id?: string
           updated_at?: string
@@ -463,12 +568,69 @@ export type Database = {
           },
         ]
       }
+      widgets: {
+        Row: {
+          component_name: string
+          created_at: string
+          height: number
+          id: string
+          position_x: number
+          position_y: number
+          settings: Json | null
+          tab_id: string
+          updated_at: string
+          user_id: string
+          width: number
+          z_index: number
+        }
+        Insert: {
+          component_name: string
+          created_at?: string
+          height?: number
+          id?: string
+          position_x?: number
+          position_y?: number
+          settings?: Json | null
+          tab_id?: string
+          updated_at?: string
+          user_id: string
+          width?: number
+          z_index?: number
+        }
+        Update: {
+          component_name?: string
+          created_at?: string
+          height?: number
+          id?: string
+          position_x?: number
+          position_y?: number
+          settings?: Json | null
+          tab_id?: string
+          updated_at?: string
+          user_id?: string
+          width?: number
+          z_index?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      widget_performance_stats: {
+        Row: {
+          active_instances: number | null
+          avg_position: number | null
+          category: string | null
+          instance_count: number | null
+          widget_name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      batch_update_widget_positions: {
+        Args: { position_updates: Json; user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
