@@ -332,18 +332,47 @@ export const useDashboardStore = create<DashboardStore>()(
           set((state) => {
             // Transform database layout data to our format
             const dbLayouts = data || [];
-            state.layouts = dbLayouts.map((dbLayout: any) => ({
-              id: dbLayout.id,
-              name: dbLayout.name,
-              userId: dbLayout.user_id,
-              panels: (dbLayout.layout_data as any)?.panels || defaultPanels,
-              widgets: (dbLayout.layout_data as any)?.widgets || [],
-              gridCols: 12,
-              gridRows: 'auto',
-              isActive: dbLayout.is_active,
-              createdAt: new Date(dbLayout.created_at),
-              updatedAt: new Date(dbLayout.updated_at),
-            }));
+            state.layouts = dbLayouts.map((dbLayout: any) => {
+              const layoutData = dbLayout.layout_data as any;
+              const rawWidgets = layoutData?.widgets || [];
+              
+              // Transform widgets to match current interface
+              const transformedWidgets = rawWidgets.map((widget: any) => ({
+                id: widget.id,
+                type: widget.type,
+                title: widget.title,
+                customName: widget.customName,
+                position: {
+                  x: widget.position.x,
+                  y: widget.position.y,
+                  w: widget.position.w || widget.position.width || 2,
+                  h: widget.position.h || widget.position.height || 2,
+                },
+                collapsed: widget.collapsed || false,
+                isDraggable: widget.isDraggable !== false,
+                isResizable: widget.isResizable !== false,
+                settings: widget.settings || {},
+                panelId: widget.panelId || 'main',
+                minW: widget.minW,
+                maxW: widget.maxW,
+                minH: widget.minH,
+                maxH: widget.maxH,
+                static: widget.static || false,
+              }));
+
+              return {
+                id: dbLayout.id,
+                name: dbLayout.name,
+                userId: dbLayout.user_id,
+                panels: layoutData?.panels || defaultPanels,
+                widgets: transformedWidgets,
+                gridCols: 12,
+                gridRows: 'auto',
+                isActive: dbLayout.is_active,
+                createdAt: new Date(dbLayout.created_at),
+                updatedAt: new Date(dbLayout.updated_at),
+              };
+            });
             state.isLoading = false;
             
             // Set active layout if none selected
