@@ -4,9 +4,11 @@ import { useDraggable } from '@dnd-kit/core';
 import { Search, Grid3x3, Package } from 'lucide-react';
 
 import { WidgetRegistry } from '../Layout/WidgetRegistry';
+import { LayoutTemplates } from './LayoutTemplates';
 import { Input } from '../ui/input';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
+import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
 import type { WidgetCatalogItem } from '@/types/dashboard';
 
@@ -142,6 +144,11 @@ export const WidgetCatalogPanel: React.FC = () => {
             </Badge>
           ))}
         </div>
+      </div>
+
+      {/* Layout Templates */}
+      <div className="p-4 border-b border-border/50">
+        <LayoutTemplates />
       </div>
 
       {/* Widget List */}

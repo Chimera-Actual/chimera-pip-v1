@@ -653,3 +653,96 @@ All colors MUST be HSL - Monochrome Green Theme
     backface-visibility: visible;
   }
 }
+
+/* Responsive Layout Improvements */
+.pip-boy-grid-container {
+  position: relative;
+  min-height: calc(100vh - 4rem);
+  background: hsl(var(--background));
+}
+
+/* Better widget spacing and sizing */
+.react-grid-layout {
+  position: relative !important;
+  min-height: 100% !important;
+}
+
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZG90cyBmaWxsPSIjODg4IiBkPSJtMSA1IDQtNE0wIDZsNi02TTE1IDFsLTQgNCIvPgo8L3N2Zz4K') no-repeat;
+  background-position: bottom right;
+  padding: 0 3px 3px 0;
+  cursor: se-resize;
+  box-sizing: border-box;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid hsl(var(--primary));
+  border-bottom: 2px solid hsl(var(--primary));
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .pip-boy-grid-container {
+    padding: 4px !important;
+  }
+  
+  .react-grid-layout {
+    margin: 0 !important;
+  }
+  
+  .react-grid-item {
+    margin: 2px !important;
+  }
+  
+  .pip-boy-widget {
+    min-height: 120px !important;
+  }
+}
+
+/* Sidebar Collapsed States */
+.panel-collapsed {
+  overflow: hidden !important;
+}
+
+.panel-collapsed > * {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Better scrollbars for dashboard */
+.pip-boy-grid-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pip-boy-grid-container::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+.pip-boy-grid-container::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 4px;
+}
+
+.pip-boy-grid-container::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}

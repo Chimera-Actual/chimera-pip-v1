@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger 
 } from '../ui/dropdown-menu';
 import { Badge } from '../ui/badge';
-import { LAYOUT_TEMPLATES, createLayoutFromTemplate } from './LayoutTemplates';
 import { HelpModal } from './HelpModal';
 import { cn } from '@/lib/utils';
 
@@ -48,14 +47,9 @@ export const DashboardHeader: React.FC = () => {
 
   const handleCreateFromTemplate = async (templateId: string) => {
     if (!user?.id) return;
-    const template = LAYOUT_TEMPLATES.find(t => t.id === templateId);
-    if (!template) return;
-    
-    const name = prompt('Enter layout name:', template.name);
+    const name = prompt('Enter layout name:');
     if (name) {
-      const layoutData = createLayoutFromTemplate(template, user.id, name);
       await createLayout(name);
-      // Note: In a real implementation, we'd pass the template data to createLayout
     }
   };
 
@@ -89,7 +83,7 @@ export const DashboardHeader: React.FC = () => {
           <Monitor className="w-6 h-6 text-primary" />
           <div>
             <h1 className="font-mono text-lg font-bold text-foreground">
-              CHIMERA-PIP 4000 mk 2
+              CHIMERA-PIP 4000 mk 1
             </h1>
             <div className="text-xs text-muted-foreground">
               Dashboard Framework v2.0
@@ -152,22 +146,6 @@ export const DashboardHeader: React.FC = () => {
               <Plus className="w-4 h-4 mr-2" />
               Blank Layout
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {LAYOUT_TEMPLATES.map((template) => (
-              <DropdownMenuItem
-                key={template.id}
-                onClick={() => handleCreateFromTemplate(template.id)}
-                className="flex items-start gap-2"
-              >
-                <div className="mt-0.5">{template.icon}</div>
-                <div>
-                  <div className="font-medium">{template.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {template.description}
-                  </div>
-                </div>
-              </DropdownMenuItem>
-            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

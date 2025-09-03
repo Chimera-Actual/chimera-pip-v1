@@ -1,245 +1,144 @@
-// Dashboard Layout Templates and Presets
+// Layout Templates for Quick Dashboard Setup
 import React from 'react';
-import { Monitor, Grid, BarChart3, Settings, Gauge } from 'lucide-react';
-import type { DashboardLayout, Widget } from '@/types/dashboard';
+import { Layout, Grid3x3, Columns2, Columns3, LayoutGrid } from 'lucide-react';
+import { Button } from '../ui/button';
+import { useDashboardStore } from '@/stores/dashboardStore';
+import { cn } from '@/lib/utils';
+import type { Widget, GridPosition } from '@/types/dashboard';
 
-export interface LayoutTemplate {
+interface LayoutTemplate {
   id: string;
   name: string;
   description: string;
   icon: React.ReactNode;
-  category: 'productivity' | 'monitoring' | 'media' | 'development';
-  widgets: Omit<Widget, 'id' | 'widgetInstanceId'>[];
-  gridCols: number;
-  gridRows: string;
+  positions: GridPosition[];
 }
 
-export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
+const templates: LayoutTemplate[] = [
   {
-    id: 'productivity-dashboard',
-    name: 'Productivity Hub',
-    description: 'Clock, calendar, weather, and system info for daily use',
-    icon: <Grid className="w-5 h-5" />,
-    category: 'productivity',
-    widgets: [
-      {
-        type: 'ClockWidget',
-        title: 'System Clock',
-        position: { x: 0, y: 0, w: 3, h: 2 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { format: '24h', showDate: true, showSeconds: true },
-      },
-      {
-        type: 'WeatherWidget',
-        title: 'Weather Status',
-        position: { x: 3, y: 0, w: 4, h: 3 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { showForecast: true, units: 'metric' },
-      },
-      {
-        type: 'CalendarWidget',
-        title: 'Schedule',
-        position: { x: 7, y: 0, w: 5, h: 4 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { view: 'month', showEvents: true },
-      },
-      {
-        type: 'UserInfoWidget',
-        title: 'User Profile',
-        position: { x: 0, y: 2, w: 3, h: 2 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { showStats: true, showAvatar: true },
-      },
-    ],
-    gridCols: 12,
-    gridRows: 'auto',
+    id: 'single-column',
+    name: '1 Column',
+    description: 'Single column layout',
+    icon: <Layout className="w-4 h-4" />,
+    positions: [
+      { x: 6, y: 0, w: 12, h: 8 },
+    ]
   },
   {
-    id: 'monitoring-dashboard',
-    name: 'System Monitor',
-    description: 'Comprehensive system monitoring and analytics',
-    icon: <Gauge className="w-5 h-5" />,
-    category: 'monitoring',
-    widgets: [
-      {
-        type: 'SystemSettingsWidget',
-        title: 'System Status',
-        position: { x: 0, y: 0, w: 6, h: 3 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { showPerformance: true, showNetwork: true },
-      },
-      {
-        type: 'MapWidget',
-        title: 'Location Tracker',
-        position: { x: 6, y: 0, w: 6, h: 4 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { showCurrent: true, trackMovement: true },
-      },
-      {
-        type: 'WeatherWidget',
-        title: 'Environmental Data',
-        position: { x: 0, y: 3, w: 4, h: 2 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { showDetails: true, showRadar: true },
-      },
-    ],
-    gridCols: 12,
-    gridRows: 'auto',
+    id: 'two-column',
+    name: '2 Columns',
+    description: 'Two equal columns',
+    icon: <Columns2 className="w-4 h-4" />,
+    positions: [
+      { x: 0, y: 0, w: 12, h: 8 },
+      { x: 12, y: 0, w: 12, h: 8 },
+    ]
   },
   {
-    id: 'media-dashboard',
-    name: 'Media Center',
-    description: 'Audio, images, and multimedia content management',
-    icon: <Monitor className="w-5 h-5" />,
-    category: 'media',
-    widgets: [
-      {
-        type: 'AudioPlayerWidget',
-        title: 'Audio Player',
-        position: { x: 0, y: 0, w: 8, h: 3 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { showVisualizer: true, showPlaylist: true },
-      },
-      {
-        type: 'ImageDisplayWidget',
-        title: 'Gallery',
-        position: { x: 8, y: 0, w: 4, h: 4 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { slideshow: true, fullscreen: true },
-      },
-      {
-        type: 'TextDisplayWidget',
-        title: 'Media Info',
-        position: { x: 0, y: 3, w: 4, h: 2 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { scrolling: true, fontSize: 'medium' },
-      },
-    ],
-    gridCols: 12,
-    gridRows: 'auto',
+    id: 'three-column',
+    name: '3 Columns',
+    description: 'Three equal columns',
+    icon: <Columns3 className="w-4 h-4" />,
+    positions: [
+      { x: 0, y: 0, w: 8, h: 8 },
+      { x: 8, y: 0, w: 8, h: 8 },
+      { x: 16, y: 0, w: 8, h: 8 },
+    ]
   },
   {
-    id: 'development-dashboard',
-    name: 'Developer Console',
-    description: 'Development tools and system administration',
-    icon: <Settings className="w-5 h-5" />,
-    category: 'development',
-    widgets: [
-      {
-        type: 'BrowserWidget',
-        title: 'Web Browser',
-        position: { x: 0, y: 0, w: 8, h: 5 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { devMode: true, showConsole: true },
-      },
-      {
-        type: 'SystemSettingsWidget',
-        title: 'System Control',
-        position: { x: 8, y: 0, w: 4, h: 3 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { advancedMode: true, showLogs: true },
-      },
-      {
-        type: 'TextDisplayWidget',
-        title: 'Debug Console',
-        position: { x: 8, y: 3, w: 4, h: 2 },
-        panelId: 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: { monospace: true, lineNumbers: true },
-      },
-    ],
-    gridCols: 12,
-    gridRows: 'auto',
+    id: 'dashboard-grid',
+    name: 'Dashboard Grid',
+    description: '2x2 grid layout',
+    icon: <Grid3x3 className="w-4 h-4" />,
+    positions: [
+      { x: 0, y: 0, w: 12, h: 6 },
+      { x: 12, y: 0, w: 12, h: 6 },
+      { x: 0, y: 6, w: 12, h: 6 },
+      { x: 12, y: 6, w: 12, h: 6 },
+    ]
+  },
+  {
+    id: 'main-sidebar',
+    name: 'Main + Sidebar',
+    description: 'Large main area with sidebar',
+    icon: <LayoutGrid className="w-4 h-4" />,
+    positions: [
+      { x: 0, y: 0, w: 16, h: 10 },
+      { x: 16, y: 0, w: 8, h: 5 },
+      { x: 16, y: 5, w: 8, h: 5 },
+    ]
   },
 ];
 
-export const getTemplatesByCategory = (category?: string) => {
-  if (!category) return LAYOUT_TEMPLATES;
-  return LAYOUT_TEMPLATES.filter(template => template.category === category);
-};
+export const LayoutTemplates: React.FC = () => {
+  const { widgets, addWidget, updateWidget, clearAllWidgets } = useDashboardStore();
 
-export const createLayoutFromTemplate = (
-  template: LayoutTemplate,
-  userId: string,
-  customName?: string
-): Omit<DashboardLayout, 'id' | 'createdAt' | 'updatedAt'> => {
-  return {
-    name: customName || template.name,
-    userId,
-    panels: [
-      {
-        id: 'sidebar-left',
-        name: 'Widget Catalog',
-        direction: 'horizontal',
-        defaultSize: 20,
-        minSize: 15,
-        collapsible: true,
-        collapsed: false,
-      },
-      {
-        id: 'main',
-        name: 'Dashboard',
-        direction: 'horizontal',
-        defaultSize: 60,
-        minSize: 40,
-        collapsible: false,
-        collapsed: false,
-      },
-      {
-        id: 'sidebar-right',
-        name: 'Properties',
-        direction: 'horizontal',
-        defaultSize: 20,
-        minSize: 15,
-        collapsible: true,
-        collapsed: false,
-      },
-    ],
-    widgets: template.widgets.map(widget => ({
-      ...widget,
-      id: crypto.randomUUID(),
-      widgetInstanceId: crypto.randomUUID(),
-    })),
-    gridCols: template.gridCols,
-    gridRows: template.gridRows,
-    isActive: false,
+  const applyTemplate = (template: LayoutTemplate) => {
+    // Get widgets in main panel
+    const mainWidgets = Array.from(widgets.values()).filter(w => w.panelId === 'main');
+    
+    // Apply positions to existing widgets
+    template.positions.forEach((position, index) => {
+      if (mainWidgets[index]) {
+        updateWidget(mainWidgets[index].id, { position });
+      }
+    });
   };
+
+  const createTemplateWithWidgets = (template: LayoutTemplate) => {
+    // Clear existing widgets and create new ones based on template
+    clearAllWidgets();
+    
+    // Add default widgets based on template
+    template.positions.forEach((position, index) => {
+      const widgetTypes = ['clock', 'weather', 'calendar', 'status'];
+      const widgetType = widgetTypes[index % widgetTypes.length];
+      
+      setTimeout(() => {
+        addWidget(widgetType, 'main', position);
+      }, index * 100); // Stagger creation to avoid conflicts
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      <h3 className="font-mono text-sm font-semibold text-foreground">
+        LAYOUT TEMPLATES
+      </h3>
+      
+      <div className="grid grid-cols-1 gap-2">
+        {templates.map((template) => (
+          <Button
+            key={template.id}
+            variant="outline"
+            size="sm"
+            onClick={() => applyTemplate(template)}
+            className={cn(
+              "flex items-center gap-2 justify-start h-auto p-3",
+              "hover:bg-primary/10 hover:border-primary/30"
+            )}
+          >
+            {template.icon}
+            <div className="text-left">
+              <div className="font-mono text-xs font-medium">
+                {template.name}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {template.description}
+              </div>
+            </div>
+          </Button>
+        ))}
+      </div>
+      
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => createTemplateWithWidgets(templates[3])} // Dashboard grid with widgets
+        className="w-full text-xs font-mono"
+      >
+        Create Sample Dashboard
+      </Button>
+    </div>
+  );
 };

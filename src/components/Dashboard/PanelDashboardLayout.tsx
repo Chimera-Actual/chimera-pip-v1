@@ -8,17 +8,20 @@ import { useState } from 'react';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ReactGridDashboard } from './ReactGridDashboard';
 import { WidgetCatalogPanel } from './WidgetCatalogPanel';
 import { WidgetPropertiesPanel } from './WidgetPropertiesPanel';
 import { DashboardHeader } from './DashboardHeader';
 import { CrossPanelDropZone } from './CrossPanelDropZone';
+import { MobileDashboard } from './MobileDashboard';
 import { PipBoyErrorFallback } from '../ui/PipBoyErrorFallback';
 import { cn } from '@/lib/utils';
 import type { DragItem } from '@/types/dashboard';
 
 export const PanelDashboardLayout: React.FC = () => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const { 
     currentLayout, 
     loadLayouts, 
@@ -41,6 +44,11 @@ export const PanelDashboardLayout: React.FC = () => {
       loadLayouts();
     }
   }, [user?.id, loadLayouts]);
+
+  // Use mobile layout on small screens
+  if (isMobile) {
+    return <MobileDashboard />;
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -141,10 +149,11 @@ export const PanelDashboardLayout: React.FC = () => {
             >
               {/* Left Sidebar - Widget Catalog */}
               <Panel
-                defaultSize={20}
-                minSize={15}
-                maxSize={30}
+                defaultSize={12}
+                minSize={10}
+                maxSize={18}
                 collapsible
+                collapsedSize={2}
                 className={cn(
                   "border-r border-border/50",
                   "bg-card/20 relative"
@@ -164,8 +173,9 @@ export const PanelDashboardLayout: React.FC = () => {
 
               {/* Main Dashboard Area */}
               <Panel
-                defaultSize={60}
-                minSize={40}
+                defaultSize={73}
+                minSize={60}
+                maxSize={80}
                 className="bg-background relative"
               >
                 <ErrorBoundary FallbackComponent={PipBoyErrorFallback}>
@@ -180,10 +190,11 @@ export const PanelDashboardLayout: React.FC = () => {
 
               {/* Right Sidebar - Properties */}
               <Panel
-                defaultSize={20}
-                minSize={15}
-                maxSize={30}
+                defaultSize={15}
+                minSize={10}
+                maxSize={20}
                 collapsible
+                collapsedSize={2}
                 className={cn(
                   "border-l border-border/50",
                   "bg-card/20 relative"

@@ -82,10 +82,10 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
     >
       {/* Widget Header - Always visible */}
       <div className={cn(
-        "flex items-center justify-between px-3 py-2",
+        "flex items-center justify-between px-2 py-1.5",
         "border-b border-border/30",
         "bg-card/50 backdrop-blur-sm",
-        "cursor-pointer"
+        "cursor-pointer min-h-[2.5rem]"
       )}>
         {/* Drag Handle + Title */}
         <div 
@@ -144,7 +144,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
 
       {/* Widget Content - Only when not collapsed */}
       {!widget.collapsed && (
-        <div className="p-4 h-[calc(100%-3rem)] overflow-hidden">
+        <div className="p-2 h-[calc(100%-2.5rem)] overflow-hidden">
           <WidgetRenderer
             widgetInstanceId={widgetId} // Use widget ID as instance ID
             widgetType={widget.type}
