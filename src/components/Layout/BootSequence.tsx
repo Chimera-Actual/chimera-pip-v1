@@ -16,7 +16,7 @@ const bootMessages = [
   "Scanning for hardware changes............[OK]",
   "Loading device drivers...................[OK]",
   "",
-  "Starting ChimeraPip OS v3.1.5............[OK]",
+  "Starting CHIMERA-PIP OS v3.1.5............[OK]",
   "Loading kernel modules...................[OK]",
   "Mounting file systems....................[OK]",
   "Starting network services................[OK]",
@@ -24,7 +24,7 @@ const bootMessages = [
   "Initializing user interface..............[OK]",
   "",
   "All systems operational.",
-  "Welcome to ChimeraPip 3000 Mark V",
+  "Welcome to CHIMERA-PIP 3000 mk 1",
   "",
   "System ready for user input."
 ];

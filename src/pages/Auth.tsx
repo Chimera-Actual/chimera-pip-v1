@@ -131,7 +131,7 @@ export default function Auth() {
       <Card className="w-full max-w-md bg-card/90 backdrop-blur border-primary/30">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-display crt-glow text-primary">
-            ChimeraPip 3000 Logon
+            CHIMERA-PIP 3000 mk 1 Logon
           </CardTitle>
           <CardDescription className="text-muted-foreground">
             Access your personal interface system

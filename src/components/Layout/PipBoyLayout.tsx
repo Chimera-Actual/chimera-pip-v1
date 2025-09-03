@@ -145,7 +145,7 @@ export const PipBoyLayout: React.FC<PipBoyLayoutProps> = () => {
         <div className={`flex-shrink-0 ${isMobile ? 'h-12' : 'h-16'} bg-card border-b border-border ${isMobile ? 'px-4' : 'px-6'} flex items-center justify-between`}>
           <div className="flex items-center space-x-2">
             <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-mono font-bold text-primary crt-glow uppercase tracking-wider`}>
-              {isMobile ? 'CHIMERA' : 'CHIMERA-PIP 3000'}
+              {isMobile ? 'CHIMERA' : 'CHIMERA-PIP 3000 mk 1'}
             </h1>
           </div>
           

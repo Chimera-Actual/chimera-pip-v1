@@ -48,7 +48,7 @@ export const CustomAssistantSettings: React.FC<CustomAssistantSettingsProps> = (
           ...(apiKey && { 'Authorization': `Bearer ${apiKey}` })
         },
         body: JSON.stringify({
-          message: 'Test connection from CHIMERA-PIP 3000',
+          message: 'Test connection from CHIMERA-PIP 3000 mk 1',
           timestamp: new Date().toISOString()
         })
       });

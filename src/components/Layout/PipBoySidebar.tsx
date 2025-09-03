@@ -31,11 +31,8 @@ export const PipBoySidebar: React.FC<PipBoySidebarProps> = ({
       <SidebarContent className="border-r border-border bg-sidebar">
         <div className="p-3 md:p-4 border-b border-border">
           <div className="text-primary font-display crt-glow text-sm md:text-base">
-            {isCollapsed ? "CHIMERA" : "ChimeraPip 3000"}
+            {isCollapsed ? "CHIMERA" : "CHIMERA-PIP 3000 mk 1"}
           </div>
-          {!isCollapsed && (
-            <div className="text-xs text-muted-foreground">Mark V</div>
-          )}
         </div>
 
         <SidebarGroup>
