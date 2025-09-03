@@ -12,13 +12,13 @@ import { cn } from '@/lib/utils';
 export const WidgetPropertiesPanel: React.FC = () => {
   const { 
     currentLayout, 
-    selectedWidget, 
-    selectWidget, 
+    selectedWidgetId, 
+    setSelectedWidget, 
     removeWidget,
     updateWidgetSettings 
   } = useDashboardStore();
 
-  const widget = currentLayout?.widgets.find(w => w.id === selectedWidget);
+  const widget = currentLayout?.widgets.find(w => w.id === selectedWidgetId);
 
   if (!widget) {
     return (
@@ -51,7 +51,7 @@ export const WidgetPropertiesPanel: React.FC = () => {
 
   const handleRemoveWidget = () => {
     removeWidget(widget.id);
-    selectWidget(null);
+    setSelectedWidget(null);
   };
 
   return (
@@ -115,11 +115,11 @@ export const WidgetPropertiesPanel: React.FC = () => {
               </div>
               <div>
                 <span className="text-muted-foreground block">Width:</span>
-                <span className="font-mono">{widget.position.width}</span>
+                <span className="font-mono">{widget.position.w}</span>
               </div>
               <div>
                 <span className="text-muted-foreground block">Height:</span>
-                <span className="font-mono">{widget.position.height}</span>
+                <span className="font-mono">{widget.position.h}</span>
               </div>
             </div>
           </div>

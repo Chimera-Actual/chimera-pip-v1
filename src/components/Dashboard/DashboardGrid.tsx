@@ -31,16 +31,16 @@ export const DashboardGrid: React.FC<DashboardGridProps> = ({
   // Generate grid cells for drop zones
   const gridCells = useMemo(() => {
     const cells = [];
-    const rows = Math.max(8, Math.max(...widgets.map(w => w.position.y + w.position.height)) + 2);
+    const rows = Math.max(8, Math.max(...widgets.map(w => w.position.y + w.position.h)) + 2);
     
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < gridCols; x++) {
         // Check if this cell is occupied by a widget
         const isOccupied = widgets.some(widget => 
           x >= widget.position.x && 
-          x < widget.position.x + widget.position.width &&
+          x < widget.position.x + widget.position.w &&
           y >= widget.position.y && 
-          y < widget.position.y + widget.position.height
+          y < widget.position.y + widget.position.h
         );
 
         if (!isOccupied) {
@@ -103,8 +103,8 @@ export const DashboardGrid: React.FC<DashboardGridProps> = ({
               widget={widget}
               onSelect={onWidgetSelect}
               style={{
-                gridColumn: `${widget.position.x + 1} / span ${widget.position.width}`,
-                gridRow: `${widget.position.y + 1} / span ${widget.position.height}`,
+                gridColumn: `${widget.position.x + 1} / span ${widget.position.w}`,
+                gridRow: `${widget.position.y + 1} / span ${widget.position.h}`,
               }}
             />
           ))}

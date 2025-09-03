@@ -42,7 +42,7 @@ export const DashboardHeader: React.FC = () => {
     if (!user?.id) return;
     const name = prompt('Enter layout name:');
     if (name) {
-      await createLayout(name, user.id);
+      await createLayout(name);
     }
   };
 
@@ -54,7 +54,7 @@ export const DashboardHeader: React.FC = () => {
     const name = prompt('Enter layout name:', template.name);
     if (name) {
       const layoutData = createLayoutFromTemplate(template, user.id, name);
-      await createLayout(name, user.id);
+      await createLayout(name);
       // Note: In a real implementation, we'd pass the template data to createLayout
     }
   };
@@ -63,7 +63,7 @@ export const DashboardHeader: React.FC = () => {
     if (!currentLayout) return;
     const name = prompt('Enter new layout name:', currentLayout.name);
     if (name && name !== currentLayout.name) {
-      updateLayout({ name });
+      updateLayout(currentLayout.id, { name });
     }
   };
 

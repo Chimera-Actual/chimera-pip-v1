@@ -330,19 +330,32 @@ export const useDashboardStore = create<DashboardStore>()(
           if (error) throw error;
 
           set((state) => {
-            state.layouts = data || [];
+            // Transform database layout data to our format
+            const dbLayouts = data || [];
+            state.layouts = dbLayouts.map((dbLayout: any) => ({
+              id: dbLayout.id,
+              name: dbLayout.name,
+              userId: dbLayout.user_id,
+              panels: (dbLayout.layout_data as any)?.panels || defaultPanels,
+              widgets: (dbLayout.layout_data as any)?.widgets || [],
+              gridCols: 12,
+              gridRows: 'auto',
+              isActive: dbLayout.is_active,
+              createdAt: new Date(dbLayout.created_at),
+              updatedAt: new Date(dbLayout.updated_at),
+            }));
             state.isLoading = false;
             
             // Set active layout if none selected
-            if (!state.activeLayoutId && data && data.length > 0) {
-              const activeLayout = data.find(l => l.is_active) || data[0];
+            if (!state.activeLayoutId && state.layouts.length > 0) {
+              const activeLayout = state.layouts.find(l => l.isActive) || state.layouts[0];
               state.activeLayoutId = activeLayout.id;
               state.currentLayout = activeLayout; // Legacy compatibility
               
               // Load widgets from layout
-              if (activeLayout.layout_data?.widgets) {
+              if (activeLayout.widgets) {
                 state.widgets.clear();
-                activeLayout.layout_data.widgets.forEach((widget: Widget) => {
+                activeLayout.widgets.forEach((widget: Widget) => {
                   state.widgets.set(widget.id, widget);
                 });
               }
@@ -372,7 +385,7 @@ export const useDashboardStore = create<DashboardStore>()(
             .insert({
               name,
               user_id: user.user.id,
-              layout_data: layoutData,
+              layout_data: layoutData as any,
               is_active: false,
             })
             .select()
@@ -381,7 +394,19 @@ export const useDashboardStore = create<DashboardStore>()(
           if (error) throw error;
 
           set((state) => {
-            state.layouts.unshift(data);
+            const newLayout: DashboardLayout = {
+              id: data.id,
+              name: data.name,
+              userId: data.user_id,
+              panels: defaultPanels,
+              widgets: [],
+              gridCols: 12,
+              gridRows: 'auto',
+              isActive: data.is_active,
+              createdAt: new Date(data.created_at),
+              updatedAt: new Date(data.updated_at),
+            };
+            state.layouts.unshift(newLayout);
           });
 
           toast.success(`Layout "${name}" created`);
@@ -441,9 +466,9 @@ export const useDashboardStore = create<DashboardStore>()(
           state.currentLayout = layout; // Legacy compatibility
           
           // Load widgets from this layout
-          if (layout.layout_data?.widgets) {
+          if (layout.widgets) {
             state.widgets.clear();
-            layout.layout_data.widgets.forEach((widget: Widget) => {
+            layout.widgets.forEach((widget: Widget) => {
               state.widgets.set(widget.id, widget);
             });
           }
@@ -460,10 +485,15 @@ export const useDashboardStore = create<DashboardStore>()(
             widgets: Array.from(widgets.values()),
           };
 
-          await get().updateLayout(activeLayoutId, {
-            layout_data: layoutData,
-            updatedAt: new Date(),
-          });
+          const { error } = await supabase
+            .from('dashboard_layouts')
+            .update({
+              layout_data: layoutData as any,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', activeLayoutId);
+
+          if (error) throw error;
         } catch (error) {
           console.error('Error saving layout:', error);
         }

@@ -25,7 +25,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'ClockWidget',
         title: 'System Clock',
-        position: { x: 0, y: 0, width: 3, height: 2 },
+        position: { x: 0, y: 0, w: 3, h: 2 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -35,7 +35,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'WeatherWidget',
         title: 'Weather Status',
-        position: { x: 3, y: 0, width: 4, height: 3 },
+        position: { x: 3, y: 0, w: 4, h: 3 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -45,7 +45,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'CalendarWidget',
         title: 'Schedule',
-        position: { x: 7, y: 0, width: 5, height: 4 },
+        position: { x: 7, y: 0, w: 5, h: 4 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -55,7 +55,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'UserInfoWidget',
         title: 'User Profile',
-        position: { x: 0, y: 2, width: 3, height: 2 },
+        position: { x: 0, y: 2, w: 3, h: 2 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -76,7 +76,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'SystemSettingsWidget',
         title: 'System Status',
-        position: { x: 0, y: 0, width: 6, height: 3 },
+        position: { x: 0, y: 0, w: 6, h: 3 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -86,7 +86,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'MapWidget',
         title: 'Location Tracker',
-        position: { x: 6, y: 0, width: 6, height: 4 },
+        position: { x: 6, y: 0, w: 6, h: 4 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -96,7 +96,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'WeatherWidget',
         title: 'Environmental Data',
-        position: { x: 0, y: 3, width: 4, height: 2 },
+        position: { x: 0, y: 3, w: 4, h: 2 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -117,7 +117,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'AudioPlayerWidget',
         title: 'Audio Player',
-        position: { x: 0, y: 0, width: 8, height: 3 },
+        position: { x: 0, y: 0, w: 8, h: 3 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -127,7 +127,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'ImageDisplayWidget',
         title: 'Gallery',
-        position: { x: 8, y: 0, width: 4, height: 4 },
+        position: { x: 8, y: 0, w: 4, h: 4 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -137,7 +137,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'TextDisplayWidget',
         title: 'Media Info',
-        position: { x: 0, y: 3, width: 4, height: 2 },
+        position: { x: 0, y: 3, w: 4, h: 2 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -158,7 +158,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'BrowserWidget',
         title: 'Web Browser',
-        position: { x: 0, y: 0, width: 8, height: 5 },
+        position: { x: 0, y: 0, w: 8, h: 5 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -168,7 +168,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'SystemSettingsWidget',
         title: 'System Control',
-        position: { x: 8, y: 0, width: 4, height: 3 },
+        position: { x: 8, y: 0, w: 4, h: 3 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,
@@ -178,7 +178,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
       {
         type: 'TextDisplayWidget',
         title: 'Debug Console',
-        position: { x: 8, y: 3, width: 4, height: 2 },
+        position: { x: 8, y: 3, w: 4, h: 2 },
         panelId: 'main',
         collapsed: false,
         isDraggable: true,

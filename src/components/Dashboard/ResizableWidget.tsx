@@ -24,7 +24,7 @@ interface ResizableWidgetProps {
   widget: Widget;
   children: React.ReactNode;
   isSelected: boolean;
-  onResize: (widgetId: string, newSize: { width: number; height: number }) => void;
+  onResize: (widgetId: string, newSize: { w: number; h: number }) => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -52,8 +52,8 @@ export const ResizableWidget: React.FC<ResizableWidgetProps> = ({
     
     startPosRef.current = { x: e.clientX, y: e.clientY };
     startSizeRef.current = {
-      width: widget.position.width,
-      height: widget.position.height,
+  width: widget.position.w,
+  height: widget.position.h,
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -71,17 +71,17 @@ export const ResizableWidget: React.FC<ResizableWidgetProps> = ({
       if (direction.includes('s')) newHeight += Math.round(deltaY / 80);
       if (direction.includes('n')) newHeight -= Math.round(deltaY / 80);
 
-      // Apply size constraints
-      const minWidth = widget.minSize?.width || 1;
-      const minHeight = widget.minSize?.height || 1;
-      const maxWidth = widget.maxSize?.width || 8;
-      const maxHeight = widget.maxSize?.height || 8;
+  // Apply size constraints
+  const minWidth = (widget.minW || 1);
+  const minHeight = (widget.minH || 1);
+  const maxWidth = (widget.maxW || 8);
+  const maxHeight = (widget.maxH || 8);
 
       newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
       newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-      if (newWidth !== widget.position.width || newHeight !== widget.position.height) {
-        onResize(widget.id, { width: newWidth, height: newHeight });
+      if (newWidth !== widget.position.w || newHeight !== widget.position.h) {
+        onResize(widget.id, { w: newWidth, h: newHeight });
       }
     };
 

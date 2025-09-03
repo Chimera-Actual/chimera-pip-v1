@@ -70,7 +70,7 @@ export const DashboardGridWidget: React.FC<DashboardGridWidgetProps> = ({
     updateWidgetSettings(widget.id, newSettings);
   };
 
-  const handleResize = (widgetId: string, newSize: { width: number; height: number }) => {
+  const handleResize = (widgetId: string, newSize: { w: number; h: number }) => {
     resizeWidget(widgetId, newSize);
   };
 
@@ -161,7 +161,7 @@ export const DashboardGridWidget: React.FC<DashboardGridWidgetProps> = ({
       {!widget.collapsed && (
         <div className="p-4 h-[calc(100%-3rem)] overflow-hidden">
           <WidgetRenderer
-            widgetInstanceId={widget.widgetInstanceId}
+            widgetInstanceId={widget.id}
             widgetType={widget.type}
             settings={widget.settings}
             widgetName={widget.customName || widget.title}

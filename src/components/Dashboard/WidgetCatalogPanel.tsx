@@ -80,8 +80,8 @@ export const WidgetCatalogPanel: React.FC = () => {
     defaultSize: {
       x: 0,
       y: 0,
-      width: 2,
-      height: 2,
+      w: 2,
+      h: 2,
     },
     minSize: { width: 1, height: 1 },
   }));

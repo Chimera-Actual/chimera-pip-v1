@@ -12,7 +12,7 @@ export const useKeyboardShortcuts = () => {
     selectedWidget, 
     removeWidget,
     toggleWidgetCollapse,
-    selectWidget 
+    setSelectedWidget,
   } = useDashboardStore();
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export const useKeyboardShortcuts = () => {
             if (user?.id) {
               const name = prompt('Enter layout name:');
               if (name) {
-                createLayout(name, user.id);
+                createLayout(name);
               }
             }
           }
@@ -67,7 +67,7 @@ export const useKeyboardShortcuts = () => {
           if (selectedWidget && !isCtrl && !isShift && !isAlt) {
             event.preventDefault();
             removeWidget(selectedWidget);
-            selectWidget(null);
+            setSelectedWidget(null);
           }
           break;
 
@@ -83,7 +83,7 @@ export const useKeyboardShortcuts = () => {
         case 'Escape':
           if (selectedWidget) {
             event.preventDefault();
-            selectWidget(null);
+            setSelectedWidget(null);
           }
           break;
 
@@ -106,7 +106,7 @@ export const useKeyboardShortcuts = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [undo, redo, createLayout, selectedWidget, removeWidget, toggleWidgetCollapse, selectWidget, user?.id]);
+  }, [undo, redo, createLayout, selectedWidget, removeWidget, toggleWidgetCollapse, setSelectedWidget, user?.id]);
 
   // Return available shortcuts for UI display
   return {

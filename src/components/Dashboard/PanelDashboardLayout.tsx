@@ -26,7 +26,7 @@ export const PanelDashboardLayout: React.FC = () => {
     error,
     addWidget,
     moveWidget,
-    selectWidget 
+    setSelectedWidget,
   } = useDashboardStore();
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export const PanelDashboardLayout: React.FC = () => {
   // Load layouts when user is available
   useEffect(() => {
     if (user?.id) {
-      loadLayouts(user.id);
+      loadLayouts();
     }
   }, [user?.id, loadLayouts]);
 
@@ -66,24 +66,12 @@ export const PanelDashboardLayout: React.FC = () => {
     // Handle dropping widget from catalog
     if (dragItem.type === 'catalog-item' && overData?.type === 'grid-cell') {
       const catalogItem = dragItem.data as any;
-      const position = {
+      const widgetId = addWidget(catalogItem.id, overData.panelId || 'main', {
         x: overData.position.x,
         y: overData.position.y,
-        width: catalogItem.defaultSize?.width || 2,
-        height: catalogItem.defaultSize?.height || 2,
-      };
-
-      addWidget({
-        widgetInstanceId: crypto.randomUUID(),
-        type: catalogItem.id,
-        title: catalogItem.name,
-        position,
-        panelId: overData.panelId || 'main',
-        collapsed: false,
-        isDraggable: true,
-        isResizable: true,
-        settings: catalogItem.defaultSettings || {},
-      }, position);
+        w: catalogItem.defaultSize?.w || 2,
+        h: catalogItem.defaultSize?.h || 2,
+      });
     }
 
     // Handle cross-panel widget movement
@@ -91,28 +79,23 @@ export const PanelDashboardLayout: React.FC = () => {
       const widget = dragItem.data as any;
       const newPanelId = overData.panelId;
       
-      // Move widget to new panel with default position
-      const position = {
+      moveWidget(widget.id, {
         x: 0,
         y: 0,
-        width: widget.position.width,
-        height: widget.position.height,
-      };
-
-      moveWidget(widget.id, position, newPanelId);
+        w: widget.position.w,
+        h: widget.position.h,
+      }, newPanelId);
     }
 
     // Handle moving existing widget within grid
     if (dragItem.type === 'widget' && overData?.type === 'grid-cell') {
       const widget = dragItem.data as any;
-      const position = {
+      moveWidget(widget.id, {
         x: overData.position.x,
         y: overData.position.y,
-        width: widget.position.width,
-        height: widget.position.height,
-      };
-
-      moveWidget(widget.id, position, overData.panelId);
+        w: widget.position.w,
+        h: widget.position.h,
+      }, overData.panelId);
     }
 
     setActiveId(null);
@@ -196,7 +179,7 @@ export const PanelDashboardLayout: React.FC = () => {
                 <ErrorBoundary FallbackComponent={PipBoyErrorFallback}>
                   <DashboardGrid 
                     layout={currentLayout}
-                    onWidgetSelect={selectWidget}
+                    onWidgetSelect={setSelectedWidget}
                   />
                   <CrossPanelDropZone 
                     panelId="main" 
