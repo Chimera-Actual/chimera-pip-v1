@@ -1,6 +1,7 @@
 // React Grid Layout Dashboard - Complete Widget Independence
 import React, { useMemo, useCallback } from 'react';
 import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
+import { useDroppable } from '@dnd-kit/core';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { WidgetContainer } from './WidgetContainer';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,15 @@ export const ReactGridDashboard: React.FC<ReactGridDashboardProps> = ({
   const widgets = useDashboardStore(state => state.widgets);
   const updateGridLayout = useDashboardStore(state => state.updateGridLayout);
   const setSelectedWidget = useDashboardStore(state => state.setSelectedWidget);
+
+  // Make the dashboard droppable for catalog items
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'main-dashboard',
+    data: {
+      type: 'dashboard',
+      panelId: panelId,
+    },
+  });
 
   // Get widgets for this specific panel
   const panelWidgets = useMemo(() => {
@@ -67,11 +77,16 @@ export const ReactGridDashboard: React.FC<ReactGridDashboardProps> = ({
   // Show empty state if no widgets
   if (panelWidgets.length === 0) {
     return (
-      <div className={cn(
-        "h-full flex items-center justify-center",
-        "bg-background/50 border-2 border-dashed border-border/30 rounded-lg",
-        className
-      )}>
+      <div 
+        ref={setNodeRef}
+        className={cn(
+          "h-full flex items-center justify-center",
+          "bg-background/50 border-2 border-dashed border-border/30 rounded-lg",
+          "transition-colors duration-200",
+          isOver ? "border-primary/50 bg-primary/5" : "",
+          className
+        )}
+      >
         <div className="text-center text-muted-foreground font-mono">
           <div className="text-lg crt-glow mb-2">PANEL EMPTY</div>
           <div className="text-sm">Drag widgets from the catalog to begin</div>
@@ -81,11 +96,15 @@ export const ReactGridDashboard: React.FC<ReactGridDashboardProps> = ({
   }
 
   return (
-    <div className={cn(
-      "h-full w-full pip-boy-grid-container",
-      "relative overflow-auto",
-      className
-    )}>
+    <div 
+      ref={setNodeRef}
+      className={cn(
+        "h-full w-full pip-boy-grid-container",
+        "relative overflow-auto transition-colors duration-200",
+        isOver ? "bg-primary/5" : "",
+        className
+      )}
+    >
       <ResponsiveGridLayout
         className="layout"
         layouts={{ lg: gridLayout }}

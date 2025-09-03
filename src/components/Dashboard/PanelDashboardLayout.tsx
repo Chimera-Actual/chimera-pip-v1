@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { DashboardGrid } from './DashboardGrid';
+import { ReactGridDashboard } from './ReactGridDashboard';
 import { WidgetCatalogPanel } from './WidgetCatalogPanel';
 import { WidgetPropertiesPanel } from './WidgetPropertiesPanel';
 import { DashboardHeader } from './DashboardHeader';
@@ -63,15 +63,18 @@ export const PanelDashboardLayout: React.FC = () => {
     const overId = over.id as string;
     const overData = over.data.current;
 
-    // Handle dropping widget from catalog
-    if (dragItem.type === 'catalog-item' && overData?.type === 'grid-cell') {
+    // Handle dropping widget from catalog or moving widgets
+    if (dragItem.type === 'catalog-item') {
       const catalogItem = dragItem.data as any;
-      const widgetId = addWidget(catalogItem.id, overData.panelId || 'main', {
-        x: overData.position.x,
-        y: overData.position.y,
-        w: catalogItem.defaultSize?.w || 2,
-        h: catalogItem.defaultSize?.h || 2,
-      });
+      // Drop on main dashboard area
+      if (overId === 'main-dashboard' || overData?.panelId === 'main') {
+        addWidget(catalogItem.id, 'main', {
+          x: 0,
+          y: 0,
+          w: catalogItem.defaultSize?.w || 2,
+          h: catalogItem.defaultSize?.h || 2,
+        });
+      }
     }
 
     // Handle cross-panel widget movement
@@ -85,17 +88,6 @@ export const PanelDashboardLayout: React.FC = () => {
         w: widget.position.w,
         h: widget.position.h,
       }, newPanelId);
-    }
-
-    // Handle moving existing widget within grid
-    if (dragItem.type === 'widget' && overData?.type === 'grid-cell') {
-      const widget = dragItem.data as any;
-      moveWidget(widget.id, {
-        x: overData.position.x,
-        y: overData.position.y,
-        w: widget.position.w,
-        h: widget.position.h,
-      }, overData.panelId);
     }
 
     setActiveId(null);
@@ -177,14 +169,9 @@ export const PanelDashboardLayout: React.FC = () => {
                 className="bg-background relative"
               >
                 <ErrorBoundary FallbackComponent={PipBoyErrorFallback}>
-                  <DashboardGrid 
-                    layout={currentLayout}
-                    onWidgetSelect={setSelectedWidget}
-                  />
-                  <CrossPanelDropZone 
-                    panelId="main" 
-                    panelName="Main Dashboard"
-                    isActive={!!dragItem && dragItem.type === 'widget'}
+                  <ReactGridDashboard 
+                    panelId="main"
+                    className="h-full"
                   />
                 </ErrorBoundary>
               </Panel>
