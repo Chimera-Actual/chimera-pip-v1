@@ -101,6 +101,16 @@ const SortableTrack: React.FC<SortableTrackProps> = ({ track, isActive, onPlay, 
   );
 };
 
+interface PlayerSettings {
+  volume?: number;
+  autoplay?: boolean;
+  loop?: boolean;
+  waveformStyle?: string;
+  waveformColor?: string;
+  waveformSize?: string;
+  showWaveform?: boolean;
+}
+
 interface AudioPlayerWidgetProps {
   widgetInstanceId?: string;
   settings?: {
@@ -112,7 +122,7 @@ interface AudioPlayerWidgetProps {
     waveformSize?: string;
     showWaveform?: boolean;
   };
-  onSettingsUpdate?: (settings: any) => void;
+  onSettingsUpdate?: (settings: PlayerSettings) => void;
 }
 
 export const AudioPlayerWidget: React.FC<AudioPlayerWidgetProps> = ({ 

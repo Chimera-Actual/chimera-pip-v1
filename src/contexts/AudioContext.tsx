@@ -105,7 +105,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     if (audioRef.current && volume.length > 0) {
       const volumeValue = Math.max(0, Math.min(1, volume[0] / 100));
       audioRef.current.volume = volumeValue;
-      console.log('Setting audio volume to:', volumeValue, 'from slider value:', volume[0]);
+      // Audio volume set to prevent console noise
     }
   }, [volume]);
 
@@ -238,7 +238,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
           console.error('Error uploading file:', error);
           return;
         }
-        console.log('File uploaded successfully:', data.path);
+        // File uploaded successfully
       }
 
       // Create a longer-lasting signed URL (30 days)
@@ -322,11 +322,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   };
 
   const playTrack = async (track: AudioTrack) => {
-    console.log('=== PLAY TRACK CALLED ===');
-    console.log('Track:', track.title, 'URL:', track.url);
-    console.log('Audio element exists:', !!audioRef.current);
-    console.log('Audio element readyState:', audioRef.current?.readyState);
-    console.log('Audio element src before:', audioRef.current?.src);
+    // Play track implementation
     
     if (audioRef.current) {
       try {
@@ -347,7 +343,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
             resolve(true);
           };
           
-          const onError = (error: any) => {
+          const onError = (error: Event) => {
             console.error('Audio load error:', error);
             audioRef.current?.removeEventListener('loadeddata', onLoadedData);
             audioRef.current?.removeEventListener('error', onError);

@@ -99,16 +99,14 @@ export class LocationService {
     // Handle service state changes
     if (newSettings.location_enabled && !wasEnabled) {
       // Service was disabled, now enabled
-      console.log('Starting location service (was disabled)');
+      // Starting location service (was disabled)
       await this.startLocationService();
     } else if (!newSettings.location_enabled && wasEnabled) {
       // Service was enabled, now disabled
-      console.log('Stopping location service (now disabled)');
       this.stopLocationService();
     } else if (newSettings.location_enabled && wasEnabled && 
                oldFrequency !== newSettings.location_polling_frequency) {
       // Frequency changed, restart polling
-      console.log('Restarting location service (frequency changed)');
       await this.restartLocationService();
     }
   }
@@ -240,7 +238,7 @@ export class LocationService {
       }
       
       const data = await response.json();
-      return data.map((item: any) => ({
+      return data.map((item: { lat: string; lon: string; display_name: string; type: string; importance: number; name?: string }) => ({
         lat: parseFloat(item.lat),
         lon: parseFloat(item.lon),
         display_name: item.display_name,

@@ -28,7 +28,7 @@ const createLazyWidget = (
   Component: React.LazyExoticComponent<React.ComponentType<any>>, 
   skeletonType: 'card' | 'minimal' | 'chart' | 'list' | 'media' = 'card'
 ) => {
-  return React.memo((props: any) => (
+  return React.memo((props: Record<string, any>) => (
     <Suspense fallback={<WidgetSkeleton type={skeletonType} />}>
       <Component {...props} />
     </Suspense>

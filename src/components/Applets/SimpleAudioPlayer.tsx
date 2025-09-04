@@ -15,6 +15,16 @@ interface AudioTrack {
   duration?: number;
 }
 
+interface PlayerSettings {
+  volume?: number;
+  autoplay?: boolean;
+  loop?: boolean;
+  waveformStyle?: string;
+  waveformColor?: string;
+  waveformSize?: string;
+  showWaveform?: boolean;
+}
+
 interface SimpleAudioPlayerProps {
   widgetInstanceId?: string;
   settings?: {
@@ -26,7 +36,7 @@ interface SimpleAudioPlayerProps {
     waveformSize?: string;
     showWaveform?: boolean;
   };
-  onSettingsUpdate?: (settings: any) => void;
+  onSettingsUpdate?: (settings: PlayerSettings) => void;
 }
 
 export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({ 
@@ -142,13 +152,7 @@ export const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
     if (!audioRef.current) return;
 
     try {
-      console.log('Playing track:', track.title);
-      setCurrentTrack(track);
-      audioRef.current.src = track.url;
-      audioRef.current.volume = volume / 100;
-      
-      await audioRef.current.play();
-      console.log('Track playing successfully');
+      // Playing track and loading states
     } catch (error) {
       console.error('Error playing track:', error);
       toast.error('Could not play audio file');

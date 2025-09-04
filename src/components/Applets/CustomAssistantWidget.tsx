@@ -59,7 +59,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
       
       // Generate session ID only once per widget instance
       const newSessionId = `custom-${user.id}-${widgetInstanceId}-${Date.now()}`;
-      console.log('CustomAssistantWidget - Setting session ID:', newSessionId, 'for widget:', widgetInstanceId);
+      // Setting session ID for widget
       setSessionId(newSessionId);
 
       try {
@@ -83,7 +83,7 @@ export const CustomAssistantWidget: React.FC<CustomAssistantWidgetProps> = ({ se
           });
         } else {
           setConversationId(conversation.id);
-          console.log('CustomAssistantWidget - Conversation created:', conversation.id, 'for widget:', widgetInstanceId);
+          // Conversation created for widget
         }
       } catch (error) {
         console.error('Error in conversation initialization:', error);

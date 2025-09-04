@@ -17,13 +17,20 @@ interface Track {
   position?: number;
 }
 
+interface PlayerSettings {
+  volume?: number;
+  autoplay?: boolean;
+  loop?: boolean;
+  showWaveform?: boolean;
+}
+
 interface AudioPlayerProps {
   widgetInstanceId?: string;
   settings?: {
     volume?: number;
     showWaveform?: boolean;
   };
-  onSettingsUpdate?: (settings: any) => void;
+  onSettingsUpdate?: (settings: PlayerSettings) => void;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
